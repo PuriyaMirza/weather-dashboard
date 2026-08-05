@@ -4,7 +4,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Weather Dashboard',
-  description: 'Milestone 1 foundation for an accessible weather dashboard.',
+  description: 'Milestone 2 mock-data weather dashboard UI.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
