@@ -1,4 +1,4 @@
-export type WeatherCondition = 'sunny' | 'partly-cloudy' | 'cloudy' | 'rain' | 'storm' | 'fog';
+export type WeatherCondition = 'sunny' | 'partly-cloudy' | 'cloudy' | 'rain' | 'snow' | 'storm' | 'fog';
 
 export interface WeatherLocation {
   name: string;
@@ -45,7 +45,7 @@ export interface WeatherDashboardData {
   comfort: ComfortMetrics | null;
   hourly: HourlyTemperaturePoint[];
   updatedAt: string;
-  source: 'mock';
+  source: 'mock' | 'open-meteo';
 }
 
 export type WeatherDataStatus = 'loading' | 'error' | 'ready';
