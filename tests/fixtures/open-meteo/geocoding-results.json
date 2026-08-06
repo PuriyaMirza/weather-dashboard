@@ -1,0 +1,33 @@
+{
+  "results": [
+    {
+      "id": 5746545,
+      "name": "Portland",
+      "latitude": 45.52345,
+      "longitude": -122.67621,
+      "elevation": 47.0,
+      "feature_code": "PPLA2",
+      "country_code": "US",
+      "country_id": 6252001,
+      "country": "United States",
+      "admin1": "Oregon",
+      "admin1_id": 5744337,
+      "admin2": "Multnomah County",
+      "admin2_id": 5741932,
+      "timezone": "America/Los_Angeles",
+      "population": 652503,
+      "postcodes": ["97201"]
+    },
+    {
+      "id": 4975802,
+      "name": "Portland",
+      "latitude": 43.66147,
+      "longitude": -70.25533,
+      "country_code": "US",
+      "country": "United States",
+      "admin1": "Maine",
+      "admin1_id": 4971068,
+      "timezone": "America/New_York"
+    }
+  ]
+}

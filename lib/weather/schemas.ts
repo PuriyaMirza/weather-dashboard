@@ -92,3 +92,37 @@ export const openMeteoErrorResponseSchema = z.object({
 });
 
 export type OpenMeteoErrorResponse = z.infer<typeof openMeteoErrorResponseSchema>;
+
+// Open-Meteo's geocoding API (geocoding-api.open-meteo.com) omits fields entirely when they have
+// no value, rather than returning null, so everything but the core identity/coordinates is optional.
+export const openMeteoGeocodingResultSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  latitude: z.number(),
+  longitude: z.number(),
+  elevation: z.number().optional(),
+  feature_code: z.string().optional(),
+  country_code: z.string().optional(),
+  country_id: z.number().optional(),
+  country: z.string().optional(),
+  admin1: z.string().optional(),
+  admin1_id: z.number().optional(),
+  admin2: z.string().optional(),
+  admin2_id: z.number().optional(),
+  admin3: z.string().optional(),
+  admin3_id: z.number().optional(),
+  admin4: z.string().optional(),
+  admin4_id: z.number().optional(),
+  timezone: z.string().optional(),
+  population: z.number().optional(),
+  postcodes: z.array(z.string()).optional(),
+});
+
+// When a search matches nothing, Open-Meteo omits the "results" key entirely rather than
+// returning an empty array.
+export const openMeteoGeocodingResponseSchema = z.object({
+  results: z.array(openMeteoGeocodingResultSchema).optional(),
+});
+
+export type OpenMeteoGeocodingResult = z.infer<typeof openMeteoGeocodingResultSchema>;
+export type OpenMeteoGeocodingResponse = z.infer<typeof openMeteoGeocodingResponseSchema>;
