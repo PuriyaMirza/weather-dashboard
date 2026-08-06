@@ -63,7 +63,15 @@ export async function fetchOpenMeteoForecast(
   params: OpenMeteoForecastParams,
   fetchImpl: typeof fetch = fetch,
 ): Promise<OpenMeteoForecastResponse> {
-  const response = await fetchImpl(buildOpenMeteoForecastUrl(params));
+  // A transport-level failure (DNS, refused connection, timeout) rejects before any Response
+  // exists. Wrap it so callers only ever see OpenMeteoError and route handlers can keep their
+  // error shape consistent instead of surfacing a raw TypeError as a 500.
+  let response: Response;
+  try {
+    response = await fetchImpl(buildOpenMeteoForecastUrl(params));
+  } catch (error) {
+    throw new OpenMeteoError(`Could not reach Open-Meteo: ${error instanceof Error ? error.message : 'network error'}`);
+  }
 
   let json: unknown;
   try {

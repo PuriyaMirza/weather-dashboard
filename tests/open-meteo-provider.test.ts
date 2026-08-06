@@ -48,4 +48,13 @@ describe('fetchOpenMeteoForecast', () => {
     const fetchImpl = (async () => new Response('not json', { status: 200 })) as unknown as typeof fetch;
     await expect(fetchOpenMeteoForecast(PARAMS, fetchImpl)).rejects.toThrow(OpenMeteoError);
   });
+
+  it('wraps transport-level failures so callers never see a raw TypeError', async () => {
+    const fetchImpl = (async () => {
+      throw new TypeError('fetch failed');
+    }) as unknown as typeof fetch;
+
+    await expect(fetchOpenMeteoForecast(PARAMS, fetchImpl)).rejects.toThrow(OpenMeteoError);
+    await expect(fetchOpenMeteoForecast(PARAMS, fetchImpl)).rejects.toThrow(/Could not reach Open-Meteo/);
+  });
 });

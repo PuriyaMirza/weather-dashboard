@@ -33,7 +33,16 @@ export async function fetchOpenMeteoGeocoding(
   params: OpenMeteoGeocodingParams,
   fetchImpl: typeof fetch = fetch,
 ): Promise<OpenMeteoGeocodingResult[]> {
-  const response = await fetchImpl(buildOpenMeteoGeocodingUrl(params));
+  // A transport-level failure (DNS, refused connection, timeout) rejects before any Response
+  // exists. Wrap it so callers only ever see OpenMeteoGeocodingError.
+  let response: Response;
+  try {
+    response = await fetchImpl(buildOpenMeteoGeocodingUrl(params));
+  } catch (error) {
+    throw new OpenMeteoGeocodingError(
+      `Could not reach Open-Meteo geocoding: ${error instanceof Error ? error.message : 'network error'}`,
+    );
+  }
 
   let json: unknown;
   try {

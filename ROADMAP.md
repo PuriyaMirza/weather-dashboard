@@ -14,11 +14,13 @@ Card registry, card frame, and three cards (current conditions, comfort, hourly 
 
 `lib/weather/providers/open-meteo.ts`, `lib/weather/normalize-open-meteo.ts`, `lib/weather/schemas.ts`, `lib/weather/weather-codes.ts`. Zod schemas validating upstream responses, conversion of Open-Meteo's parallel arrays into hourly objects, WMO weather-code mapping, missing-data handling, unit-aware request parameters, and test fixtures for valid, malformed, and partial responses. The provider is not imported by card components — cards only ever see the normalized `WeatherDashboardData` model.
 
-## Milestone 4 — Internal API routes — mostly done
+## Milestone 4 — Internal API routes — done
 
-`app/api/weather/route.ts` and `app/api/geocode/route.ts`. Query validation, coordinate bounds checking, normalized JSON responses, and consistent error shapes are in place; there is no proxying of arbitrary external URLs by construction (routes only accept coordinates/place-name params, never a URL).
+`app/api/weather/route.ts` and `app/api/geocode/route.ts`. Query validation, coordinate bounds checking, normalized JSON responses, and consistent error shapes (`{ error: string }` on every failure path). No proxying of arbitrary external URLs by construction — the routes accept coordinates and a place name, never a URL.
 
-**Not yet implemented:** response caching for both weather and geocoding, and request limits. Neither route currently sets any caching behavior (each request re-fetches from Open-Meteo fresh) or enforces a rate limit.
+Response caching is set via `Cache-Control` aimed at the CDN: weather `s-maxage=600` (Open-Meteo's current block updates every 15 min), geocoding `s-maxage=86400` (coordinates are effectively static), and `no-store` on every error so a transient upstream blip is never pinned. Request limits are a fixed-window per-IP limiter (30 requests/minute per route) returning 429 with `Retry-After`.
+
+**Known limitation:** the rate limiter lives in process memory (`lib/rate-limit.ts`), so on serverless each instance keeps its own counters — the effective global ceiling is roughly limit x live instances, and counters reset when an instance recycles. It is a guardrail against a single client hammering one instance, not a strict global quota. A shared store (Redis/Vercel KV) would be needed for that, which this local-first MVP intentionally does not have.
 
 ## Milestone 5 — Location selection — not started
 

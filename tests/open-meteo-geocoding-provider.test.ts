@@ -51,4 +51,12 @@ describe('fetchOpenMeteoGeocoding', () => {
     const fetchImpl = fakeFetch({ error: true, reason: 'name is required' }, { status: 400 });
     await expect(fetchOpenMeteoGeocoding({ name: '' }, fetchImpl)).rejects.toThrow(/name is required/);
   });
+
+  it('wraps transport-level failures so callers never see a raw TypeError', async () => {
+    const fetchImpl = (async () => {
+      throw new TypeError('fetch failed');
+    }) as unknown as typeof fetch;
+
+    await expect(fetchOpenMeteoGeocoding({ name: 'Portland' }, fetchImpl)).rejects.toThrow(OpenMeteoGeocodingError);
+  });
 });
