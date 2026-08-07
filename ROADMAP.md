@@ -46,6 +46,10 @@ Persisted layouts are reconciled against the card registry on load (`lib/weather
 
 **Fixed here:** the Playwright suite was pointing at `127.0.0.1` while the Next dev server treats `localhost` as its origin. Next blocks cross-origin dev resources, so the client bundle never loaded and the e2e tests were only ever exercising server-rendered HTML — no hydration, no interactivity. Dev-only (production was unaffected), but it meant the e2e suite was substantially weaker than it looked.
 
-## Milestone 8 — Deployment and CI — in progress
+## Milestone 8 — Deployment and CI — done
 
-GitHub Actions validation, Vercel Git integration with PR preview deployments, Open-Meteo attribution, and a location privacy note. Vercel is already connected and CI (`.github/workflows/ci.yml`) is running lint/typecheck/test/build on every PR and push to `main`. Attribution and privacy-note copy are not yet added anywhere in the UI.
+GitHub Actions runs lint, typecheck, unit tests, build, and now the Playwright end-to-end suite on every PR and push to `main`. Vercel is connected with per-PR preview deployments and production deploys from `main`.
+
+Open-Meteo attribution and the location privacy note are in `components/dashboard/site-footer.tsx`. Open-Meteo publishes under CC BY 4.0, which requires crediting the source, linking the licence, and indicating that changes were made — all three are covered, since this app converts units and reshapes the response.
+
+E2E runs against the **production build** in CI rather than the dev server, so it exercises the artifact that actually ships. `PLAYWRIGHT_CHROMIUM_PATH` overrides the browser binary for environments that provide their own.
