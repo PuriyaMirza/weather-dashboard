@@ -10,3 +10,20 @@ body {
   color: #0f172a;
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/*
+  Respect the OS-level "reduce motion" setting. Applied globally so it covers third-party
+  animation too (Recharts transitions today, drag-and-drop later) rather than relying on each
+  component to remember. Motion is reduced to near-zero rather than removed outright, so
+  transition/animation completion events still fire and stateful UI can't get stuck.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
