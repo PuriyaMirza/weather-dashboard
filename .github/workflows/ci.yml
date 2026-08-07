@@ -6,6 +6,12 @@ on:
   push:
     branches: [main]
 
+# A newer commit on the same branch makes an in-flight run obsolete; cancel it rather than paying
+# for both.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -34,7 +40,18 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Installed after the build so a compile failure fails fast, before spending time on browsers.
+      # The browser binary is large and changes only with the Playwright version, so it is cached
+      # rather than re-downloaded on every run.
+      - name: Cache Playwright browser
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      # Always run, even on a cache hit: --with-deps also installs Chromium's system libraries,
+      # which live outside the cached directory. Playwright skips re-downloading the binary itself
+      # when the cache restored it.
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
