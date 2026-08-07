@@ -1,25 +1,38 @@
 import { expect, test } from '@playwright/test';
 
-test('renders the weather dashboard shell with location search', async ({ page }) => {
+test('renders the default dashboard layout with location and unit controls', async ({ page }) => {
   await page.goto('/');
 
   await expect(page.getByRole('heading', { name: 'Weather Dashboard' })).toBeVisible();
-  await expect(page.getByLabel('Weather cards')).toBeVisible();
+
+  // The default layout is deliberately curated rather than showing all eight cards.
   await expect(page.getByRole('heading', { name: 'Current Conditions' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Comfort' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Hourly Temperature' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Precipitation' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Wind' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Daily Forecast' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Sun and UV' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Atmospheric Details' })).toBeVisible();
+
+  // The rest are available through the add-card drawer, not shown by default.
+  await expect(page.getByRole('heading', { name: 'Wind' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Precipitation' })).toHaveCount(0);
+
+  await expect(page.getByLabel('Weather cards')).toBeVisible();
 
   // Unit preference is a radio group so the active choice is announced, not just coloured.
   await expect(page.getByRole('radio', { name: /fahrenheit/i })).toBeChecked();
 
-  // Location controls are present and collapsed until a search is typed.
   const search = page.getByRole('combobox', { name: /search for a city or postal code/i });
   await expect(search).toBeVisible();
   await expect(search).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('button', { name: /use my current location/i })).toBeVisible();
+});
+
+test('every available card can be added from the drawer', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /edit dashboard/i }).click();
+  await page.getByRole('button', { name: /add a card/i }).click();
+
+  const panel = page.getByRole('region', { name: /add a card/i });
+  for (const name of [/add precipitation/i, /add wind/i, /add sun and uv/i, /add atmospheric details/i]) {
+    await expect(panel.getByRole('button', { name })).toBeVisible();
+  }
 });
