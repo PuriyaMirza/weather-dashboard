@@ -36,9 +36,15 @@ Unit-aware formatting is handled by `lib/weather/units.ts` with an imperial/metr
 
 **Known gap:** air quality still reads "Unavailable" — it comes from Open-Meteo's separate air-quality API, which this provider does not call.
 
-## Milestone 7 — Customization — not started
+## Milestone 7 — Customization — done
 
-Edit mode, add-card drawer, remove-card action, card size controls, pointer reordering, keyboard reordering, move-up/move-down buttons, restore-defaults, persistence through Zustand browser storage, and safe hydration handling. This is the core feature of the product.
+Edit mode, add-card drawer, remove-card action, card size controls, pointer reordering (dnd-kit), keyboard reordering, move-up/move-down buttons, restore-defaults, and persistence through Zustand browser storage.
+
+Reordering never depends on dragging: every card carries labelled move-earlier/move-later buttons that name the card, and dnd-kit's keyboard sensor gives arrow-key dragging for those who want it. Edit mode is transient and deliberately not persisted, so a reload never reopens it.
+
+Persisted layouts are reconciled against the card registry on load (`lib/weather/card-layout.ts`), so a layout saved by an older version referencing a card that no longer exists degrades to the remaining valid cards rather than rendering a hole or crashing.
+
+**Fixed here:** the Playwright suite was pointing at `127.0.0.1` while the Next dev server treats `localhost` as its origin. Next blocks cross-origin dev resources, so the client bundle never loaded and the e2e tests were only ever exercising server-rendered HTML — no hydration, no interactivity. Dev-only (production was unaffected), but it meant the e2e suite was substantially weaker than it looked.
 
 ## Milestone 8 — Deployment and CI — in progress
 
