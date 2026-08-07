@@ -2,6 +2,7 @@
 
 import { weatherCardRegistry } from '@/components/weather/card-registry';
 import { LocationSearch } from '@/components/location/location-search';
+import { UnitToggle } from '@/components/dashboard/unit-toggle';
 import { useHasHydrated } from '@/lib/hooks/use-has-hydrated';
 import { useWeatherData } from '@/lib/hooks/use-weather-data';
 import { formatLocationLabel } from '@/lib/weather/location';
@@ -11,6 +12,8 @@ export function Dashboard() {
   const hasHydrated = useHasHydrated();
   const location = useDashboardStore((state) => state.location);
   const setLocation = useDashboardStore((state) => state.setLocation);
+  const unitSystem = useDashboardStore((state) => state.unitSystem);
+  const setUnitSystem = useDashboardStore((state) => state.setUnitSystem);
 
   // Until saved preferences have loaded we don't know which location to request, so no fetch is
   // started and every card shows its loading state.
@@ -37,10 +40,13 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-slate-950 px-5 py-4 text-white" aria-label="Selected location">
-            <p className="text-sm text-slate-300">Showing</p>
-            <p className="text-xl font-semibold">{hasHydrated ? formatLocationLabel(location) : 'Loading…'}</p>
-            <p className="mt-1 text-sm text-slate-300">Updated live from Open-Meteo</p>
+          <div className="flex flex-col items-start gap-3 lg:items-end">
+            <UnitToggle unitSystem={unitSystem} onChange={setUnitSystem} />
+            <div className="rounded-2xl bg-slate-950 px-5 py-4 text-white" aria-label="Selected location">
+              <p className="text-sm text-slate-300">Showing</p>
+              <p className="text-xl font-semibold">{hasHydrated ? formatLocationLabel(location) : 'Loading…'}</p>
+              <p className="mt-1 text-sm text-slate-300">Updated live from Open-Meteo</p>
+            </div>
           </div>
         </div>
       </div>
@@ -48,7 +54,7 @@ export function Dashboard() {
       <div className="mt-6 grid gap-5 lg:grid-cols-2" aria-label="Weather cards">
         {weatherCardRegistry.map(({ id, columnSpan, Component }) => (
           <div key={id} className={columnSpan === 'wide' ? 'lg:col-span-2' : undefined}>
-            <Component data={data} isLoading={isLoading} errorMessage={errorMessage} />
+            <Component data={data} isLoading={isLoading} errorMessage={errorMessage} unitSystem={unitSystem} />
           </div>
         ))}
       </div>

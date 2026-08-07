@@ -12,7 +12,9 @@
     "weather_code": 2,
     "wind_speed_10m": 8,
     "wind_direction_10m": 315,
-    "pressure_msl": null
+    "pressure_msl": null,
+    "wind_gusts_10m": null,
+    "cloud_cover": null
   },
   "hourly": {
     "time": [
@@ -21,17 +23,118 @@
       "2026-07-18T15:00",
       "2026-07-18T16:00"
     ],
-    "temperature_2m": [70, null, 74, 75],
-    "apparent_temperature": [71, 73, 75, 76],
-    "precipitation_probability": [10, 12, 12, 14],
-    "weather_code": [2, 2, 2, 1],
-    "dew_point_2m": [54, 55, 55, 56],
-    "uv_index": [5, 6, null, 5],
-    "visibility": [15000, 15000, 15000, 16000]
+    "temperature_2m": [
+      70,
+      null,
+      74,
+      75
+    ],
+    "apparent_temperature": [
+      71,
+      73,
+      75,
+      76
+    ],
+    "precipitation_probability": [
+      10,
+      12,
+      12,
+      14
+    ],
+    "weather_code": [
+      2,
+      2,
+      2,
+      1
+    ],
+    "dew_point_2m": [
+      54,
+      55,
+      55,
+      56
+    ],
+    "uv_index": [
+      5,
+      6,
+      null,
+      5
+    ],
+    "visibility": [
+      15000,
+      15000,
+      15000,
+      16000
+    ],
+    "precipitation": [
+      0.0,
+      0.01,
+      null,
+      0.03
+    ],
+    "wind_speed_10m": [
+      5,
+      null,
+      null,
+      8
+    ],
+    "wind_gusts_10m": [
+      9,
+      10,
+      11,
+      12
+    ],
+    "wind_direction_10m": [
+      300,
+      301,
+      302,
+      303
+    ],
+    "cloud_cover": [
+      20,
+      21,
+      22,
+      23
+    ],
+    "pressure_msl": [
+      null,
+      null,
+      null,
+      null
+    ]
   },
   "daily": {
-    "time": ["2026-07-18"],
-    "temperature_2m_max": [79],
-    "temperature_2m_min": [58]
+    "time": [
+      "2026-07-18"
+    ],
+    "temperature_2m_max": [
+      79
+    ],
+    "temperature_2m_min": [
+      58
+    ],
+    "weather_code": [
+      2
+    ],
+    "sunrise": [
+      "2026-07-18T05:35"
+    ],
+    "sunset": [
+      "2026-07-18T20:52"
+    ],
+    "daylight_duration": [
+      55020.0
+    ],
+    "uv_index_max": [
+      null
+    ],
+    "precipitation_sum": [
+      0.04
+    ],
+    "precipitation_probability_max": [
+      18
+    ],
+    "wind_speed_10m_max": [
+      12.0
+    ]
   }
 }

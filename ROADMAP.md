@@ -22,13 +22,19 @@ Response caching is set via `Cache-Control` aimed at the CDN: weather `s-maxage=
 
 **Known limitation:** the rate limiter lives in process memory (`lib/rate-limit.ts`), so on serverless each instance keeps its own counters — the effective global ceiling is roughly limit x live instances, and counters reset when an instance recycles. It is a guardrail against a single client hammering one instance, not a strict global quota. A shared store (Redis/Vercel KV) would be needed for that, which this local-first MVP intentionally does not have.
 
-## Milestone 5 — Location selection — not started
+## Milestone 5 — Location selection — done
 
-Debounced city and postal-code search, accessible result list, a current-location option, a graceful fallback when geolocation is denied, timezone-aware selected location, and persistence of the choice.
+Debounced city and postal-code search via an editable combobox (WAI-ARIA APG pattern), a current-location option with distinct messages for each geolocation failure mode, timezone-aware selected location, and persistence through Zustand with `skipHydration` so the first client render matches the server's.
 
-## Milestone 6 — Remaining cards — not started
+## Milestone 6 — Remaining cards — done
 
-Precipitation, Wind, Daily Forecast, Sun and UV, Atmospheric Details. Every card needs a ready state, loading state, error state, and unavailable-data state, plus unit-aware formatting, sensible mobile behavior, and an accessible text summary.
+All eight cards exist: Current Conditions, Comfort, Hourly Temperature, Precipitation, Wind, Daily Forecast, Sun and UV, Atmospheric Details. The four states are enforced by a shared `CardBoundary` and verified by a test that walks the registry, so a card added later without them fails automatically.
+
+Unit-aware formatting is handled by `lib/weather/units.ts` with an imperial/metric toggle persisted alongside the location. The internal model stays imperial (matching its `...F`/`...Mph` field names) and unit choice is purely presentational — switching units re-renders rather than re-fetches.
+
+`forecast_days` was raised from 1 to 7, which was the blocker preventing the Daily Forecast card from being buildable at all.
+
+**Known gap:** air quality still reads "Unavailable" — it comes from Open-Meteo's separate air-quality API, which this provider does not call.
 
 ## Milestone 7 — Customization — not started
 

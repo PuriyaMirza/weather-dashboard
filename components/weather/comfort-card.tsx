@@ -1,31 +1,39 @@
 import type { WeatherCardProps } from './card-registry';
-import { CardFrame, CardState } from './card-frame';
+import { CardBoundary, Metric } from './card-frame';
+import {
+  formatDistance,
+  formatIndex,
+  formatPercent,
+  formatPressure,
+  formatTemperatureWithUnit,
+} from '@/lib/weather/units';
 
-export function ComfortCard({ data, isLoading, errorMessage }: WeatherCardProps) {
-  if (isLoading) return <CardFrame title="Comfort" description="Humidity, dew point, UV, visibility, pressure, and air quality."><CardState label="Loading comfort metrics…" /></CardFrame>;
-  if (errorMessage) return <CardFrame title="Comfort" description="Humidity, dew point, UV, visibility, pressure, and air quality."><CardState label={errorMessage} tone="error" /></CardFrame>;
-  if (!data?.comfort) return <CardFrame title="Comfort" description="Humidity, dew point, UV, visibility, pressure, and air quality."><CardState label="Comfort metrics are unavailable." /></CardFrame>;
+const TITLE = 'Comfort';
+const DESCRIPTION = 'Humidity, dew point, UV, visibility, pressure, and air quality.';
 
-  const comfort = data.comfort;
-  const metrics = [
-    ['Humidity', `${comfort.humidityPercent}%`],
-    ['Dew point', `${comfort.dewPointF}°F`],
-    ['UV index', comfort.uvIndex === null ? 'Unavailable' : String(comfort.uvIndex)],
-    ['Visibility', `${comfort.visibilityMiles} mi`],
-    ['Pressure', `${comfort.pressureInHg} inHg`],
-    ['Air quality', comfort.airQualityIndex === null ? 'Unavailable' : `AQI ${comfort.airQualityIndex}`],
-  ];
+export function ComfortCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
+  const comfort = data?.comfort;
 
   return (
-    <CardFrame title="Comfort" description="Humidity, dew point, UV, visibility, pressure, and air quality.">
-      <dl className="grid grid-cols-2 gap-3">
-        {metrics.map(([label, value]) => (
-          <div key={label} className="rounded-2xl bg-gradient-to-br from-slate-50 to-sky-50 p-3">
-            <dt className="text-sm text-slate-500">{label}</dt>
-            <dd className="mt-1 text-lg font-semibold text-slate-950">{value}</dd>
-          </div>
-        ))}
-      </dl>
-    </CardFrame>
+    <CardBoundary
+      title={TITLE}
+      description={DESCRIPTION}
+      isLoading={isLoading}
+      errorMessage={errorMessage}
+      isUnavailable={!comfort}
+      loadingLabel="Loading comfort metrics…"
+      unavailableLabel="Comfort metrics are unavailable."
+    >
+      {comfort && (
+        <dl className="grid grid-cols-2 gap-3 text-sm">
+          <Metric label="Humidity" value={formatPercent(comfort.humidityPercent)} />
+          <Metric label="Dew point" value={formatTemperatureWithUnit(comfort.dewPointF, unitSystem)} />
+          <Metric label="UV index" value={formatIndex(comfort.uvIndex)} />
+          <Metric label="Visibility" value={formatDistance(comfort.visibilityMiles, unitSystem)} />
+          <Metric label="Pressure" value={formatPressure(comfort.pressureInHg, unitSystem)} />
+          <Metric label="Air quality" value={formatIndex(comfort.airQualityIndex)} />
+        </dl>
+      )}
+    </CardBoundary>
   );
 }

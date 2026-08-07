@@ -39,13 +39,13 @@ describe('dashboard store', () => {
     expect(persisted.state.location).toEqual(SEATTLE);
     // partialize should keep actions out of storage.
     expect(persisted.state.setLocation).toBeUndefined();
-    expect(persisted.version).toBe(1);
+    expect(persisted.version).toBe(2);
   });
 
   it('does not read persisted state until rehydrate is called (skipHydration)', async () => {
     window.localStorage.setItem(
       DASHBOARD_STORAGE_KEY,
-      JSON.stringify({ state: { location: SEATTLE }, version: 1 }),
+      JSON.stringify({ state: { location: SEATTLE }, version: 2 }),
     );
 
     // Nothing has rehydrated yet, so the store still holds its initial state — this is what keeps
@@ -56,10 +56,10 @@ describe('dashboard store', () => {
     expect(useDashboardStore.getState().location).toEqual(SEATTLE);
   });
 
-  it('discards persisted state saved under an older version', async () => {
+  it('discards persisted state saved under an older schema version', async () => {
     window.localStorage.setItem(
       DASHBOARD_STORAGE_KEY,
-      JSON.stringify({ state: { location: SEATTLE }, version: 0 }),
+      JSON.stringify({ state: { location: SEATTLE }, version: 1 }),
     );
 
     await useDashboardStore.persist.rehydrate();
