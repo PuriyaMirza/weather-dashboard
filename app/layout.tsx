@@ -4,7 +4,8 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Weather Dashboard',
-  description: 'Milestone 2 mock-data weather dashboard UI.',
+  description:
+    'A customizable weather dashboard. Choose which cards you see, for any location, with live data from Open-Meteo.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

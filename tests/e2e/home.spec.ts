@@ -24,6 +24,11 @@ test('renders the default dashboard layout with location and unit controls', asy
   await expect(search).toBeVisible();
   await expect(search).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('button', { name: /use my current location/i })).toBeVisible();
+
+  // Attribution is a licence obligation, so it must actually render on the page.
+  await expect(page.getByRole('link', { name: /open-meteo\.com/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /cc by 4\.0/i })).toBeVisible();
+  await expect(page.getByText(/how your location is used/i)).toBeVisible();
 });
 
 test('every available card can be added from the drawer', async ({ page }) => {
