@@ -1,6 +1,6 @@
 # Weather Dashboard — Product Requirements Document
 
-**Version:** 1.0 · **Last updated:** 6 August 2026 · **Reflects:** `main` at commit `b46f503`
+**Version:** 1.1 · **Last updated:** 7 August 2026 · **Reflects:** `main` after Milestone 8 and the dependency cleanup
 
 **Status key used throughout:**
 
@@ -22,7 +22,7 @@ A **customizable weather dashboard**. The user sees a grid of weather cards and 
 
 **One-line pitch:** *Your weather, showing only what you actually care about.*
 
-**Current overall status: 🟡 In progress.** The data foundation is finished and live; the headline customization feature has not been started.
+**Current overall status: ✅ v1.0 complete.** Every milestone is merged and all ten definition-of-done criteria are met.
 
 ---
 
@@ -34,12 +34,12 @@ A **customizable weather dashboard**. The user sees a grid of weather cards and 
 | 2 | Mock-data UI | ✅ Complete | Card registry, card frame, 3 cards |
 | 3 | Open-Meteo provider & normalization | ✅ Complete | Validation, WMO codes, missing-data handling |
 | 4 | Internal API routes | ✅ Complete | Caching, rate limits, consistent error shapes |
-| 5 | Location selection | ⬜ Not started | Dashboard is hardcoded to Portland, Oregon |
-| 6 | Remaining cards | ⬜ Not started | 3 of 8 cards exist |
-| 7 | **Customization** | ⬜ Not started | **The core product feature** |
-| 8 | Deployment & CI | 🟡 In progress | CI + Vercel live; attribution & privacy note missing |
+| 5 | Location selection | ✅ Complete | Accessible combobox search, geolocation, persisted |
+| 6 | Remaining cards | ✅ Complete | All 8 cards, plus the imperial/metric unit system |
+| 7 | **Customization** | ✅ Complete | **The core product feature** — add/remove/reorder/resize, persisted |
+| 8 | Deployment & CI | ✅ Complete | CI (incl. e2e) + Vercel; attribution and privacy note shipped |
 
-**Blunt read:** the plumbing is solid and the product isn't built yet. Milestones 1–4 are all infrastructure — a user visiting today sees a fixed, non-customizable three-card page for a city they can't change. Milestones 5–7 are where this becomes the product described above.
+**Blunt read:** the product described at the top now exists. A visitor picks any location, chooses which of eight cards to show, reorders and resizes them by mouse or keyboard, and finds it all as they left it next visit. Remaining work is genuine enhancement, not missing basics — see §9.
 
 ---
 
@@ -49,12 +49,12 @@ A **customizable weather dashboard**. The user sees a grid of weather cards and 
 
 | Goal | Status |
 |---|---|
-| Show accurate current, hourly, and daily weather from a free source | 🟡 Current + hourly done; daily data not yet surfaced |
-| Let users choose which cards appear, and in what order and size | ⬜ Not started |
-| Remember each user's layout across visits | ⬜ Not started |
-| Let users pick their location | ⬜ Not started |
-| Work equally well on mobile and desktop | 🟡 Responsive grid exists; untested against real card variety |
-| Be fully usable by keyboard and screen reader | 🟡 Good foundation; key pieces missing (see §7, F8) |
+| Show accurate current, hourly, and daily weather from a free source | ✅ Complete |
+| Let users choose which cards appear, and in what order and size | ✅ Complete |
+| Remember each user's layout across visits | ✅ Complete |
+| Let users pick their location | ✅ Complete |
+| Work equally well on mobile and desktop | 🟡 Responsive across all eight cards; not yet tested on real devices or at small viewports in CI |
+| Be fully usable by keyboard and screen reader | 🟡 Every feature is keyboard-operable and chart data has text equivalents; no automated a11y check or real screen-reader testing yet (see §7, F8) |
 | Stay within Open-Meteo's free non-commercial tier | ✅ Caching + rate limits in place |
 
 ### Non-goals (deliberately excluded)
@@ -85,7 +85,7 @@ A **customizable weather dashboard**. The user sees a grid of weather cards and 
 
 **Primary scenario (target end state):** A user opens the dashboard, sees a default set of cards for their location, enters edit mode, removes cards they don't care about, adds two they do, drags one to the top (or uses move-up buttons), makes it full-width, and leaves. Next visit, it's exactly as they left it.
 
-**Current reality:** they see three fixed cards for Portland, Oregon, and can change nothing.
+**This is now the actual behaviour**, not a target. The default layout is four curated cards; the other four are one click away in the add-card drawer.
 
 ---
 
@@ -95,15 +95,15 @@ A **customizable weather dashboard**. The user sees a grid of weather cards and 
 
 | Layer | Technology | Status |
 |---|---|---|
-| Framework | Next.js (App Router) 16.2.10 | ✅ |
+| Framework | Next.js (App Router) 16.3.0 | ✅ |
 | Language | TypeScript 6.x, `strict: true` | ✅ |
 | Styling | Tailwind CSS 4.x | ✅ |
-| Client state | Zustand 5.x | ⬜ Installed, not yet used |
-| Drag & drop | dnd-kit | ⬜ Installed, not yet used |
-| Charts | Recharts 3.x | ✅ Used by Hourly Temperature |
+| Client state | Zustand 5.x (with `persist`) | ✅ Location, units, and card layout |
+| Drag & drop | dnd-kit | ✅ Pointer and keyboard reordering |
+| Charts | Recharts 3.x | ✅ Hourly Temperature and Precipitation |
 | Validation | Zod 4.x | ✅ |
-| Unit tests | Vitest + jsdom | ✅ 63 tests, 11 files |
-| E2E tests | Playwright (Chromium) | 🟡 1 test; not wired into CI |
+| Unit tests | Vitest + jsdom + Testing Library | ✅ 198 tests, 18 files |
+| E2E tests | Playwright (Chromium) | ✅ 4 tests, running in CI against the production build |
 | Hosting | Vercel | ✅ |
 | Weather data | Open-Meteo (free, no API key) | ✅ |
 
@@ -118,10 +118,10 @@ Provider                  lib/weather/providers/open-meteo.ts
       ↓
 Normalizer                lib/weather/normalize-open-meteo.ts
       ↓  (WeatherDashboardData — the ONLY shape the UI ever sees)
-Orchestrator              lib/weather/get-dashboard-weather.ts
-      ↓
-Page (server component)   app/page.tsx
-      ↓  (props)
+Route handler             app/api/weather/route.ts
+      ↓  (one HTTP response per location change)
+useWeatherData hook       lib/hooks/use-weather-data.ts
+      ↓  (props, identical for every card)
 Cards                     components/weather/*-card.tsx
 ```
 
@@ -133,14 +133,14 @@ Cards                     components/weather/*-card.tsx
 |---|---|---|
 | 1 | Third-party responses never reach UI components | ✅ Enforced |
 | 2 | One shared weather request per forecast, distributed to all cards — never one per card | ✅ Enforced |
-| 3 | External API calls go through Next.js route handlers, not browser components | ✅ Routes exist; nothing calls from the browser yet |
+| 3 | External API calls go through Next.js route handlers, not browser components | ✅ Enforced — the browser calls our routes, never Open-Meteo directly |
 | 4 | New cards are added via the card registry, not hardcoded conditionals | ✅ Enforced |
-| 5 | Accessibility must not depend on dragging or charts | 🟡 Partial (see §7, F8) |
+| 5 | Accessibility must not depend on dragging or charts | ✅ Enforced — move buttons alongside drag, data tables alongside charts |
 | 6 | Local-first: no auth, no database, no accounts | ✅ Held |
 | 7 | No new dependencies without discussion | ✅ Held — no deps added since scaffold |
 | 8 | Check current official docs before changing an integration | ✅ Practiced |
 
-> **Note on constraint 3:** `app/page.tsx` calls the shared library functions *directly* rather than HTTP-fetching its own API routes. This is deliberate and correct — a server component fetching its own route handler adds a pointless network round-trip, and current Next.js guidance advises against it. The routes exist for **browser-side** calls, which arrive in Milestone 5.
+> **Note on rendering:** the page is a **static shell** and weather is fetched in the browser, because the location and layout live in client-only preferences the server cannot see. The trade-off is no server-rendered weather on first paint, accepted because a personal dashboard driven by local preferences cannot meaningfully server-render them.
 
 ---
 
@@ -199,64 +199,64 @@ The internal model every card consumes (`lib/weather/types.ts`):
 | Response caching — weather `s-maxage=600`, geocoding `s-maxage=86400`, errors `no-store` | ✅ |
 | Request limits — 30/min per client IP, `429` + `Retry-After` | ✅ *(with a real caveat — see §9.2)* |
 
-### F4 — Location selection ⬜ Not started
+### F4 — Location selection ✅ Complete
 
 | Requirement | Status |
 |---|---|
-| Debounced city search | ⬜ |
-| Postal-code search | ⬜ |
-| Accessible results list (keyboard navigable, screen-reader announced) | ⬜ |
-| "Use my current location" via browser geolocation | ⬜ |
-| Graceful fallback when geolocation is denied or unavailable | ⬜ |
-| Timezone-aware selected location | 🟡 Pipeline is timezone-aware; no UI to select |
-| Persist chosen location | ⬜ |
+| Debounced city search | ✅ |
+| Postal-code search | ✅ |
+| Accessible results list (keyboard navigable, screen-reader announced) | ✅ |
+| "Use my current location" via browser geolocation | ✅ |
+| Graceful fallback when geolocation is denied or unavailable | ✅ |
+| Timezone-aware selected location | ✅ Timezone resolved from coordinates by the forecast request |
+| Persist chosen location | ✅ |
 
-> Today the location is a hardcoded constant, `DEFAULT_PLACE = 'Portland, Oregon'`, in `app/page.tsx`.
+> Portland remains the *default* for a first-time visitor, but it is now a starting point rather than a limit.
 
-### F5 — Card catalogue 🟡 In progress — 3 of 8
+### F5 — Card catalogue ✅ Complete — 8 of 8
 
 | Card | Status | Data available today? |
 |---|---|---|
 | Current Conditions | ✅ Complete | ✅ Yes |
-| Comfort | ✅ Complete | 🟡 Partial — air quality always shows "Unavailable" (see §9.5) |
+| Comfort | ✅ Complete | 🟡 Air quality always shows "Unavailable" (see §9.5) |
 | Hourly Temperature | ✅ Complete | ✅ Yes |
-| Precipitation | ⬜ Not started | 🟡 Probability yes; amounts need new request variables |
-| Wind | ⬜ Not started | 🟡 Current wind yes; hourly wind + gusts need new variables |
-| Daily Forecast | ⬜ Not started | ❌ **No** — blocked, see §9.1 |
-| Sun & UV | ⬜ Not started | 🟡 UV yes; sunrise/sunset need new daily variables |
-| Atmospheric Details | ⬜ Not started | 🟡 Pressure/visibility yes; others need new variables |
+| Precipitation | ✅ Complete | ✅ Yes |
+| Wind | ✅ Complete | ✅ Yes |
+| Daily Forecast | ✅ Complete | ✅ Yes — `forecast_days` raised from 1 to 7 |
+| Sun & UV | ✅ Complete | ✅ Yes |
+| Atmospheric Details | ✅ Complete | ✅ Yes |
 
-Every new card must ship with: ready state, loading state, error state, unavailable-data state, unit-aware formatting, sensible mobile behaviour, and an accessible text summary.
+Every card ships with a ready, loading, error, and unavailable-data state, enforced by a shared `CardBoundary` and verified by a test that walks the registry — so a card added later without them fails automatically.
 
-### F6 — Customization ⬜ Not started — **this is the core product feature**
-
-| Requirement | Status |
-|---|---|
-| Edit mode toggle | ⬜ |
-| Add-card drawer showing available cards | ⬜ |
-| Remove-card action | ⬜ |
-| Card size controls (single/wide) | ⬜ |
-| Pointer reordering (drag & drop, via dnd-kit) | ⬜ |
-| Keyboard reordering | ⬜ |
-| Move-up / move-down buttons as a drag-free alternative | ⬜ |
-| Restore-defaults action | ⬜ |
-| Persistence via Zustand browser storage | ⬜ |
-| Safe hydration handling (no server/client mismatch flash) | ⬜ |
-
-> **Hydration is the sharp edge here.** The server has no access to the user's saved layout, so it must render a default while the browser renders the saved layout. Done naively this produces a visible flash of the wrong layout, or a React hydration error. This needs a deliberate pattern, not an afterthought.
-
-### F7 — Persistence ⬜ Not started
+### F6 — Customization ✅ Complete — **the core product feature**
 
 | Requirement | Status |
 |---|---|
-| Card layout (which cards, order, sizes) persisted locally | ⬜ |
-| Selected location persisted locally | ⬜ |
-| Schema versioning so a future layout change doesn't corrupt saved state | ⬜ *Recommended — not yet in any milestone* |
-| Graceful handling when storage is unavailable or disabled | ⬜ |
+| Edit mode toggle | ✅ |
+| Add-card drawer showing available cards | ✅ |
+| Remove-card action | ✅ |
+| Card size controls (single/wide) | ✅ |
+| Pointer reordering (drag & drop, via dnd-kit) | ✅ |
+| Keyboard reordering | ✅ |
+| Move-up / move-down buttons as a drag-free alternative | ✅ |
+| Restore-defaults action | ✅ |
+| Persistence via Zustand browser storage | ✅ |
+| Safe hydration handling (no server/client mismatch flash) | ✅ |
 
-A Zustand store exists (`store/dashboard-store.ts`) with a `selectedCity` field, but **nothing imports it** and it has no persistence middleware.
+> **How hydration was handled:** the store uses `skipHydration` and rehydrates after mount, so the first client render matches the server's exactly. Until that completes the grid shows a neutral placeholder rather than the default layout, so a saved layout never visibly flashes as something else first. `useHasHydrated` is built on `useSyncExternalStore` with an explicit server snapshot.
 
-### F8 — Accessibility 🟡 In progress *(cross-cutting requirement)*
+### F7 — Persistence ✅ Complete
+
+| Requirement | Status |
+|---|---|
+| Card layout (which cards, order, sizes) persisted locally | ✅ |
+| Selected location persisted locally | ✅ |
+| Schema versioning so a future layout change doesn't corrupt saved state | ✅ `version: 3` plus a `merge` that reconciles saved layouts against the registry |
+| Graceful handling when storage is unavailable or disabled | ✅ |
+
+A saved layout referencing a card this version no longer has degrades to the remaining valid cards rather than rendering a hole; one that reconciles to nothing falls back to defaults. Measurement units persist alongside. Edit mode is deliberately *not* persisted, so a reload never reopens it.
+
+### F8 — Accessibility 🟡 Largely complete *(cross-cutting requirement)*
 
 | Requirement | Status |
 |---|---|
@@ -265,13 +265,13 @@ A Zustand store exists (`store/dashboard-store.ts`) with a `selectedCity` field,
 | `role="status"` / `role="alert"` on loading and error states | ✅ |
 | Text alternative for every chart | ✅ Hourly chart has a screen-reader-only data table |
 | Large temperature glyph has a readable label (`"72 degrees Fahrenheit"`, not `"72°"`) | ✅ |
-| Never use colour as the only signal | 🟡 Holds today; needs re-checking as chart-heavy cards land |
-| Keyboard reordering + move-up/down buttons alongside drag | ⬜ Blocked on F6 |
-| Respect `prefers-reduced-motion` | ⬜ **Not implemented anywhere** |
-| Focus management in edit mode and the add-card drawer | ⬜ Blocked on F6 |
-| Automated accessibility testing in CI | ⬜ Not set up |
+| Never use colour as the only signal | ✅ UV risk, wind strength, cloud cover, and pressure trend all carry words, not just colour or a glyph |
+| Keyboard reordering + move-up/down buttons alongside drag | ✅ Both, and every control names its card |
+| Respect `prefers-reduced-motion` | ✅ Complete — handled globally in `globals.css` |
+| Focus management in edit mode and the add-card drawer | ✅ Focus moves into the drawer on open; Escape closes it |
+| Automated accessibility testing in CI | ⬜ Not set up — the strongest remaining a11y gap, since current coverage asserts intent rather than scanning for violations |
 
-### F9 — Deployment, CI, and compliance 🟡 In progress
+### F9 — Deployment, CI, and compliance ✅ Complete
 
 | Requirement | Status |
 |---|---|
@@ -279,9 +279,9 @@ A Zustand store exists (`store/dashboard-store.ts`) with a `selectedCity` field,
 | Node 22 with npm caching | ✅ |
 | Vercel Git integration with per-PR preview deployments | ✅ |
 | Production deploys from `main` | ✅ |
-| **Open-Meteo attribution displayed in the UI** | ⬜ **Not started — required by their licence terms** |
-| **Location privacy note** | ⬜ Not started |
-| E2E tests running in CI | ⬜ Not wired into the workflow |
+| **Open-Meteo attribution displayed in the UI** | ✅ Complete — source, CC BY 4.0 licence link, and a note that data is modified |
+| **Location privacy note** | ✅ Complete |
+| E2E tests running in CI | ✅ Complete — runs against the production build |
 
 ---
 
@@ -306,18 +306,18 @@ Ordered by how likely they are to bite.
 
 | # | Issue | Impact | Status |
 |---|---|---|---|
-| 1 | **`forecast_days=1`** in the provider — only one day of data is requested | **Blocks the Daily Forecast card entirely.** Must be raised (to ~7) before F5's Daily Forecast is buildable | ⬜ Unresolved |
+| 1 | ~~**`forecast_days=1`**~~ | Resolved: raised to 7, which unblocked the Daily Forecast card. The hourly series is trimmed to 24h during normalization so the extra span costs nothing at the card level | ✅ Resolved |
 | 2 | **Rate limiter is in-process memory** | On serverless each instance has its own counter, so the real ceiling is `30 × live instances`, and it resets when an instance recycles. A guardrail against one client hammering one instance — not a true global quota. Fixing properly needs a shared store (Redis/Vercel KV), which conflicts with the no-database constraint | 🟡 Documented, accepted |
-| 3 | **`package.json` pins every dependency to `"latest"`** | Builds are not reproducible from `package.json` alone; the lockfile is doing all the work. A fresh install could silently pull breaking majors | ⬜ Known, deferred by choice |
-| 4 | **5 high-severity `npm audit` findings** | Next.js (SSRF, cache confusion, DoS), plus transitive `postcss`, `sharp`, `brace-expansion`, `undici`. Some fix non-breaking; the Next.js cluster needs a deliberate version bump | ⬜ Deferred to a single pass with #3 |
-| 5 | **Air quality always `null`** | Comfort card permanently shows "Unavailable" for AQI. Open-Meteo serves air quality from a *separate* API that this app doesn't call | ⬜ Unresolved |
-| 6 | **Units hardcoded** to Fahrenheit / mph / inches | F5 requires "unit-aware formatting"; there is no unit system or toggle. Needs designing before the remaining 5 cards, or they'll each hardcode too | ⬜ Not designed |
-| 7 | **No `prefers-reduced-motion` handling** | Violates a stated accessibility requirement; matters more once drag-and-drop animations land | ⬜ Unresolved |
-| 8 | **Orphaned scaffold code** — `lib/weather-schema.ts` + its test | Dead code from Milestone 1, unconnected to the real model. Harmless but misleading to a newcomer | ⬜ Safe to delete |
-| 9 | **`store/dashboard-store.ts` unused** | Placeholder shape (`selectedCity: string`) that doesn't match what F6/F7 will need | ⬜ Will be replaced |
+| 3 | ~~**`package.json` pins every dependency to `"latest"`**~~ | Resolved: every dependency now carries a caret range at its known-good version, and `engines.node` documents the runtime CI already used | ✅ Resolved |
+| 4 | ~~**5 high-severity `npm audit` findings**~~ | Resolved: `npm audit` reports zero. Real ranges let the fixes apply without `--force`; Next went 16.2.10 → 16.3.0 | ✅ Resolved |
+| 1 | **Air quality always `null`** | Comfort card permanently shows "Unavailable" for AQI. Open-Meteo serves air quality from a *separate* API this provider does not call; adding it is a new upstream integration, not a tweak | ⬜ Open |
+| 6 | ~~**Units hardcoded**~~ | Resolved: `lib/weather/units.ts` with a persisted imperial/metric toggle. The internal model stays imperial and unit choice is presentational, so switching re-renders rather than re-fetches | ✅ Resolved |
+| 7 | ~~**No `prefers-reduced-motion` handling**~~ | Resolved: handled globally in `globals.css`, so it covers third-party animation (Recharts, dnd-kit) rather than relying on each component | ✅ Resolved |
+| 8 | ~~**Orphaned scaffold code**~~ | Resolved: `lib/weather-schema.ts` and its test are deleted. Nothing imported them but the test itself | ✅ Resolved |
+| 9 | ~~**`store/dashboard-store.ts` unused**~~ | Resolved: it is now the real preferences store — location, units, and card layout, with versioning and reconciliation | ✅ Resolved |
 | 10 | **Mock data still in the tree** | `lib/weather/mock-data.ts` no longer feeds the page but is still used by its own test. Fine as a fixture; should not be mistaken for live behaviour | ✅ Intentional |
-| 11 | **E2E tests not in CI**, and some environments need a Chromium path override to run them | Regressions in real browser rendering won't be caught automatically | ⬜ Unresolved |
-| 12 | **`feelsLike` computed but never plotted** on the hourly chart | Minor dead computation; possibly an intended second chart line | ⬜ Decide: plot it or drop it |
+| 11 | ~~**E2E tests not in CI**~~ | Resolved: CI installs Chromium and runs Playwright against the production build. `PLAYWRIGHT_CHROMIUM_PATH` overrides the binary where an environment supplies its own | ✅ Resolved |
+| 12 | ~~**`feelsLike` computed but never plotted**~~ | Resolved: it now appears in the chart's screen-reader data table, so it is no longer dead | ✅ Resolved |
 | 13 | **No upstream response caching** — only CDN response caching | A CDN cache miss always hits Open-Meteo. Acceptable given the CDN absorbs most traffic | 🟡 Acceptable |
 
 ---
@@ -326,12 +326,10 @@ Ordered by how likely they are to bite.
 
 | Risk / question | Why it matters | Recommendation |
 |---|---|---|
-| **Hydration flash** when restoring saved layouts (F6) | Most likely source of user-visible bugs in the core feature | Design the pattern before writing the store |
-| **No unit system designed** (§9.6) | Building 5 more cards without it means 5 places to retrofit | Decide before Milestone 6 |
-| **Card count vs. one shared request** | 8 cards need more Open-Meteo variables. Adding all of them to one request keeps the "one request" rule but grows the payload | Keep one request; add variables as cards need them |
-| **Milestone ordering** — customization is last | The headline feature is the least de-risked part of the project | Consider pulling a thin slice of F6 forward |
-| **Open-Meteo attribution missing** | A licence-terms obligation, not a nice-to-have | Cheap to add; do it soon |
-| **Free-tier quota under real traffic** | Rate limiting is a guardrail, not a guarantee (§9.2) | Watch Open-Meteo usage after any traffic spike |
+| **Free-tier quota under real traffic** | Rate limiting is a guardrail, not a guarantee (§9.2) | Watch Open-Meteo usage after any traffic spike; add a shared store if it becomes real |
+| **No automated accessibility scanning** | Current a11y coverage asserts the intent we wrote; it cannot catch a regression nobody thought to assert | Add axe to the Playwright suite — cheap, and the e2e harness now exists |
+| **No real screen-reader or device testing** | The ARIA is correct by construction and by test, but has not been driven by an actual screen reader or on a real phone | Worth one manual pass before calling the accessibility goal met |
+| **Layout schema will drift** | Saved layouts are reconciled and versioned, but each future card change still needs the version bumped deliberately | Keep `ALL_CARD_IDS` and the version in step; the registry test catches half of it |
 
 ---
 
@@ -339,18 +337,18 @@ Ordered by how likely they are to bite.
 
 The product ships when all of the following are true:
 
-- [ ] A user can search for and select any city or postal code, and it's remembered
-- [ ] All 8 cards exist, each with ready / loading / error / unavailable states
-- [ ] A user can add, remove, reorder, and resize cards, and it's remembered
-- [ ] Every customization action works by keyboard alone, with no dragging required
-- [ ] Every chart has a text equivalent; no information is conveyed by colour alone
-- [ ] `prefers-reduced-motion` is respected
-- [ ] Open-Meteo attribution and a location privacy note are visible
+- [x] A user can search for and select any city or postal code, and it's remembered
+- [x] All 8 cards exist, each with ready / loading / error / unavailable states
+- [x] A user can add, remove, reorder, and resize cards, and it's remembered
+- [x] Every customization action works by keyboard alone, with no dragging required
+- [x] Every chart has a text equivalent; no information is conveyed by colour alone
+- [x] `prefers-reduced-motion` is respected
+- [x] Open-Meteo attribution and a location privacy note are visible
 - [x] `npm run lint`, `typecheck`, `test`, and `build` all pass in CI on every PR
-- [ ] E2E tests run in CI
-- [ ] Dependencies are pinned to real version ranges with no high-severity advisories
+- [x] E2E tests run in CI
+- [x] Dependencies are pinned to real version ranges with no high-severity advisories
 
-**Currently satisfied: 1 of 10.**
+**Currently satisfied: 10 of 10.**
 
 ---
 
@@ -373,8 +371,7 @@ The product ships when all of the following are true:
 | `lib/weather/get-dashboard-weather.ts` | Geocode → forecast → normalize orchestration | ✅ |
 | `lib/rate-limit.ts` | Fixed-window limiter | ✅ |
 | `lib/api/http.ts` | Shared error shape + cache constants | ✅ |
-| `store/dashboard-store.ts` | Zustand store | ⬜ Unused placeholder |
+| `store/dashboard-store.ts` | Preferences store: location, units, card layout | ✅ |
 | `lib/weather/mock-data.ts` | Mock fixture, test-only | ✅ |
-| `lib/weather-schema.ts` | Orphaned Milestone 1 scaffold | ⬜ Delete candidate |
 | `.github/workflows/ci.yml` | CI: lint, typecheck, test, build | ✅ |
 | `ROADMAP.md` | Milestone execution order | ✅ |
