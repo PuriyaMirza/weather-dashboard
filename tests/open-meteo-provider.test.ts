@@ -24,7 +24,11 @@ describe('buildOpenMeteoForecastUrl', () => {
     expect(url.searchParams.get('wind_speed_unit')).toBe('mph');
     expect(url.searchParams.get('current')).toContain('temperature_2m');
     expect(url.searchParams.get('hourly')).toContain('dew_point_2m');
-    expect(url.searchParams.get('daily')).toBe('temperature_2m_max,temperature_2m_min');
+    expect(url.searchParams.get('daily')).toContain('temperature_2m_max');
+    expect(url.searchParams.get('daily')).toContain('sunrise');
+    expect(url.searchParams.get('daily')).toContain('precipitation_probability_max');
+    // A week of data, so the daily forecast card has something to show.
+    expect(url.searchParams.get('forecast_days')).toBe('7');
   });
 });
 

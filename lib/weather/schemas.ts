@@ -15,7 +15,9 @@ export const openMeteoCurrentSchema = z.object({
   weather_code: nullableNumber,
   wind_speed_10m: nullableNumber,
   wind_direction_10m: nullableNumber,
+  wind_gusts_10m: nullableNumber,
   pressure_msl: nullableNumber,
+  cloud_cover: nullableNumber,
 });
 
 export const openMeteoHourlySchema = z
@@ -24,20 +26,32 @@ export const openMeteoHourlySchema = z
     temperature_2m: nullableNumberArray,
     apparent_temperature: nullableNumberArray,
     precipitation_probability: nullableNumberArray,
+    precipitation: nullableNumberArray,
     weather_code: nullableNumberArray,
     dew_point_2m: nullableNumberArray,
     uv_index: nullableNumberArray,
     visibility: nullableNumberArray,
+    wind_speed_10m: nullableNumberArray,
+    wind_gusts_10m: nullableNumberArray,
+    wind_direction_10m: nullableNumberArray,
+    cloud_cover: nullableNumberArray,
+    pressure_msl: nullableNumberArray,
   })
   .superRefine((hourly, ctx) => {
     const variableKeys = [
       'temperature_2m',
       'apparent_temperature',
       'precipitation_probability',
+      'precipitation',
       'weather_code',
       'dew_point_2m',
       'uv_index',
       'visibility',
+      'wind_speed_10m',
+      'wind_gusts_10m',
+      'wind_direction_10m',
+      'cloud_cover',
+      'pressure_msl',
     ] as const;
 
     for (const key of variableKeys) {
@@ -51,14 +65,36 @@ export const openMeteoHourlySchema = z
     }
   });
 
+// sunrise/sunset are ISO time strings rather than numbers, so they get their own array type.
+const nullableStringArray = z.array(z.string().nullable());
+
 export const openMeteoDailySchema = z
   .object({
     time: z.array(z.string()),
     temperature_2m_max: nullableNumberArray,
     temperature_2m_min: nullableNumberArray,
+    weather_code: nullableNumberArray,
+    sunrise: nullableStringArray,
+    sunset: nullableStringArray,
+    daylight_duration: nullableNumberArray,
+    uv_index_max: nullableNumberArray,
+    precipitation_sum: nullableNumberArray,
+    precipitation_probability_max: nullableNumberArray,
+    wind_speed_10m_max: nullableNumberArray,
   })
   .superRefine((daily, ctx) => {
-    const variableKeys = ['temperature_2m_max', 'temperature_2m_min'] as const;
+    const variableKeys = [
+      'temperature_2m_max',
+      'temperature_2m_min',
+      'weather_code',
+      'sunrise',
+      'sunset',
+      'daylight_duration',
+      'uv_index_max',
+      'precipitation_sum',
+      'precipitation_probability_max',
+      'wind_speed_10m_max',
+    ] as const;
     for (const key of variableKeys) {
       if (daily[key].length !== daily.time.length) {
         ctx.addIssue({

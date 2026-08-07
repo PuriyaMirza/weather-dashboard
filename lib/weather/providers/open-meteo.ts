@@ -11,20 +11,43 @@ const CURRENT_VARIABLES = [
   'weather_code',
   'wind_speed_10m',
   'wind_direction_10m',
+  'wind_gusts_10m',
   'pressure_msl',
+  'cloud_cover',
 ] as const;
 
 const HOURLY_VARIABLES = [
   'temperature_2m',
   'apparent_temperature',
   'precipitation_probability',
+  'precipitation',
   'weather_code',
   'dew_point_2m',
   'uv_index',
   'visibility',
+  'wind_speed_10m',
+  'wind_gusts_10m',
+  'wind_direction_10m',
+  'cloud_cover',
+  'pressure_msl',
 ] as const;
 
-const DAILY_VARIABLES = ['temperature_2m_max', 'temperature_2m_min'] as const;
+const DAILY_VARIABLES = [
+  'temperature_2m_max',
+  'temperature_2m_min',
+  'weather_code',
+  'sunrise',
+  'sunset',
+  'daylight_duration',
+  'uv_index_max',
+  'precipitation_sum',
+  'precipitation_probability_max',
+  'wind_speed_10m_max',
+] as const;
+
+// A week of data: enough for the daily forecast card. Hourly variables are returned for the same
+// span, so the hourly series is trimmed during normalization rather than over-fetched per card.
+const FORECAST_DAYS = 7;
 
 export interface OpenMeteoForecastParams {
   latitude: number;
@@ -51,7 +74,7 @@ export function buildOpenMeteoForecastUrl({ latitude, longitude, timezone }: Ope
   url.searchParams.set('wind_speed_unit', 'mph');
   url.searchParams.set('precipitation_unit', 'inch');
   url.searchParams.set('timezone', timezone);
-  url.searchParams.set('forecast_days', '1');
+  url.searchParams.set('forecast_days', String(FORECAST_DAYS));
   return url.toString();
 }
 

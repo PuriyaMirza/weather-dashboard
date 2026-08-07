@@ -21,3 +21,53 @@ export function CardState({ label, tone = 'neutral' }: { label: string; tone?: '
     </div>
   );
 }
+
+interface CardBoundaryProps {
+  title: string;
+  description: string;
+  isLoading?: boolean;
+  errorMessage?: string;
+  /** True when the request succeeded but this card's particular data isn't present. */
+  isUnavailable?: boolean;
+  loadingLabel: string;
+  unavailableLabel: string;
+  children: ReactNode;
+}
+
+/**
+ * Renders the four states every card must implement — loading, error, unavailable-data, and ready
+ * — so each card declares only its ready-state content. Previously each card repeated its title
+ * and description across four early returns, which is how they drift apart.
+ */
+export function CardBoundary({
+  title,
+  description,
+  isLoading,
+  errorMessage,
+  isUnavailable,
+  loadingLabel,
+  unavailableLabel,
+  children,
+}: CardBoundaryProps) {
+  let content: ReactNode = children;
+
+  if (isLoading) content = <CardState label={loadingLabel} />;
+  else if (errorMessage) content = <CardState label={errorMessage} tone="error" />;
+  else if (isUnavailable) content = <CardState label={unavailableLabel} />;
+
+  return (
+    <CardFrame title={title} description={description}>
+      {content}
+    </CardFrame>
+  );
+}
+
+/** Label/value pair used by most cards' metric grids. */
+export function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-slate-50 p-3">
+      <dt className="text-slate-500">{label}</dt>
+      <dd className="mt-1 font-semibold text-slate-900">{value}</dd>
+    </div>
+  );
+}

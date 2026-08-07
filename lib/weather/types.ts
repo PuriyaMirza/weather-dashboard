@@ -31,19 +31,75 @@ export interface ComfortMetrics {
   airQualityIndex: number | null;
 }
 
-export interface HourlyTemperaturePoint {
+export interface WindMetrics {
+  speedMph: number | null;
+  gustMph: number | null;
+  directionDegrees: number | null;
+  direction: string | null;
+}
+
+export type PressureTrend = 'rising' | 'falling' | 'steady';
+
+export interface AtmosphericMetrics {
+  pressureInHg: number | null;
+  /** Derived by comparing the earliest and latest hourly pressure readings available. */
+  pressureTrend: PressureTrend | null;
+  visibilityMiles: number | null;
+  cloudCoverPercent: number | null;
+  humidityPercent: number | null;
+  dewPointF: number | null;
+}
+
+export interface SunMetrics {
+  sunrise: string | null;
+  sunset: string | null;
+  daylightSeconds: number | null;
+  uvIndexMax: number | null;
+  uvIndexNow: number | null;
+}
+
+/**
+ * One hour of the forecast. The first five fields are required — an hour without them is dropped
+ * during normalization rather than rendered with invented values. The rest are nullable so a
+ * single missing variable costs one metric, not the whole hour.
+ */
+export interface HourlyPoint {
   time: string;
   temperatureF: number;
   feelsLikeF: number;
   precipitationChance: number;
   condition: WeatherCondition;
+  precipitationInches: number | null;
+  windMph: number | null;
+  windGustMph: number | null;
+  windDirection: string | null;
+  cloudCoverPercent: number | null;
+  pressureInHg: number | null;
+}
+
+export interface DailyForecastDay {
+  date: string;
+  condition: WeatherCondition;
+  conditionLabel: string;
+  highF: number;
+  lowF: number;
+  precipitationChance: number | null;
+  precipitationInches: number | null;
+  windMaxMph: number | null;
+  sunrise: string | null;
+  sunset: string | null;
+  uvIndexMax: number | null;
 }
 
 export interface WeatherDashboardData {
   location: WeatherLocation;
   current: CurrentConditions | null;
   comfort: ComfortMetrics | null;
-  hourly: HourlyTemperaturePoint[];
+  wind: WindMetrics | null;
+  atmospheric: AtmosphericMetrics | null;
+  sun: SunMetrics | null;
+  hourly: HourlyPoint[];
+  daily: DailyForecastDay[];
   updatedAt: string;
   source: 'mock' | 'open-meteo';
 }
