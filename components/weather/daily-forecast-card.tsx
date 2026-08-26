@@ -24,7 +24,7 @@ export function DailyForecastCard({ data, isLoading, errorMessage, unitSystem }:
         <table className="w-full text-sm">
           <caption className="sr-only">Daily forecast for the week ahead</caption>
           <thead>
-            <tr className="text-left text-slate-500">
+            <tr className="text-left text-muted">
               <th scope="col" className="pb-2 font-medium">
                 Day
               </th>
@@ -41,17 +41,17 @@ export function DailyForecastCard({ data, isLoading, errorMessage, unitSystem }:
           </thead>
           <tbody>
             {days.map((day) => (
-              <tr key={day.date} className="border-t border-slate-100">
-                <th scope="row" className="py-2.5 pr-3 text-left font-semibold text-slate-900">
+              <tr key={day.date} className="border-t border-line">
+                <th scope="row" className="py-2.5 pr-3 text-left font-semibold text-ink">
                   {formatWeekday(day.date)}
                 </th>
-                <td className="py-2.5 pr-3 text-slate-700">{day.conditionLabel}</td>
-                <td className="py-2.5 pr-3 text-right text-slate-700">
+                <td className="py-2.5 pr-3 text-ink">{day.conditionLabel}</td>
+                <td className="py-2.5 pr-3 text-right text-ink">
                   {day.precipitationChance == null ? '—' : formatPercent(day.precipitationChance)}
                 </td>
-                <td className="py-2.5 text-right font-medium text-slate-900">
+                <td className="py-2.5 text-right font-medium text-ink">
                   {formatTemperature(day.highF, unitSystem)}
-                  <span className="text-slate-500"> / {formatTemperature(day.lowF, unitSystem)}</span>
+                  <span className="text-muted"> / {formatTemperature(day.lowF, unitSystem)}</span>
                 </td>
               </tr>
             ))}

@@ -53,3 +53,15 @@ GitHub Actions runs lint, typecheck, unit tests, build, and now the Playwright e
 Open-Meteo attribution and the location privacy note are in `components/dashboard/site-footer.tsx`. Open-Meteo publishes under CC BY 4.0, which requires crediting the source, linking the licence, and indicating that changes were made — all three are covered, since this app converts units and reshapes the response.
 
 E2E runs against the **production build** in CI rather than the dev server, so it exercises the artifact that actually ships. `PLAYWRIGHT_CHROMIUM_PATH` overrides the browser binary for environments that provide their own.
+
+## v2 — Visual identity, saved locations, air quality — done
+
+A round of product work after v1.0 shipped.
+
+- **Design tokens + dark mode.** `app/globals.css` defines semantic tokens (`--canvas`, `--card`, `--ink`, `--muted`, `--line`, `--accent`, plus chart and severity scales) mapped into Tailwind, so components use `bg-card`/`text-ink` rather than palette classes. Dark mode follows the system by default with a Light/Auto/Dark override, applied before first paint by an inline script in `app/layout.tsx` so there is no flash. Both palettes are verified against WCAG AA.
+- **Weather-reactive hero.** `lib/weather/atmosphere.ts` maps condition + day/night onto the sky behind a new hero. Purely decorative — the condition and day/night are also stated in words. In dark mode the night palette is always used, so a bright hero never lands on a dark page.
+- **Saved locations.** Keep up to 8 places and switch between them; every control names its location.
+- **Air quality.** Closes the long-standing gap. `lib/weather/providers/open-meteo-air-quality.ts` calls Open-Meteo's separate air-quality host; `app/api/weather/route.ts` settles both upstreams independently so air quality can fail without taking the forecast down. Fills the previously always-null `ComfortMetrics.airQualityIndex` and adds an Air Quality card.
+- **Layout presets.** Commuter, Cyclist, Gardener, and Everything, built from the PRD's personas.
+
+**Bug fixed along the way:** times rendered in the *viewer's* timezone rather than the location's, so looking up another city showed its sunrise at your own local hour. `formatTime`/`formatHour` now take the location's IANA zone.

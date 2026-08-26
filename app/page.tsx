@@ -5,7 +5,7 @@ import { SiteFooter } from '@/components/dashboard/site-footer';
 // location comes from preferences that only exist on the client.
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#e0f2fe,transparent_35%),linear-gradient(180deg,#f8fafc,#eef6ff)] px-4 py-6 sm:px-6 lg:px-10">
+    <main className="min-h-screen bg-canvas px-4 py-6 sm:px-6 lg:px-10">
       <Dashboard />
       <SiteFooter />
     </main>

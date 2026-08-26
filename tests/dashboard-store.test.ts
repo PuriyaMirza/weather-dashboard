@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { DASHBOARD_STORAGE_KEY, useDashboardStore } from '@/store/dashboard-store';
+import { DASHBOARD_STORAGE_KEY, MAX_SAVED_LOCATIONS, useDashboardStore } from '@/store/dashboard-store';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
-import { DEFAULT_CARD_LAYOUT } from '@/lib/weather/card-layout';
+import { ALL_CARD_IDS, DEFAULT_CARD_LAYOUT, LAYOUT_PRESETS } from '@/lib/weather/card-layout';
 
 const SEATTLE: SelectedLocation = {
   id: '5809844',
@@ -40,13 +40,13 @@ describe('dashboard store', () => {
     expect(persisted.state.location).toEqual(SEATTLE);
     // partialize should keep actions out of storage.
     expect(persisted.state.setLocation).toBeUndefined();
-    expect(persisted.version).toBe(3);
+    expect(persisted.version).toBe(4);
   });
 
   it('does not read persisted state until rehydrate is called (skipHydration)', async () => {
     window.localStorage.setItem(
       DASHBOARD_STORAGE_KEY,
-      JSON.stringify({ state: { location: SEATTLE }, version: 3 }),
+      JSON.stringify({ state: { location: SEATTLE }, version: 4 }),
     );
 
     // Nothing has rehydrated yet, so the store still holds its initial state — this is what keeps
@@ -60,7 +60,7 @@ describe('dashboard store', () => {
   it('discards persisted state saved under an older schema version', async () => {
     window.localStorage.setItem(
       DASHBOARD_STORAGE_KEY,
-      JSON.stringify({ state: { location: SEATTLE }, version: 2 }),
+      JSON.stringify({ state: { location: SEATTLE }, version: 3 }),
     );
 
     await useDashboardStore.persist.rehydrate();
@@ -153,11 +153,109 @@ describe('dashboard store — card layout', () => {
       DASHBOARD_STORAGE_KEY,
       JSON.stringify({
         state: { location: DEFAULT_LOCATION, unitSystem: 'imperial', cards: [{ id: 'wind', span: 'wide' }, { id: 'gone', span: 'single' }] },
-        version: 3,
+        version: 4,
       }),
     );
 
     await useDashboardStore.persist.rehydrate();
     expect(useDashboardStore.getState().cards).toEqual([{ id: 'wind', span: 'wide' }]);
+  });
+});
+
+describe('dashboard store — saved locations', () => {
+  beforeEach(() => {
+    useDashboardStore.setState({ savedLocations: [], location: DEFAULT_LOCATION });
+  });
+
+  it('saves a location and ignores a duplicate id', () => {
+    useDashboardStore.getState().saveLocation(SEATTLE);
+    expect(useDashboardStore.getState().savedLocations).toHaveLength(1);
+
+    useDashboardStore.getState().saveLocation({ ...SEATTLE, name: 'Seattle again' });
+    expect(useDashboardStore.getState().savedLocations).toHaveLength(1);
+  });
+
+  it('removes a saved location by id', () => {
+    useDashboardStore.getState().saveLocation(SEATTLE);
+    useDashboardStore.getState().removeSavedLocation(SEATTLE.id);
+    expect(useDashboardStore.getState().savedLocations).toHaveLength(0);
+  });
+
+  it('caps the list, dropping the oldest rather than refusing the save', () => {
+    for (let i = 0; i < MAX_SAVED_LOCATIONS + 3; i += 1) {
+      useDashboardStore.getState().saveLocation({ ...SEATTLE, id: `city-${i}`, name: `City ${i}` });
+    }
+
+    const saved = useDashboardStore.getState().savedLocations;
+    expect(saved).toHaveLength(MAX_SAVED_LOCATIONS);
+    // The most recent survives; the earliest is gone.
+    expect(saved.at(-1)?.id).toBe(`city-${MAX_SAVED_LOCATIONS + 2}`);
+    expect(saved.some((location) => location.id === 'city-0')).toBe(false);
+  });
+
+  it('persists saved locations', () => {
+    useDashboardStore.getState().saveLocation(SEATTLE);
+    const persisted = JSON.parse(window.localStorage.getItem(DASHBOARD_STORAGE_KEY) as string);
+    expect(persisted.state.savedLocations).toHaveLength(1);
+  });
+
+  it('recovers from persisted state where savedLocations is not an array', async () => {
+    window.localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      JSON.stringify({ state: { location: DEFAULT_LOCATION, savedLocations: 'corrupt' }, version: 4 }),
+    );
+
+    await useDashboardStore.persist.rehydrate();
+    expect(useDashboardStore.getState().savedLocations).toEqual([]);
+  });
+});
+
+describe('dashboard store — theme', () => {
+  it('defaults to following the system', () => {
+    useDashboardStore.setState({ theme: 'system' });
+    expect(useDashboardStore.getState().theme).toBe('system');
+  });
+
+  it('sets and persists an explicit theme', () => {
+    useDashboardStore.getState().setTheme('dark');
+    const persisted = JSON.parse(window.localStorage.getItem(DASHBOARD_STORAGE_KEY) as string);
+    expect(persisted.state.theme).toBe('dark');
+  });
+
+  it('falls back to the default when persisted state holds a nonsense theme', async () => {
+    window.localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      JSON.stringify({ state: { location: DEFAULT_LOCATION, theme: 'neon' }, version: 4 }),
+    );
+
+    await useDashboardStore.persist.rehydrate();
+    // The pre-paint script reads this value, so it must never be handed something invalid.
+    expect(useDashboardStore.getState().theme).toBe('system');
+  });
+});
+
+describe('dashboard store — layout presets', () => {
+  it('applies a preset layout', () => {
+    const preset = LAYOUT_PRESETS[0];
+    useDashboardStore.getState().applyPreset(preset.id);
+    expect(useDashboardStore.getState().cards).toEqual(preset.layout);
+  });
+
+  it('ignores an unknown preset id rather than emptying the dashboard', () => {
+    useDashboardStore.setState({ cards: DEFAULT_CARD_LAYOUT });
+    useDashboardStore.getState().applyPreset('does-not-exist');
+    expect(useDashboardStore.getState().cards).toEqual(DEFAULT_CARD_LAYOUT);
+  });
+
+  it('every preset references only registered cards, so none are silently dropped', () => {
+    for (const preset of LAYOUT_PRESETS) {
+      expect(preset.layout.length).toBeGreaterThan(0);
+      for (const entry of preset.layout) {
+        expect(ALL_CARD_IDS).toContain(entry.id);
+      }
+      // Duplicates would collide as React keys.
+      const ids = preset.layout.map((entry) => entry.id);
+      expect(new Set(ids).size).toBe(ids.length);
+    }
   });
 });

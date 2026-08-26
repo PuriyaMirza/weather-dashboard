@@ -11,6 +11,8 @@ export interface WeatherLocation {
 
 export interface CurrentConditions {
   observedAt: string;
+  /** Drives the day/night atmosphere. Null when the provider didn't report it (e.g. older payloads). */
+  isDay: boolean | null;
   condition: WeatherCondition;
   conditionLabel: string;
   temperatureF: number;
@@ -48,6 +50,21 @@ export interface AtmosphericMetrics {
   cloudCoverPercent: number | null;
   humidityPercent: number | null;
   dewPointF: number | null;
+}
+
+/** US AQI categories, per the EPA scale. Always rendered with the word, never colour alone. */
+export type AirQualityCategory = 'good' | 'moderate' | 'sensitive' | 'unhealthy' | 'very-unhealthy' | 'hazardous';
+
+export interface AirQualityMetrics {
+  usAqi: number | null;
+  europeanAqi: number | null;
+  category: AirQualityCategory | null;
+  pm2_5: number | null;
+  pm10: number | null;
+  ozone: number | null;
+  nitrogenDioxide: number | null;
+  sulphurDioxide: number | null;
+  carbonMonoxide: number | null;
 }
 
 export interface SunMetrics {
@@ -98,6 +115,11 @@ export interface WeatherDashboardData {
   wind: WindMetrics | null;
   atmospheric: AtmosphericMetrics | null;
   sun: SunMetrics | null;
+  /**
+   * Null whenever air quality is unavailable — it comes from a separate upstream API, so it is
+   * allowed to fail without taking the forecast down with it.
+   */
+  airQuality: AirQualityMetrics | null;
   hourly: HourlyPoint[];
   daily: DailyForecastDay[];
   updatedAt: string;

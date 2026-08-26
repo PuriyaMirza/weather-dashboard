@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { CACHE_CONTROL, clientKey, jsonError, rateLimitHeaders } from '@/lib/api/http';
-import { normalizeOpenMeteoForecast } from '@/lib/weather/normalize-open-meteo';
+import { normalizeOpenMeteoAirQuality, normalizeOpenMeteoForecast } from '@/lib/weather/normalize-open-meteo';
 import { OpenMeteoError, fetchOpenMeteoForecast } from '@/lib/weather/providers/open-meteo';
+import { fetchOpenMeteoAirQuality } from '@/lib/weather/providers/open-meteo-air-quality';
+import type { AirQualityMetrics } from '@/lib/weather/types';
 import { createRateLimiter } from '@/lib/rate-limit';
 
 const rateLimiter = createRateLimiter({ limit: 30, windowMs: 60_000 });
@@ -36,19 +38,40 @@ export async function GET(request: Request) {
     return jsonError(parsedQuery.error.issues[0]?.message ?? 'Invalid query', 400, rateLimitHeaders(limit));
   }
 
+  const coordinates = {
+    latitude: parsedQuery.data.latitude,
+    longitude: parsedQuery.data.longitude,
+    timezone: 'auto',
+  };
+
   try {
-    // One shared forecast request per lookup — this response is meant to be distributed to
-    // every card on the dashboard, not re-fetched per card.
-    const forecast = await fetchOpenMeteoForecast({
-      latitude: parsedQuery.data.latitude,
-      longitude: parsedQuery.data.longitude,
-      timezone: 'auto',
-    });
-    const data = normalizeOpenMeteoForecast(forecast, {
-      name: parsedQuery.data.name,
-      region: parsedQuery.data.region,
-      country: parsedQuery.data.country,
-    });
+    // Two upstream calls, one response. The "one shared request per forecast" rule is about cards
+    // never fetching for themselves — which still holds, since the browser makes a single request
+    // and every card is handed the same result.
+    //
+    // They are settled independently on purpose: air quality is supplementary, so its failure must
+    // not take down a perfectly good forecast. The forecast is the only one allowed to fail hard.
+    const [forecastResult, airQualityResult] = await Promise.allSettled([
+      fetchOpenMeteoForecast(coordinates),
+      fetchOpenMeteoAirQuality(coordinates),
+    ]);
+
+    if (forecastResult.status === 'rejected') throw forecastResult.reason;
+
+    let airQuality: AirQualityMetrics | null = null;
+    if (airQualityResult.status === 'fulfilled') {
+      airQuality = normalizeOpenMeteoAirQuality(airQualityResult.value);
+    }
+
+    const data = normalizeOpenMeteoForecast(
+      forecastResult.value,
+      {
+        name: parsedQuery.data.name,
+        region: parsedQuery.data.region,
+        country: parsedQuery.data.country,
+      },
+      airQuality,
+    );
     return NextResponse.json(data, {
       headers: { 'Cache-Control': CACHE_CONTROL.weather, ...rateLimitHeaders(limit) },
     });

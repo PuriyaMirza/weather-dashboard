@@ -31,12 +31,12 @@ export function WindCard({ data, isLoading, errorMessage, unitSystem }: WeatherC
       {wind && wind.speedMph != null && (
         <>
           <div className="flex items-baseline gap-3">
-            <p className="text-5xl font-bold tracking-tight text-slate-950">{formatSpeed(wind.speedMph, unitSystem)}</p>
-            <p className="text-base font-medium text-slate-700">{describeWindStrength(wind.speedMph)}</p>
+            <p className="text-5xl font-bold tracking-tight text-ink-strong">{formatSpeed(wind.speedMph, unitSystem)}</p>
+            <p className="text-base font-medium text-ink">{describeWindStrength(wind.speedMph)}</p>
           </div>
 
           {wind.direction && (
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-muted">
               Blowing from the {wind.direction}
               {wind.directionDegrees != null && ` (${Math.round(wind.directionDegrees)}°)`}
             </p>

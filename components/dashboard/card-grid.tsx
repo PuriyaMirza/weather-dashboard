@@ -50,7 +50,7 @@ export function CardGrid({ cards, isHydrated, cardProps, isEditing, onReorder, o
 
   if (!isHydrated) {
     return (
-      <p role="status" className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white/70 p-8 text-center text-sm text-slate-600">
+      <p role="status" className="mt-6 rounded-2xl border border-dashed border-line-strong bg-card p-8 text-center text-sm text-muted">
         Loading your dashboard…
       </p>
     );
@@ -58,7 +58,7 @@ export function CardGrid({ cards, isHydrated, cardProps, isEditing, onReorder, o
 
   if (cards.length === 0) {
     return (
-      <p role="status" className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white/70 p-8 text-center text-sm text-slate-600">
+      <p role="status" className="mt-6 rounded-2xl border border-dashed border-line-strong bg-card p-8 text-center text-sm text-muted">
         Your dashboard is empty. Use “Add a card” to choose what to show.
       </p>
     );

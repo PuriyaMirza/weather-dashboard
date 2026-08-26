@@ -4,6 +4,7 @@ import {
   describeTemperature,
   formatDistance,
   formatDuration,
+  formatHour,
   formatIndex,
   formatPercent,
   formatPrecipitation,
@@ -11,6 +12,7 @@ import {
   formatSpeed,
   formatTemperature,
   formatTemperatureWithUnit,
+  formatTime,
   formatWeekday,
   toCelsius,
   toHectopascals,
@@ -104,5 +106,34 @@ describe('formatWeekday', () => {
   it('reports unavailable for unparseable input', () => {
     expect(formatWeekday(null)).toBe(UNAVAILABLE);
     expect(formatWeekday('not-a-date')).toBe(UNAVAILABLE);
+  });
+});
+
+/**
+ * Times must read as someone standing at the location would read them. Without an explicit zone,
+ * Intl uses the *viewer's* zone — so looking up Portland from elsewhere showed Portland's sunrise
+ * at the viewer's hour, which is simply wrong information.
+ */
+describe('formatTime / formatHour — location timezone', () => {
+  const PORTLAND_3PM = '2026-07-18T15:00:00-07:00';
+
+  it('renders in the location zone regardless of the viewer', () => {
+    expect(formatTime(PORTLAND_3PM, 'America/Los_Angeles')).toBe('3:00 PM');
+    expect(formatHour(PORTLAND_3PM, 'America/Los_Angeles')).toBe('3 PM');
+  });
+
+  it('shows the same instant differently for a different location', () => {
+    // The same moment is the next morning in Tokyo — which is the point of passing the zone.
+    expect(formatTime(PORTLAND_3PM, 'Asia/Tokyo')).toBe('7:00 AM');
+  });
+
+  it('falls back rather than blanking the time when the zone is unusable', () => {
+    expect(formatTime(PORTLAND_3PM, 'Not/AZone')).not.toBe(UNAVAILABLE);
+    expect(formatHour(PORTLAND_3PM, 'Not/AZone')).not.toBe(UNAVAILABLE);
+  });
+
+  it('still reports unavailable for missing or unparseable timestamps', () => {
+    expect(formatTime(null, 'America/Los_Angeles')).toBe(UNAVAILABLE);
+    expect(formatHour('nonsense', 'America/Los_Angeles')).toBe(UNAVAILABLE);
   });
 });

@@ -35,6 +35,7 @@ export const mockWeatherData: WeatherDashboardData = {
   },
   current: {
     observedAt: '2026-07-18T15:00:00-07:00',
+    isDay: true,
     condition: 'partly-cloudy',
     conditionLabel: 'Partly cloudy',
     temperatureF: 72,
@@ -66,6 +67,17 @@ export const mockWeatherData: WeatherDashboardData = {
     cloudCoverPercent: 40,
     humidityPercent: 54,
     dewPointF: 55,
+  },
+  airQuality: {
+    usAqi: 38,
+    europeanAqi: 21,
+    category: 'good',
+    pm2_5: 8.4,
+    pm10: 14.2,
+    ozone: 62,
+    nitrogenDioxide: 9.1,
+    sulphurDioxide: 1.8,
+    carbonMonoxide: 142,
   },
   sun: {
     sunrise: '2026-07-18T05:35:00-07:00',

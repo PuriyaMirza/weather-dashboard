@@ -1,21 +1,196 @@
 @import "tailwindcss";
 
+/*
+  Semantic design tokens.
+
+  Components reference these (bg-card, text-ink, border-line) rather than palette classes like
+  bg-white or text-slate-900. That means the dark palette is defined once here instead of as a
+  `dark:` variant on every element — which is what previously made dark mode impractical, with 43
+  distinct palette classes spread across 115 places.
+
+  Light is the default; dark applies either when the user picks it explicitly ([data-theme="dark"])
+  or when the system asks for it and the user hasn't overridden it.
+*/
+
 :root {
+  --canvas: #f1f5f9;
+  --card: #ffffff;
+  --card-raised: #ffffff;
+  --ink: #0f172a;
+  --ink-strong: #020617;
+  --muted: #52616f;
+  --line: #d3dbe4;
+  --line-strong: #b6c2cf;
+  --accent: #0369a1;
+  --accent-ink: #ffffff;
+  --accent-soft: #e0f2fe;
+  --accent-soft-ink: #075985;
+  --danger: #b91c1c;
+  --danger-soft: #fef2f2;
+  --danger-line: #fca5a5;
+
+  /* Charts read these directly — SVG accepts var() in stroke/fill. */
+  --chart-grid: #e2e8f0;
+  --chart-axis: #475569;
+  --chart-line: #0369a1;
+  --chart-fill: #bae6fd;
+  --chart-bar: #0284c7;
+
+  /* Qualitative scale for severity bands (UV, air quality). Always paired with a word. */
+  --scale-1: #047857;
+  --scale-1-bg: #d1fae5;
+  --scale-2: #92400e;
+  --scale-2-bg: #fef3c7;
+  --scale-3: #9a3412;
+  --scale-3-bg: #ffedd5;
+  --scale-4: #9f1239;
+  --scale-4-bg: #ffe4e6;
+  --scale-5: #6b21a8;
+  --scale-5-bg: #f3e8ff;
+
+  /* Overridden per weather condition by lib/weather/atmosphere.ts. Defaults are a calm daytime sky. */
+  --sky-from: #dbeafe;
+  --sky-via: #e0f2fe;
+  --sky-to: #f1f5f9;
+  --sky-ink: #0f172a;
+  --sky-ink-muted: #334155;
+
   color-scheme: light;
+}
+
+/* The dark values are written twice — once for the explicit override, once for the system
+   preference — because CSS has no way to share a declaration block between two selectors that
+   must stay independently addressable. */
+:root[data-theme="dark"] {
+  --canvas: #070b14;
+  --card: #101827;
+  --card-raised: #16202f;
+  --ink: #e9eef5;
+  --ink-strong: #ffffff;
+  --muted: #a3b0c0;
+  --line: #27354a;
+  --line-strong: #3a4a63;
+  --accent: #7cc6f5;
+  --accent-ink: #04121f;
+  --accent-soft: #10283a;
+  --accent-soft-ink: #b6e2fb;
+  --danger: #fda4a4;
+  --danger-soft: #2a1315;
+  --danger-line: #7f2a2a;
+
+  --chart-grid: #253248;
+  --chart-axis: #a3b0c0;
+  --chart-line: #7cc6f5;
+  --chart-fill: #17364d;
+  --chart-bar: #4aa8e0;
+
+  --scale-1: #6ee7b7;
+  --scale-1-bg: #06281f;
+  --scale-2: #fcd34d;
+  --scale-2-bg: #2e2206;
+  --scale-3: #fdba74;
+  --scale-3-bg: #331a08;
+  --scale-4: #fda4af;
+  --scale-4-bg: #350f18;
+  --scale-5: #d8b4fe;
+  --scale-5-bg: #241033;
+
+  --sky-from: #0b1220;
+  --sky-via: #101a2e;
+  --sky-to: #070b14;
+  --sky-ink: #e9eef5;
+  --sky-ink-muted: #a3b0c0;
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas: #070b14;
+    --card: #101827;
+    --card-raised: #16202f;
+    --ink: #e9eef5;
+    --ink-strong: #ffffff;
+    --muted: #a3b0c0;
+    --line: #27354a;
+    --line-strong: #3a4a63;
+    --accent: #7cc6f5;
+    --accent-ink: #04121f;
+    --accent-soft: #10283a;
+    --accent-soft-ink: #b6e2fb;
+    --danger: #fda4a4;
+    --danger-soft: #2a1315;
+    --danger-line: #7f2a2a;
+
+    --chart-grid: #253248;
+    --chart-axis: #a3b0c0;
+    --chart-line: #7cc6f5;
+    --chart-fill: #17364d;
+    --chart-bar: #4aa8e0;
+
+    --scale-1: #6ee7b7;
+    --scale-1-bg: #06281f;
+    --scale-2: #fcd34d;
+    --scale-2-bg: #2e2206;
+    --scale-3: #fdba74;
+    --scale-3-bg: #331a08;
+    --scale-4: #fda4af;
+    --scale-4-bg: #350f18;
+    --scale-5: #d8b4fe;
+    --scale-5-bg: #241033;
+
+    --sky-from: #0b1220;
+    --sky-via: #101a2e;
+    --sky-to: #070b14;
+    --sky-ink: #e9eef5;
+    --sky-ink-muted: #a3b0c0;
+
+    color-scheme: dark;
+  }
+}
+
+/* Expose the tokens to Tailwind so `bg-card`, `text-ink`, `border-line` etc. exist as utilities. */
+@theme inline {
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --color-canvas: var(--canvas);
+  --color-card: var(--card);
+  --color-card-raised: var(--card-raised);
+  --color-ink: var(--ink);
+  --color-ink-strong: var(--ink-strong);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-ink: var(--accent-soft-ink);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-line: var(--danger-line);
+  --color-sky-ink: var(--sky-ink);
+  --color-sky-ink-muted: var(--sky-ink-muted);
 }
 
 body {
   margin: 0;
-  background: #f8fafc;
-  color: #0f172a;
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+/* The atmospheric backdrop behind the hero. Its colours come from atmosphere.ts and change with
+   the weather; it is decorative only, and never the sole carrier of information. */
+.atmosphere {
+  background-image:
+    radial-gradient(120% 90% at 15% 0%, var(--sky-from) 0%, transparent 60%),
+    radial-gradient(100% 80% at 85% 10%, var(--sky-via) 0%, transparent 55%),
+    linear-gradient(180deg, var(--sky-via) 0%, var(--sky-to) 100%);
 }
 
 /*
   Respect the OS-level "reduce motion" setting. Applied globally so it covers third-party
-  animation too (Recharts transitions today, drag-and-drop later) rather than relying on each
-  component to remember. Motion is reduced to near-zero rather than removed outright, so
-  transition/animation completion events still fire and stateful UI can't get stuck.
+  animation too (Recharts transitions, drag-and-drop) rather than relying on each component to
+  remember. Motion is reduced to near-zero rather than removed outright, so transition/animation
+  completion events still fire and stateful UI can't get stuck.
 */
 @media (prefers-reduced-motion: reduce) {
   *,

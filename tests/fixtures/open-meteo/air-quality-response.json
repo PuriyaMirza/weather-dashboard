@@ -1,0 +1,17 @@
+{
+  "latitude": 45.5,
+  "longitude": -122.6784,
+  "utc_offset_seconds": -25200,
+  "current": {
+    "time": "2026-07-18T15:00",
+    "interval": 3600,
+    "us_aqi": 38,
+    "european_aqi": 21,
+    "pm2_5": 8.4,
+    "pm10": 14.2,
+    "ozone": 62.0,
+    "nitrogen_dioxide": 9.1,
+    "sulphur_dioxide": 1.8,
+    "carbon_monoxide": 142.0
+  }
+}

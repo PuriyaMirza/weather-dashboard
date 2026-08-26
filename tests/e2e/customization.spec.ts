@@ -31,16 +31,21 @@ test('cards can be reordered by keyboard alone, with no dragging', async ({ page
   await page.goto('/');
   await page.getByRole('button', { name: /edit dashboard/i }).click();
 
-  const headingsBefore = await page.getByRole('heading', { level: 2 }).allTextContents();
+  // Scoped to the grid: the page also has headings for the hero, saved locations, and edit panels.
+  const cardHeadings = page.getByLabel('Weather cards').getByRole('heading', { level: 2 });
+  const headingsBefore = await cardHeadings.allTextContents();
 
   // Move the second card earlier using its button — no pointer drag involved.
   await page.getByRole('button', { name: /^move comfort earlier$/i }).click();
 
-  const headingsAfter = await page.getByRole('heading', { level: 2 }).allTextContents();
+  const headingsAfter = await cardHeadings.allTextContents();
   expect(headingsAfter).not.toEqual(headingsBefore);
   expect(headingsAfter[0]).toBe('Comfort');
 
   await page.reload();
-  const headingsAfterReload = await page.getByRole('heading', { level: 2 }).allTextContents();
+  // The grid shows a placeholder until persisted preferences rehydrate, so wait for real cards
+  // before reading the order.
+  await expect(page.getByRole('heading', { name: 'Comfort' })).toBeVisible();
+  const headingsAfterReload = await page.getByLabel('Weather cards').getByRole('heading', { level: 2 }).allTextContents();
   expect(headingsAfterReload[0]).toBe('Comfort');
 });

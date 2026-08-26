@@ -29,6 +29,64 @@ export const ALL_CARD_IDS: WeatherCardId[] = [
   'daily-forecast',
   'sun-uv',
   'atmospheric-details',
+  'air-quality',
+];
+
+/**
+ * Starting points built from the personas in the PRD. Customization is powerful but presents as a
+ * blank slate; a preset gets someone to a useful dashboard in one click, and they can still edit
+ * from there. Each is validated by reconcileLayout like any other layout.
+ */
+export interface LayoutPreset {
+  id: string;
+  label: string;
+  description: string;
+  layout: CardLayoutEntry[];
+}
+
+export const LAYOUT_PRESETS: LayoutPreset[] = [
+  {
+    id: 'commuter',
+    label: 'Commuter',
+    description: 'Will I get rained on in the next few hours?',
+    layout: [
+      { id: 'current-conditions', span: 'single' },
+      { id: 'precipitation', span: 'wide' },
+      { id: 'hourly-temperature', span: 'wide' },
+    ],
+  },
+  {
+    id: 'cyclist',
+    label: 'Cyclist',
+    description: 'Wind, gusts, and how it will actually feel.',
+    layout: [
+      { id: 'current-conditions', span: 'single' },
+      { id: 'wind', span: 'single' },
+      { id: 'precipitation', span: 'wide' },
+      { id: 'air-quality', span: 'single' },
+      { id: 'comfort', span: 'single' },
+    ],
+  },
+  {
+    id: 'gardener',
+    label: 'Gardener',
+    description: 'Frost risk, sun exposure, and humidity.',
+    layout: [
+      { id: 'daily-forecast', span: 'wide' },
+      { id: 'sun-uv', span: 'single' },
+      { id: 'comfort', span: 'single' },
+      { id: 'precipitation', span: 'wide' },
+    ],
+  },
+  {
+    id: 'everything',
+    label: 'Everything',
+    description: 'Every card the dashboard offers.',
+    layout: ALL_CARD_IDS.map((id) => ({
+      id,
+      span: id === 'hourly-temperature' || id === 'daily-forecast' || id === 'precipitation' ? 'wide' : 'single',
+    })),
+  },
 ];
 
 export function moveEntry<T>(items: T[], from: number, to: number): T[] {

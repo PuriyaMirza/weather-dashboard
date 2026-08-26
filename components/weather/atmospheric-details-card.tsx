@@ -42,16 +42,16 @@ export function AtmosphericDetailsCard({ data, isLoading, errorMessage, unitSyst
       {atmospheric && (
         <>
           <div className="flex items-baseline justify-between gap-3">
-            <p className="text-4xl font-bold tracking-tight text-slate-950">
+            <p className="text-4xl font-bold tracking-tight text-ink-strong">
               {formatPressure(atmospheric.pressureInHg, unitSystem)}
             </p>
             {atmospheric.pressureTrend && (
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-800">
+              <span className="rounded-full bg-canvas px-3 py-1 text-sm font-semibold text-ink">
                 {PRESSURE_TREND_LABEL[atmospheric.pressureTrend]}
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-slate-600">Sea-level pressure</p>
+          <p className="mt-1 text-sm text-muted">Sea-level pressure</p>
 
           <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
             <Metric

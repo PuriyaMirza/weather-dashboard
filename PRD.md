@@ -1,6 +1,6 @@
 # Weather Dashboard — Product Requirements Document
 
-**Version:** 1.1 · **Last updated:** 7 August 2026 · **Reflects:** `main` after Milestone 8 and the dependency cleanup
+**Version:** 2.0 · **Last updated:** 26 August 2026 · **Reflects:** `main` after the v2 visual identity work
 
 **Status key used throughout:**
 
@@ -218,7 +218,7 @@ The internal model every card consumes (`lib/weather/types.ts`):
 | Card | Status | Data available today? |
 |---|---|---|
 | Current Conditions | ✅ Complete | ✅ Yes |
-| Comfort | ✅ Complete | 🟡 Air quality always shows "Unavailable" (see §9.5) |
+| Comfort | ✅ Complete | ✅ Yes — including air quality |
 | Hourly Temperature | ✅ Complete | ✅ Yes |
 | Precipitation | ✅ Complete | ✅ Yes |
 | Wind | ✅ Complete | ✅ Yes |
@@ -296,7 +296,7 @@ A saved layout referencing a card this version no longer has degrades to the rem
 | **Rendering** | Live data must render per-request, never frozen at build time | ✅ `dynamic = 'force-dynamic'` |
 | **Type safety** | `strict: true`, no `any` in the data pipeline | ✅ |
 | **Browser support** | Modern evergreen browsers | ✅ Implicit |
-| **Dark mode** | — | ⬜ Not implemented; light-only (`color-scheme: light`) |
+| **Dark mode** | Follows the system, with a manual override | ✅ Complete — semantic token layer, verified AA in both palettes |
 
 ---
 
@@ -310,7 +310,7 @@ Ordered by how likely they are to bite.
 | 2 | **Rate limiter is in-process memory** | On serverless each instance has its own counter, so the real ceiling is `30 × live instances`, and it resets when an instance recycles. A guardrail against one client hammering one instance — not a true global quota. Fixing properly needs a shared store (Redis/Vercel KV), which conflicts with the no-database constraint | 🟡 Documented, accepted |
 | 3 | ~~**`package.json` pins every dependency to `"latest"`**~~ | Resolved: every dependency now carries a caret range at its known-good version, and `engines.node` documents the runtime CI already used | ✅ Resolved |
 | 4 | ~~**5 high-severity `npm audit` findings**~~ | Resolved: `npm audit` reports zero. Real ranges let the fixes apply without `--force`; Next went 16.2.10 → 16.3.0 | ✅ Resolved |
-| 1 | **Air quality always `null`** | Comfort card permanently shows "Unavailable" for AQI. Open-Meteo serves air quality from a *separate* API this provider does not call; adding it is a new upstream integration, not a tweak | ⬜ Open |
+| 1 | ~~**Air quality always `null`**~~ | Resolved: the separate air-quality API is now called, degrading independently so its failure never costs the user their forecast | ✅ Resolved |
 | 6 | ~~**Units hardcoded**~~ | Resolved: `lib/weather/units.ts` with a persisted imperial/metric toggle. The internal model stays imperial and unit choice is presentational, so switching re-renders rather than re-fetches | ✅ Resolved |
 | 7 | ~~**No `prefers-reduced-motion` handling**~~ | Resolved: handled globally in `globals.css`, so it covers third-party animation (Recharts, dnd-kit) rather than relying on each component | ✅ Resolved |
 | 8 | ~~**Orphaned scaffold code**~~ | Resolved: `lib/weather-schema.ts` and its test are deleted. Nothing imported them but the test itself | ✅ Resolved |

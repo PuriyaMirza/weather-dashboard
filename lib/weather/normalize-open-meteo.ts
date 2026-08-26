@@ -1,5 +1,7 @@
-import type { OpenMeteoForecastResponse } from './schemas';
+import type { OpenMeteoAirQualityResponse, OpenMeteoForecastResponse } from './schemas';
 import type {
+  AirQualityCategory,
+  AirQualityMetrics,
   AtmosphericMetrics,
   ComfortMetrics,
   CurrentConditions,
@@ -99,6 +101,8 @@ function buildCurrentConditions(response: OpenMeteoForecastResponse): CurrentCon
 
   return {
     observedAt: toIsoWithOffset(current.time, utcOffsetSeconds),
+    // Open-Meteo reports is_day as 1/0 rather than a boolean.
+    isDay: current.is_day == null ? null : current.is_day === 1,
     condition,
     conditionLabel: label,
     temperatureF,
@@ -132,7 +136,7 @@ function buildComfortMetrics(response: OpenMeteoForecastResponse): ComfortMetric
     uvIndex: hourly.uv_index[hourlyIndex] ?? null,
     visibilityMiles: metersToMiles(visibilityMeters),
     pressureInHg: hectopascalsToInchesOfMercury(pressureHpa),
-    // Air quality requires Open-Meteo's separate air-quality API, which this provider doesn't call.
+    // Filled in by normalizeOpenMeteoForecast when the separate air-quality API returned data.
     airQualityIndex: null,
   };
 }
@@ -271,7 +275,45 @@ function buildDailyForecast(response: OpenMeteoForecastResponse): DailyForecastD
   return days;
 }
 
-export function normalizeOpenMeteoForecast(response: OpenMeteoForecastResponse, place: OpenMeteoPlace): WeatherDashboardData {
+/**
+ * US AQI breakpoints (EPA). Returned as a category so the UI can name the band rather than
+ * leaving the reader to interpret a bare number.
+ */
+export function categorizeUsAqi(usAqi: number | null | undefined): AirQualityCategory | null {
+  if (usAqi == null) return null;
+  if (usAqi <= 50) return 'good';
+  if (usAqi <= 100) return 'moderate';
+  if (usAqi <= 150) return 'sensitive';
+  if (usAqi <= 200) return 'unhealthy';
+  if (usAqi <= 300) return 'very-unhealthy';
+  return 'hazardous';
+}
+
+export function normalizeOpenMeteoAirQuality(response: OpenMeteoAirQualityResponse): AirQualityMetrics | null {
+  const { current } = response;
+
+  const metrics: AirQualityMetrics = {
+    usAqi: current.us_aqi,
+    europeanAqi: current.european_aqi,
+    category: categorizeUsAqi(current.us_aqi),
+    pm2_5: current.pm2_5,
+    pm10: current.pm10,
+    ozone: current.ozone,
+    nitrogenDioxide: current.nitrogen_dioxide,
+    sulphurDioxide: current.sulphur_dioxide,
+    carbonMonoxide: current.carbon_monoxide,
+  };
+
+  // A response where every pollutant is null carries nothing worth rendering.
+  const hasAnyValue = Object.values(metrics).some((value) => value != null);
+  return hasAnyValue ? metrics : null;
+}
+
+export function normalizeOpenMeteoForecast(
+  response: OpenMeteoForecastResponse,
+  place: OpenMeteoPlace,
+  airQuality: AirQualityMetrics | null = null,
+): WeatherDashboardData {
   const location: WeatherLocation = {
     name: place.name,
     region: place.region,
@@ -281,13 +323,18 @@ export function normalizeOpenMeteoForecast(response: OpenMeteoForecastResponse, 
     longitude: response.longitude,
   };
 
+  const comfort = buildComfortMetrics(response);
+
   return {
     location,
     current: buildCurrentConditions(response),
-    comfort: buildComfortMetrics(response),
+    // The Comfort card's AQI comes from the separate air-quality API, so it is stitched in here
+    // rather than inside buildComfortMetrics, which only sees the forecast response.
+    comfort: comfort && { ...comfort, airQualityIndex: airQuality?.usAqi ?? null },
     wind: buildWindMetrics(response),
     atmospheric: buildAtmosphericMetrics(response),
     sun: buildSunMetrics(response),
+    airQuality,
     hourly: buildHourlyPoints(response),
     daily: buildDailyForecast(response),
     updatedAt: toIsoWithOffset(response.current.time, response.utc_offset_seconds),

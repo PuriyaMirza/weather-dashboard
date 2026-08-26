@@ -56,7 +56,7 @@ export function SortableCard({
       ref={setNodeRef}
       style={style}
       className={`${entry.span === 'wide' ? 'lg:col-span-2' : ''} ${
-        isEditing ? 'rounded-3xl outline-2 outline-dashed outline-sky-400 outline-offset-4' : ''
+        isEditing ? 'rounded-3xl outline-2 outline-dashed outline-accent outline-offset-4' : ''
       }`}
     >
       {isEditing && (

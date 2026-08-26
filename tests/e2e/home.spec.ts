@@ -5,17 +5,20 @@ test('renders the default dashboard layout with location and unit controls', asy
 
   await expect(page.getByRole('heading', { name: 'Weather Dashboard' })).toBeVisible();
 
+  // Scoped to the grid: the hero carries its own screen-reader-only "Current conditions" heading,
+  // so an unscoped query would match two elements.
+  const grid = page.getByLabel('Weather cards');
+  await expect(grid).toBeVisible();
+
   // The default layout is deliberately curated rather than showing all eight cards.
-  await expect(page.getByRole('heading', { name: 'Current Conditions' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Comfort' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Hourly Temperature' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Daily Forecast' })).toBeVisible();
+  await expect(grid.getByRole('heading', { name: 'Current Conditions' })).toBeVisible();
+  await expect(grid.getByRole('heading', { name: 'Comfort' })).toBeVisible();
+  await expect(grid.getByRole('heading', { name: 'Hourly Temperature' })).toBeVisible();
+  await expect(grid.getByRole('heading', { name: 'Daily Forecast' })).toBeVisible();
 
   // The rest are available through the add-card drawer, not shown by default.
-  await expect(page.getByRole('heading', { name: 'Wind' })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Precipitation' })).toHaveCount(0);
-
-  await expect(page.getByLabel('Weather cards')).toBeVisible();
+  await expect(grid.getByRole('heading', { name: 'Wind' })).toHaveCount(0);
+  await expect(grid.getByRole('heading', { name: 'Precipitation' })).toHaveCount(0);
 
   // Unit preference is a radio group so the active choice is announced, not just coloured.
   await expect(page.getByRole('radio', { name: /fahrenheit/i })).toBeChecked();
