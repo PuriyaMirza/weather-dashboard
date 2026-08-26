@@ -18,7 +18,7 @@ interface CardControlsProps {
 }
 
 const BUTTON_CLASS =
-  'rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-sky-600 disabled:cursor-not-allowed disabled:opacity-40';
+  'rounded-lg border border-line-strong bg-card px-2 py-1 text-xs font-semibold text-ink outline-none hover:bg-canvas focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40';
 
 /**
  * Edit affordances for a single card.
@@ -41,7 +41,7 @@ export function CardControls({
   dragHandleProps,
 }: CardControlsProps) {
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-slate-100 p-2">
+    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-canvas p-2">
       <button
         type="button"
         {...dragHandleProps}
@@ -72,7 +72,7 @@ export function CardControls({
       <button
         type="button"
         onClick={onRemove}
-        className="ml-auto rounded-lg border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 outline-none hover:bg-rose-50 focus-visible:ring-2 focus-visible:ring-rose-600"
+        className="ml-auto rounded-lg border border-danger-line bg-card px-2 py-1 text-xs font-semibold text-danger outline-none hover:bg-danger-soft focus-visible:ring-2 focus-visible:ring-danger"
         aria-label={`Remove ${title} from the dashboard`}
       >
         Remove

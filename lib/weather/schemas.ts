@@ -18,6 +18,7 @@ export const openMeteoCurrentSchema = z.object({
   wind_gusts_10m: nullableNumber,
   pressure_msl: nullableNumber,
   cloud_cover: nullableNumber,
+  is_day: nullableNumber,
 });
 
 export const openMeteoHourlySchema = z
@@ -162,3 +163,31 @@ export const openMeteoGeocodingResponseSchema = z.object({
 
 export type OpenMeteoGeocodingResult = z.infer<typeof openMeteoGeocodingResultSchema>;
 export type OpenMeteoGeocodingResponse = z.infer<typeof openMeteoGeocodingResponseSchema>;
+
+/**
+ * Open-Meteo serves air quality from a separate host with its own response document. The shape
+ * mirrors the forecast API, so the same validation approach applies. Only the `current` block is
+ * requested — the cards show present conditions, not an air-quality timeline.
+ */
+export const openMeteoAirQualityCurrentSchema = z.object({
+  time: z.string(),
+  interval: z.number(),
+  us_aqi: nullableNumber,
+  european_aqi: nullableNumber,
+  pm2_5: nullableNumber,
+  pm10: nullableNumber,
+  ozone: nullableNumber,
+  nitrogen_dioxide: nullableNumber,
+  sulphur_dioxide: nullableNumber,
+  carbon_monoxide: nullableNumber,
+});
+
+export const openMeteoAirQualityResponseSchema = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
+  utc_offset_seconds: z.number(),
+  current: openMeteoAirQualityCurrentSchema,
+});
+
+export type OpenMeteoAirQualityCurrent = z.infer<typeof openMeteoAirQualityCurrentSchema>;
+export type OpenMeteoAirQualityResponse = z.infer<typeof openMeteoAirQualityResponseSchema>;

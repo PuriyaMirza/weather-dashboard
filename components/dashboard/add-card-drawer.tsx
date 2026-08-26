@@ -30,26 +30,26 @@ export function AddCardDrawer({ isOpen, activeCardIds, onAdd, onClose }: AddCard
   return (
     <section
       aria-labelledby="add-card-heading"
-      className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+      className="mt-4 rounded-2xl border border-line bg-card p-4 shadow-sm"
       onKeyDown={(event) => {
         if (event.key === 'Escape') onClose();
       }}
     >
       <div className="flex items-center justify-between gap-3">
-        <h2 id="add-card-heading" tabIndex={-1} className="text-base font-semibold text-slate-900 outline-none">
+        <h2 id="add-card-heading" tabIndex={-1} className="text-base font-semibold text-ink outline-none">
           Add a card
         </h2>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-sky-600"
+          className="rounded-lg border border-line-strong px-2 py-1 text-xs font-semibold text-ink outline-none hover:bg-canvas focus-visible:ring-2 focus-visible:ring-accent"
         >
           Close
         </button>
       </div>
 
       {available.length === 0 ? (
-        <p role="status" className="mt-3 text-sm text-slate-600">
+        <p role="status" className="mt-3 text-sm text-muted">
           Every available card is already on your dashboard.
         </p>
       ) : (
@@ -59,10 +59,10 @@ export function AddCardDrawer({ isOpen, activeCardIds, onAdd, onClose }: AddCard
               <button
                 type="button"
                 onClick={() => onAdd(card.id)}
-                className="w-full rounded-xl border border-slate-200 p-3 text-left outline-none hover:border-sky-500 hover:bg-sky-50 focus-visible:ring-2 focus-visible:ring-sky-600"
+                className="w-full rounded-xl border border-line p-3 text-left outline-none hover:border-accent hover:bg-accent-soft focus-visible:ring-2 focus-visible:ring-accent"
               >
-                <span className="block text-sm font-semibold text-slate-900">Add {card.title}</span>
-                <span className="mt-0.5 block text-xs text-slate-600">{card.description}</span>
+                <span className="block text-sm font-semibold text-ink">Add {card.title}</span>
+                <span className="mt-0.5 block text-xs text-muted">{card.description}</span>
               </button>
             </li>
           ))}

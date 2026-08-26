@@ -14,7 +14,8 @@
     "wind_direction_10m": 315,
     "pressure_msl": null,
     "wind_gusts_10m": null,
-    "cloud_cover": null
+    "cloud_cover": null,
+    "is_day": null
   },
   "hourly": {
     "time": [

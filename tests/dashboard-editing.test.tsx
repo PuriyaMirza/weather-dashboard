@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { Dashboard } from '@/components/dashboard/dashboard';
-import { DEFAULT_CARD_LAYOUT } from '@/lib/weather/card-layout';
+import { ALL_CARD_IDS, DEFAULT_CARD_LAYOUT } from '@/lib/weather/card-layout';
 import { DEFAULT_LOCATION } from '@/lib/weather/location';
 import { useDashboardStore } from '@/store/dashboard-store';
 
@@ -126,8 +126,10 @@ describe('adding and removing cards', () => {
     render(<Dashboard />);
     enterEditMode();
 
+    // Derived from the registry rather than hardcoded, so adding a card later can't quietly
+    // turn this into a test that no longer exercises the "all cards added" state.
     act(() => {
-      for (const card of ['precipitation', 'wind', 'sun-uv', 'atmospheric-details'] as const) {
+      for (const card of ALL_CARD_IDS) {
         useDashboardStore.getState().addCard(card);
       }
     });

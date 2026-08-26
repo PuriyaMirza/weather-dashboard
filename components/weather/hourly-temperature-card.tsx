@@ -3,16 +3,17 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { WeatherCardProps } from './card-registry';
 import { CardBoundary } from './card-frame';
-import { describeTemperature, formatTemperature, toCelsius } from '@/lib/weather/units';
+import { describeTemperature, formatHour, formatTemperature, toCelsius } from '@/lib/weather/units';
 
 const TITLE = 'Hourly Temperature';
 const DESCRIPTION = 'Temperature trend for the next several hours.';
 
 export function HourlyTemperatureCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
+  const timeZone = data?.location.timezone;
   const hourly = data?.hourly ?? [];
 
   const chartData = hourly.map((point) => ({
-    time: new Intl.DateTimeFormat('en-US', { hour: 'numeric' }).format(new Date(point.time)),
+    time: formatHour(point.time, timeZone),
     temperature: unitSystem === 'metric' ? Math.round(toCelsius(point.temperatureF)) : Math.round(point.temperatureF),
     feelsLike: unitSystem === 'metric' ? Math.round(toCelsius(point.feelsLikeF)) : Math.round(point.feelsLikeF),
     rawTemperature: point.temperatureF,
@@ -37,21 +38,21 @@ export function HourlyTemperatureCard({ data, isLoading, errorMessage, unitSyste
           <div className="h-72 w-full" aria-hidden="true">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 12, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="time" tickLine={false} axisLine={false} tick={{ fill: '#475569', fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                <XAxis dataKey="time" tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)', fontSize: 12 }} />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: '#475569', fontSize: 12 }}
+                  tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
                   unit="°"
                   domain={['dataMin - 3', 'dataMax + 3']}
                 />
-                <Tooltip formatter={(value) => [`${value}${unitSuffix}`, 'Temperature']} labelClassName="text-slate-900" />
+                <Tooltip formatter={(value) => [`${value}${unitSuffix}`, 'Temperature']} labelClassName="text-ink" />
                 <Area
                   type="monotone"
                   dataKey="temperature"
-                  stroke="#0369a1"
-                  fill="#bae6fd"
+                  stroke="var(--chart-line)"
+                  fill="var(--chart-fill)"
                   strokeWidth={3}
                   dot={{ r: 3 }}
                   activeDot={{ r: 5 }}
@@ -74,7 +75,7 @@ export function HourlyTemperatureCard({ data, isLoading, errorMessage, unitSyste
             <tbody>
               {hourly.map((point) => (
                 <tr key={point.time}>
-                  <th scope="row">{new Intl.DateTimeFormat('en-US', { hour: 'numeric' }).format(new Date(point.time))}</th>
+                  <th scope="row">{formatHour(point.time, timeZone)}</th>
                   <td>{describeTemperature(point.temperatureF, unitSystem)}</td>
                   <td>{describeTemperature(point.feelsLikeF, unitSystem)}</td>
                 </tr>
@@ -82,7 +83,7 @@ export function HourlyTemperatureCard({ data, isLoading, errorMessage, unitSyste
             </tbody>
           </table>
 
-          <p className="mt-3 text-sm text-slate-600">
+          <p className="mt-3 text-sm text-muted">
             Range {formatTemperature(Math.min(...hourly.map((p) => p.temperatureF)), unitSystem)} to{' '}
             {formatTemperature(Math.max(...hourly.map((p) => p.temperatureF)), unitSystem)} over the next{' '}
             {hourly.length} hours.

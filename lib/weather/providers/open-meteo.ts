@@ -14,6 +14,9 @@ const CURRENT_VARIABLES = [
   'wind_gusts_10m',
   'pressure_msl',
   'cloud_cover',
+  // Drives the day/night atmosphere. Cheaper and more reliable than comparing timestamps against
+  // sunrise/sunset, which needs care around timezones and polar day/night.
+  'is_day',
 ] as const;
 
 const HOURLY_VARIABLES = [

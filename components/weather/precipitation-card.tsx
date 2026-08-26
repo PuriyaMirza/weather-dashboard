@@ -3,21 +3,18 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { WeatherCardProps } from './card-registry';
 import { CardBoundary, Metric } from './card-frame';
-import { formatPercent, formatPrecipitation, toMillimetres } from '@/lib/weather/units';
+import { formatHour, formatPercent, formatPrecipitation, toMillimetres } from '@/lib/weather/units';
 
 const TITLE = 'Precipitation';
 const DESCRIPTION = 'Chance and amount of rain or snow over the coming hours.';
 const HOURS_SHOWN = 12;
 
-function hourLabel(time: string): string {
-  return new Intl.DateTimeFormat('en-US', { hour: 'numeric' }).format(new Date(time));
-}
-
 export function PrecipitationCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
+  const timeZone = data?.location.timezone;
   const hourly = (data?.hourly ?? []).slice(0, HOURS_SHOWN);
 
   const chartData = hourly.map((point) => ({
-    time: hourLabel(point.time),
+    time: formatHour(point.time, timeZone),
     chance: point.precipitationChance,
     amount:
       point.precipitationInches == null
@@ -48,7 +45,7 @@ export function PrecipitationCard({ data, isLoading, errorMessage, unitSystem }:
       {hourly.length > 0 && (
         <>
           <dl className="grid grid-cols-2 gap-3 text-sm">
-            <Metric label="Peak chance" value={peak ? `${formatPercent(peak.chance)} at ${hourLabel(peak.time)}` : '—'} />
+            <Metric label="Peak chance" value={peak ? `${formatPercent(peak.chance)} at ${formatHour(peak.time, timeZone)}` : '—'} />
             <Metric
               label={`Total, next ${hourly.length}h`}
               value={anyAmountReported ? formatPrecipitation(totalInches, unitSystem) : 'Unavailable'}
@@ -58,17 +55,17 @@ export function PrecipitationCard({ data, isLoading, errorMessage, unitSystem }:
           <div className="mt-4 h-56 w-full" aria-hidden="true">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="time" tickLine={false} axisLine={false} tick={{ fill: '#475569', fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                <XAxis dataKey="time" tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)', fontSize: 12 }} />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: '#475569', fontSize: 12 }}
+                  tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
                   unit="%"
                   domain={[0, 100]}
                 />
-                <Tooltip formatter={(value) => [`${value}%`, 'Chance']} labelClassName="text-slate-900" />
-                <Bar dataKey="chance" fill="#0284c7" radius={[4, 4, 0, 0]} />
+                <Tooltip formatter={(value) => [`${value}%`, 'Chance']} labelClassName="text-ink" />
+                <Bar dataKey="chance" fill="var(--chart-bar)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -85,7 +82,7 @@ export function PrecipitationCard({ data, isLoading, errorMessage, unitSystem }:
             <tbody>
               {hourly.map((point) => (
                 <tr key={point.time}>
-                  <th scope="row">{hourLabel(point.time)}</th>
+                  <th scope="row">{formatHour(point.time, timeZone)}</th>
                   <td>{formatPercent(point.precipitationChance)}</td>
                   <td>{formatPrecipitation(point.precipitationInches, unitSystem)}</td>
                 </tr>

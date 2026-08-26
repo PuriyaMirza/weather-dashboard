@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import type { WeatherDashboardData } from '@/lib/weather/types';
 import type { UnitSystem } from '@/lib/weather/units';
+import { AirQualityCard } from './air-quality-card';
 import { AtmosphericDetailsCard } from './atmospheric-details-card';
 import { ComfortCard } from './comfort-card';
 import { CurrentConditionsCard } from './current-conditions-card';
@@ -18,7 +19,8 @@ export type WeatherCardId =
   | 'wind'
   | 'daily-forecast'
   | 'sun-uv'
-  | 'atmospheric-details';
+  | 'atmospheric-details'
+  | 'air-quality';
 
 export interface WeatherCardProps {
   data?: WeatherDashboardData;
@@ -84,6 +86,13 @@ export const weatherCardRegistry: WeatherCardDefinition[] = [
     description: 'Sunrise, sunset, daylight, and UV exposure.',
     columnSpan: 'single',
     Component: SunUvCard,
+  },
+  {
+    id: 'air-quality',
+    title: 'Air Quality',
+    description: 'Current US AQI and the pollutants behind it.',
+    columnSpan: 'single',
+    Component: AirQualityCard,
   },
   {
     id: 'atmospheric-details',

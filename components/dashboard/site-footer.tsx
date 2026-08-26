@@ -1,4 +1,4 @@
-const LINK_CLASS = 'font-medium text-sky-800 underline underline-offset-2 outline-none hover:text-sky-900 focus-visible:ring-2 focus-visible:ring-sky-600';
+const LINK_CLASS = 'font-medium text-accent-soft-ink underline underline-offset-2 outline-none hover:text-accent-soft-ink focus-visible:ring-2 focus-visible:ring-accent';
 
 /**
  * Open-Meteo publishes its data under CC BY 4.0, which requires crediting the source, linking the
@@ -7,7 +7,7 @@ const LINK_CLASS = 'font-medium text-sky-800 underline underline-offset-2 outlin
  */
 export function SiteFooter() {
   return (
-    <footer className="mx-auto mt-10 max-w-7xl px-1 pb-8 text-sm text-slate-600">
+    <footer className="mx-auto mt-10 max-w-7xl px-1 pb-8 text-sm text-muted">
       <p>
         Weather data by{' '}
         <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
@@ -25,8 +25,8 @@ export function SiteFooter() {
         . Values are converted and reformatted for display.
       </p>
 
-      <details className="mt-3 rounded-2xl border border-slate-200 bg-white/70 p-4">
-        <summary className="cursor-pointer font-medium text-slate-800 outline-none focus-visible:ring-2 focus-visible:ring-sky-600">
+      <details className="mt-3 rounded-2xl border border-line bg-card p-4">
+        <summary className="cursor-pointer font-medium text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent">
           How your location is used
         </summary>
         <div className="mt-3 space-y-2">

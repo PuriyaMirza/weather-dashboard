@@ -14,7 +14,8 @@
     "wind_direction_10m": 315,
     "pressure_msl": 1018.5,
     "wind_gusts_10m": 14.0,
-    "cloud_cover": 40
+    "cloud_cover": 40,
+    "is_day": 1
   },
   "hourly": {
     "time": [

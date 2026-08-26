@@ -4,10 +4,10 @@ export function CardFrame({ title, description, children }: { title: string; des
   const titleId = `${title.toLowerCase().replaceAll(' ', '-')}-title`;
 
   return (
-    <article className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm shadow-slate-200/70" aria-labelledby={titleId}>
+    <article className="flex h-full flex-col rounded-3xl border border-line bg-card p-5 shadow-sm" aria-labelledby={titleId}>
       <div>
-        <h2 id={titleId} className="text-lg font-semibold text-slate-950">{title}</h2>
-        <p className="mt-1 text-sm text-slate-600">{description}</p>
+        <h2 id={titleId} className="text-lg font-semibold text-ink-strong">{title}</h2>
+        <p className="mt-1 text-sm text-muted">{description}</p>
       </div>
       <div className="mt-5 flex flex-1 flex-col">{children}</div>
     </article>
@@ -16,7 +16,7 @@ export function CardFrame({ title, description, children }: { title: string; des
 
 export function CardState({ label, tone = 'neutral' }: { label: string; tone?: 'neutral' | 'error' }) {
   return (
-    <div className={`flex min-h-40 flex-1 items-center justify-center rounded-2xl border border-dashed p-6 text-center text-sm ${tone === 'error' ? 'border-rose-300 bg-rose-50 text-rose-800' : 'border-slate-300 bg-slate-50 text-slate-600'}`} role={tone === 'error' ? 'alert' : 'status'}>
+    <div className={`flex min-h-40 flex-1 items-center justify-center rounded-2xl border border-dashed p-6 text-center text-sm ${tone === 'error' ? 'border-danger-line bg-danger-soft text-danger' : 'border-line-strong bg-canvas text-muted'}`} role={tone === 'error' ? 'alert' : 'status'}>
       {label}
     </div>
   );
@@ -65,9 +65,9 @@ export function CardBoundary({
 /** Label/value pair used by most cards' metric grids. */
 export function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-slate-50 p-3">
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="mt-1 font-semibold text-slate-900">{value}</dd>
+    <div className="rounded-2xl bg-canvas p-3">
+      <dt className="text-muted">{label}</dt>
+      <dd className="mt-1 font-semibold text-ink">{value}</dd>
     </div>
   );
 }

@@ -179,7 +179,7 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
 
   return (
     <div className="w-full">
-      <label htmlFor={`${baseId}-input`} className="block text-sm font-medium text-slate-700">
+      <label htmlFor={`${baseId}-input`} className="block text-sm font-medium text-ink">
         Search for a city or postal code
       </label>
 
@@ -202,7 +202,7 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
             setDismissedQuery(null);
           }}
           onKeyDown={handleKeyDown}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-sky-600 focus:ring-2 focus:ring-sky-600"
+          className="w-full rounded-2xl border border-line-strong bg-card px-4 py-2.5 text-ink shadow-sm outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent"
         />
 
         <ul
@@ -210,7 +210,7 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
           role="listbox"
           aria-label="Location results"
           hidden={!isOpen}
-          className="absolute z-10 mt-1 max-h-72 w-full overflow-auto rounded-2xl border border-slate-200 bg-white py-1 shadow-lg"
+          className="absolute z-10 mt-1 max-h-72 w-full overflow-auto rounded-2xl border border-line bg-card py-1 shadow-lg"
         >
           {results.map((location, index) => (
             <li
@@ -225,12 +225,12 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
               }}
               onMouseEnter={() => setActive({ query: debouncedQuery, index })}
               className={`cursor-pointer px-4 py-2 text-sm ${
-                index === activeIndex ? 'bg-sky-700 text-white' : 'text-slate-900'
+                index === activeIndex ? 'bg-accent text-card' : 'text-ink'
               }`}
             >
               <span className="font-medium">{location.name}</span>
               {(location.region || location.country) && (
-                <span className={index === activeIndex ? 'text-sky-100' : 'text-slate-500'}>
+                <span className={index === activeIndex ? 'text-accent-soft' : 'text-muted'}>
                   {' — '}
                   {[location.region, location.country].filter(Boolean).join(', ')}
                 </span>
@@ -250,14 +250,14 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
           type="button"
           onClick={requestCurrentLocation}
           disabled={isLocating}
-          className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-sm outline-none hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-full border border-line-strong bg-card px-4 py-2 text-sm font-medium text-ink shadow-sm outline-none hover:bg-canvas focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isLocating ? 'Finding your location…' : 'Use my current location'}
         </button>
       </div>
 
       {geolocationError && (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <p role="alert" className="mt-2 text-sm text-danger">
           {geolocationError}
         </p>
       )}

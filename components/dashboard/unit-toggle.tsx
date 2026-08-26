@@ -26,8 +26,8 @@ export function UnitToggle({ unitSystem, onChange }: UnitToggleProps) {
           <label
             key={option.value}
             className={`cursor-pointer rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
-              isSelected ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 hover:bg-slate-100'
-            } border border-slate-300 focus-within:ring-2 focus-within:ring-sky-600`}
+              isSelected ? 'bg-ink text-card' : 'bg-card text-ink hover:bg-canvas'
+            } border border-line-strong focus-within:ring-2 focus-within:ring-accent`}
           >
             <input
               type="radio"

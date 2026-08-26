@@ -23,14 +23,14 @@ export function CurrentConditionsCard({ data, isLoading, errorMessage, unitSyste
           <div className="flex items-start justify-between gap-4">
             <div>
               <p
-                className="text-6xl font-bold tracking-tight text-slate-950"
+                className="text-6xl font-bold tracking-tight text-ink-strong"
                 aria-label={describeTemperature(current.temperatureF, unitSystem)}
               >
                 {formatTemperature(current.temperatureF, unitSystem)}
               </p>
-              <p className="mt-2 text-base font-medium text-slate-700">{current.conditionLabel}</p>
+              <p className="mt-2 text-base font-medium text-ink">{current.conditionLabel}</p>
             </div>
-            <span className="rounded-full bg-sky-100 px-3 py-1 text-sm font-semibold text-sky-800">
+            <span className="rounded-full bg-accent-soft px-3 py-1 text-sm font-semibold text-accent-soft-ink">
               Feels {formatTemperature(current.feelsLikeF, unitSystem)}
             </span>
           </div>
@@ -41,7 +41,7 @@ export function CurrentConditionsCard({ data, isLoading, errorMessage, unitSyste
             />
             <Metric label="Wind" value={`${current.windDirection} ${formatSpeed(current.windMph, unitSystem)}`} />
             <Metric label="Rain chance" value={formatPercent(current.precipitationChance)} />
-            <Metric label="Observed" value={formatTime(current.observedAt)} />
+            <Metric label="Observed" value={formatTime(current.observedAt, data?.location.timezone)} />
           </dl>
         </>
       )}

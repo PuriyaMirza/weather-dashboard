@@ -93,12 +93,34 @@ export function formatIndex(value: number | null | undefined): string {
   return round(value);
 }
 
-/** Formats an offset-qualified ISO timestamp as a local clock time, e.g. "3:15 PM". */
-export function formatTime(isoTimestamp: string | null | undefined): string {
+/**
+ * Formats an offset-qualified ISO timestamp as a clock time, e.g. "3:15 PM".
+ *
+ * `timeZone` matters: without it the time renders in the *viewer's* zone, so looking up Tokyo
+ * from London would show Tokyo's sunrise at a London hour. Passing the location's IANA zone shows
+ * the time as someone standing there would read it.
+ */
+export function formatTime(isoTimestamp: string | null | undefined, timeZone?: string): string {
   if (!isoTimestamp) return UNAVAILABLE;
   const date = new Date(isoTimestamp);
   if (Number.isNaN(date.getTime())) return UNAVAILABLE;
-  return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(date);
+  try {
+    return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone }).format(date);
+  } catch {
+    // An unrecognised zone must not blank out the time.
+    return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(date);
+  }
+}
+
+/** Hour-only label for chart axes and hourly rows, in the location's zone for the same reason. */
+export function formatHour(isoTimestamp: string, timeZone?: string): string {
+  const date = new Date(isoTimestamp);
+  if (Number.isNaN(date.getTime())) return UNAVAILABLE;
+  try {
+    return new Intl.DateTimeFormat('en-US', { hour: 'numeric', timeZone }).format(date);
+  } catch {
+    return new Intl.DateTimeFormat('en-US', { hour: 'numeric' }).format(date);
+  }
 }
 
 /** Formats a date as a short weekday, e.g. "Mon". */

@@ -42,6 +42,7 @@ describe.each(weatherCardRegistry.map((card) => [card.title, card] as const))('%
       wind: null,
       atmospheric: null,
       sun: null,
+      airQuality: null,
       hourly: [],
       daily: [],
     };
@@ -125,5 +126,39 @@ describe('wind card', () => {
     expect(screen.getByText('8 mph')).toBeInTheDocument();
     expect(screen.getByText('Moderate')).toBeInTheDocument();
     expect(screen.getByText(/blowing from the NW/i)).toBeInTheDocument();
+  });
+});
+
+describe('air quality card', () => {
+  it('names the AQI band in words, not just a number and a colour', () => {
+    const AirQuality = cardComponent('air-quality');
+    render(<AirQuality data={mockWeatherData} unitSystem="imperial" />);
+
+    expect(screen.getByText(/38/)).toBeInTheDocument();
+    expect(screen.getByText(/Good/)).toBeInTheDocument();
+    expect(screen.getByText(/air quality is satisfactory/i)).toBeInTheDocument();
+  });
+
+  it('still shows pollutants when the overall index is missing', () => {
+    const AirQuality = cardComponent('air-quality');
+    render(
+      <AirQuality
+        data={{ ...mockWeatherData, airQuality: { ...mockWeatherData.airQuality!, usAqi: null, category: null } }}
+        unitSystem="imperial"
+      />,
+    );
+
+    expect(screen.getByText(/individual pollutants are shown below/i)).toBeInTheDocument();
+    expect(screen.getByText('8.4 µg/m³')).toBeInTheDocument();
+  });
+});
+
+describe('times use the location timezone', () => {
+  it('shows sunrise as the location would read it, not the viewer', () => {
+    const SunUv = cardComponent('sun-uv');
+    render(<SunUv data={mockWeatherData} unitSystem="imperial" />);
+
+    // mock sunrise is 05:35 local to Portland.
+    expect(screen.getByText('5:35 AM')).toBeInTheDocument();
   });
 });
