@@ -117,3 +117,29 @@ test('a failure is announced once, not once per module', async ({ page }) => {
   await expect(page.getByRole('main').getByRole('alert')).toHaveCount(1);
   await expect(page.getByRole('button', { name: /try again/i })).toBeVisible();
 });
+
+test('one broken module degrades to its own tile, leaving the dashboard usable', async ({ page }) => {
+  // `daily` is read by the Daily Forecast module and nothing else — not the hero, not any single
+  // reading — so corrupting it isolates the failure to one tile.
+  //
+  // A malformed *entry* rather than a malformed array: an empty object simply fails the module's
+  // length guards and renders nothing, which proves less than it looks. A null row reaches the
+  // render and throws on property access, which is what a real upstream-shape regression does.
+  const broken = { ...mockWeatherData, daily: [null] as unknown as typeof mockWeatherData.daily };
+
+  await page.route('**/api/weather*', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(broken) }),
+  );
+
+  await page.goto('/');
+
+  // The broken module says so, in its own tile.
+  const grid = page.getByLabel('Weather modules');
+  await expect(grid.getByText(/ran into a problem/i)).toBeVisible();
+
+  // Everything else still works. Before the boundary existed this was a blank page.
+  await expect(grid.getByRole('heading', { name: 'Temperature', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /open menu/i })).toBeVisible();
+  await page.getByRole('button', { name: /open menu/i }).click();
+  await expect(page.getByRole('dialog', { name: /dashboard settings/i })).toBeVisible();
+});
