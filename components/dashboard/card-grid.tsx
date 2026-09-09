@@ -11,7 +11,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { getCardDefinition, type WeatherCardId, type WeatherCardProps } from '@/components/weather/card-registry';
-import type { CardLayoutEntry, CardSpan } from '@/lib/weather/card-layout';
+import type { CardLayoutEntry, CardSize } from '@/lib/weather/card-layout';
 import { SortableCard } from './sortable-card';
 
 interface CardGridProps {
@@ -23,11 +23,13 @@ interface CardGridProps {
   isEditing: boolean;
   onReorder: (orderedIds: WeatherCardId[]) => void;
   onMove: (id: WeatherCardId, direction: -1 | 1) => void;
-  onSetSpan: (id: WeatherCardId, span: CardSpan) => void;
+  onSetSize: (id: WeatherCardId, size: CardSize) => void;
   onRemove: (id: WeatherCardId) => void;
 }
 
-export function CardGrid({ cards, isHydrated, cardProps, isEditing, onReorder, onMove, onSetSpan, onRemove }: CardGridProps) {
+const PLACEHOLDER = 'mt-8 border border-dashed border-line p-10 text-center text-sm text-muted';
+
+export function CardGrid({ cards, isHydrated, cardProps, isEditing, onReorder, onMove, onSetSize, onRemove }: CardGridProps) {
   const sensors = useSensors(
     // A small distance threshold keeps a click on the handle from being read as a drag, which
     // would otherwise make the button's own activation unreliable.
@@ -50,7 +52,7 @@ export function CardGrid({ cards, isHydrated, cardProps, isEditing, onReorder, o
 
   if (!isHydrated) {
     return (
-      <p role="status" className="mt-6 rounded-2xl border border-dashed border-line-strong bg-card p-8 text-center text-sm text-muted">
+      <p role="status" className={PLACEHOLDER}>
         Loading your dashboard…
       </p>
     );
@@ -58,8 +60,8 @@ export function CardGrid({ cards, isHydrated, cardProps, isEditing, onReorder, o
 
   if (cards.length === 0) {
     return (
-      <p role="status" className="mt-6 rounded-2xl border border-dashed border-line-strong bg-card p-8 text-center text-sm text-muted">
-        Your dashboard is empty. Use “Add a card” to choose what to show.
+      <p role="status" className={PLACEHOLDER}>
+        Your dashboard is empty. Open the menu to choose what to show.
       </p>
     );
   }
@@ -67,7 +69,19 @@ export function CardGrid({ cards, isHydrated, cardProps, isEditing, onReorder, o
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={cards.map((card) => card.id)} strategy={rectSortingStrategy}>
-        <div className="mt-6 grid gap-5 lg:grid-cols-2" aria-label="Weather cards">
+        {/*
+          Two columns on a phone, four from `md` up. A small module is 1x1, medium 2x1, large 2x2 —
+          so on a phone medium and large both fill the width, which is the only sensible reading of
+          those shapes at that size.
+
+          Rules are drawn by each module's own right and bottom border rather than by a coloured
+          background showing through a 1px gap: with the gap trick, any cell the layout leaves
+          empty renders as a solid block of rule colour.
+        */}
+        <div
+          className="mt-8 grid auto-rows-[minmax(9.5rem,auto)] grid-cols-2 border-l border-t border-line md:grid-cols-4"
+          aria-label="Weather modules"
+        >
           {cards.map((entry, index) => {
             const definition = getCardDefinition(entry.id);
             if (!definition) return null;
@@ -85,7 +99,7 @@ export function CardGrid({ cards, isHydrated, cardProps, isEditing, onReorder, o
                 total={cards.length}
                 onMoveUp={() => onMove(entry.id, -1)}
                 onMoveDown={() => onMove(entry.id, 1)}
-                onToggleSpan={() => onSetSpan(entry.id, entry.span === 'wide' ? 'single' : 'wide')}
+                onSetSize={(size) => onSetSize(entry.id, size)}
                 onRemove={() => onRemove(entry.id)}
               />
             );

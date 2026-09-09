@@ -5,7 +5,7 @@ import { SiteFooter } from '@/components/dashboard/site-footer';
 // location comes from preferences that only exist on the client.
 export default function Home() {
   return (
-    <main className="min-h-screen bg-canvas px-4 py-6 sm:px-6 lg:px-10">
+    <main className="min-h-screen bg-canvas px-4 py-8 sm:px-8 lg:px-12">
       <Dashboard />
       <SiteFooter />
     </main>

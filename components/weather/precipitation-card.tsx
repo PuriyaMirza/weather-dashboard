@@ -52,7 +52,7 @@ export function PrecipitationCard({ data, isLoading, errorMessage, unitSystem }:
             />
           </dl>
 
-          <div className="mt-4 h-56 w-full" aria-hidden="true">
+          <div className="mt-4 min-h-44 w-full flex-1" aria-hidden="true">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />

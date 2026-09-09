@@ -2,7 +2,7 @@ import type { WeatherCardProps } from './card-registry';
 import { CardBoundary, Metric } from './card-frame';
 import { formatSpeed } from '@/lib/weather/units';
 
-const TITLE = 'Wind';
+const TITLE = 'Wind Detail';
 const DESCRIPTION = 'Current speed, gusts, and direction.';
 
 /** Descriptive band so wind strength is conveyed in words, not only by a number. */

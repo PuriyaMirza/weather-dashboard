@@ -4,10 +4,12 @@ import type { WeatherCardId } from '@/components/weather/card-registry';
 import {
   DEFAULT_CARD_LAYOUT,
   LAYOUT_PRESETS,
+  CARD_SIZES,
+  defaultSizeFor,
   moveEntry,
   reconcileLayout,
   type CardLayoutEntry,
-  type CardSpan,
+  type CardSize,
 } from '@/lib/weather/card-layout';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
 import { isThemePreference, type ThemePreference } from '@/lib/theme';
@@ -38,7 +40,11 @@ export interface DashboardState {
   setEditing: (isEditing: boolean) => void;
   addCard: (id: WeatherCardId) => void;
   removeCard: (id: WeatherCardId) => void;
-  setCardSpan: (id: WeatherCardId, span: CardSpan) => void;
+  /** Adds the module if it is absent, removes it if present — what the menu's toggle list needs. */
+  toggleCard: (id: WeatherCardId) => void;
+  setCardSize: (id: WeatherCardId, size: CardSize) => void;
+  /** Advances a module to the next size, wrapping large back round to small. */
+  cycleCardSize: (id: WeatherCardId) => void;
   /** Moves a card one position earlier (-1) or later (+1); a no-op at the ends. */
   moveCard: (id: WeatherCardId, direction: -1 | 1) => void;
   /** Reorders to an explicit id sequence — used by drag-and-drop. */
@@ -48,6 +54,24 @@ export interface DashboardState {
 }
 
 export const DASHBOARD_STORAGE_KEY = 'weather-dashboard';
+
+/**
+ * Persisted locations are re-checked on load. A location missing a coordinate is not merely
+ * cosmetic: it would be handed to the weather route, where a missing latitude coerces to 0 and
+ * silently resolves to a point in the Atlantic rather than failing.
+ */
+function isSelectedLocation(value: unknown): value is SelectedLocation {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate = value as Partial<SelectedLocation>;
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.name === 'string' &&
+    typeof candidate.latitude === 'number' &&
+    Number.isFinite(candidate.latitude) &&
+    typeof candidate.longitude === 'number' &&
+    Number.isFinite(candidate.longitude)
+  );
+}
 
 export const useDashboardStore = create<DashboardState>()(
   persist(
@@ -81,13 +105,27 @@ export const useDashboardStore = create<DashboardState>()(
         set((state) =>
           state.cards.some((card) => card.id === id)
             ? state
-            : { cards: [...state.cards, { id, span: 'single' as CardSpan }] },
+            : { cards: [...state.cards, { id, size: defaultSizeFor(id) }] },
         ),
 
       removeCard: (id) => set((state) => ({ cards: state.cards.filter((card) => card.id !== id) })),
 
-      setCardSpan: (id, span) =>
-        set((state) => ({ cards: state.cards.map((card) => (card.id === id ? { ...card, span } : card)) })),
+      toggleCard: (id) =>
+        set((state) =>
+          state.cards.some((card) => card.id === id)
+            ? { cards: state.cards.filter((card) => card.id !== id) }
+            : { cards: [...state.cards, { id, size: defaultSizeFor(id) }] },
+        ),
+
+      setCardSize: (id, size) =>
+        set((state) => ({ cards: state.cards.map((card) => (card.id === id ? { ...card, size } : card)) })),
+
+      cycleCardSize: (id) =>
+        set((state) => ({
+          cards: state.cards.map((card) =>
+            card.id === id ? { ...card, size: CARD_SIZES[(CARD_SIZES.indexOf(card.size) + 1) % CARD_SIZES.length] } : card,
+          ),
+        })),
 
       moveCard: (id, direction) =>
         set((state) => {
@@ -118,9 +156,14 @@ export const useDashboardStore = create<DashboardState>()(
     }),
     {
       name: DASHBOARD_STORAGE_KEY,
-      // Bump when the persisted shape changes so old saved state is discarded rather than
-      // deserialized into a shape the code no longer understands.
-      version: 4,
+      // Bump when the persisted shape changes so old saved state is never deserialized into a
+      // shape the code no longer understands.
+      version: 5,
+      // Without a migrate, zustand *discards* state saved under an older version — which would
+      // throw away every existing dashboard on upgrade and make reconcileLayout's span-to-size
+      // translation dead code. Older state is handed through instead, because `merge` below
+      // re-validates every field it cares about anyway.
+      migrate: (persisted) => persisted as DashboardState,
       // Persist preferences only. Actions are unserializable, and isEditing is transient.
       partialize: (state) => ({
         location: state.location,
@@ -129,9 +172,11 @@ export const useDashboardStore = create<DashboardState>()(
         theme: state.theme,
         cards: state.cards,
       }),
-      // A stored layout can reference cards this version no longer has (or miss ones it gained),
-      // so it is reconciled against the registry instead of trusted as-is. The theme is validated
-      // for the same reason: it is read by a pre-paint script that must not be handed nonsense.
+      // Every persisted field is re-validated here rather than trusted, because `migrate` above
+      // deliberately lets state written by older versions through. A stored layout can reference
+      // modules this version no longer has (or miss ones it gained); the theme is read by a
+      // pre-paint script that must not be handed nonsense; and a location with a missing
+      // coordinate would be sent straight to the weather route as a request for "null island".
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<DashboardState>;
         return {
@@ -141,7 +186,11 @@ export const useDashboardStore = create<DashboardState>()(
           // Falls back to the constant rather than `current.theme`: merge runs against whatever
           // the store happens to hold at rehydrate time, which is not necessarily the default.
           theme: isThemePreference(saved.theme) ? saved.theme : DEFAULT_THEME,
-          savedLocations: Array.isArray(saved.savedLocations) ? saved.savedLocations : [],
+          location: isSelectedLocation(saved.location) ? saved.location : DEFAULT_LOCATION,
+          savedLocations: Array.isArray(saved.savedLocations)
+            ? saved.savedLocations.filter(isSelectedLocation)
+            : [],
+          unitSystem: saved.unitSystem === 'metric' || saved.unitSystem === 'imperial' ? saved.unitSystem : 'imperial',
         };
       },
       // Critical for SSR correctness: without this, the store reads localStorage while the module

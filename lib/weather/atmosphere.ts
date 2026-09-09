@@ -7,6 +7,11 @@ import type { WeatherCondition } from './types';
  * This is separate from light/dark mode, which follows the system setting. This is atmosphere:
  * a clear afternoon and a midnight storm should not look identical. It is decorative — every
  * value it depicts is also stated in words elsewhere, so nothing is conveyed by colour alone.
+ *
+ * The palettes are warm greys rather than blues: on a monochrome page a literal blue sky reads as
+ * a stray photograph. Condition and time of day come through as *weight* — clear is light and
+ * open, storm is dense and close — which survives greyscale printing and low-quality displays,
+ * where a hue shift would not.
  */
 export interface AtmospherePalette {
   /** Gradient stops, consumed by the `.atmosphere` class in globals.css. */
@@ -23,32 +28,32 @@ export interface AtmospherePalette {
 type ConditionPalettes = Record<WeatherCondition, AtmospherePalette>;
 
 const DAY: ConditionPalettes = {
-  sunny: { from: '#bae6fd', via: '#dbeafe', to: '#eff6ff', ink: '#0c2438', inkMuted: '#2f4a63', label: 'Clear daytime sky' },
-  'partly-cloudy': { from: '#cfe4f7', via: '#e2edf7', to: '#f1f5f9', ink: '#0f2333', inkMuted: '#3a5060', label: 'Partly cloudy sky' },
-  cloudy: { from: '#d7dee6', via: '#e3e8ee', to: '#f1f5f9', ink: '#182430', inkMuted: '#43505c', label: 'Overcast sky' },
-  rain: { from: '#b9c9d8', via: '#cdd9e4', to: '#e6ecf2', ink: '#12212e', inkMuted: '#3b4d5c', label: 'Rainy sky' },
-  snow: { from: '#dce7f2', via: '#eaf1f8', to: '#f7fafd', ink: '#16232f', inkMuted: '#41525f', label: 'Snowy sky' },
-  storm: { from: '#9aa8bb', via: '#b6c1ce', to: '#d8dee6', ink: '#101823', inkMuted: '#2b333e', label: 'Stormy sky' },
-  fog: { from: '#d5d9dd', via: '#e4e7ea', to: '#f2f4f6', ink: '#1b2128', inkMuted: '#454d55', label: 'Foggy sky' },
+  sunny: { from: '#f7f5ef', via: '#f4f3f0', to: '#e9e6dd', ink: '#16150f', inkMuted: '#4a4840', label: 'Clear daytime sky' },
+  'partly-cloudy': { from: '#efede7', via: '#eae8e2', to: '#dedbd2', ink: '#16150f', inkMuted: '#4a4840', label: 'Partly cloudy sky' },
+  cloudy: { from: '#e6e4dd', via: '#e0ded7', to: '#d3d0c7', ink: '#16150f', inkMuted: '#484640', label: 'Overcast sky' },
+  rain: { from: '#dedcd6', via: '#d7d5cf', to: '#c8c5bd', ink: '#141309', inkMuted: '#454338', label: 'Rainy sky' },
+  snow: { from: '#f4f4f2', via: '#eeeeec', to: '#e0e0dc', ink: '#16150f', inkMuted: '#4a4840', label: 'Snowy sky' },
+  storm: { from: '#cfccc4', via: '#c5c2b9', to: '#b3afa5', ink: '#100f08', inkMuted: '#3a382e', label: 'Stormy sky' },
+  fog: { from: '#e8e8e6', via: '#e1e1de', to: '#d4d4d0', ink: '#16150f', inkMuted: '#474640', label: 'Foggy sky' },
 };
 
 const NIGHT: ConditionPalettes = {
-  sunny: { from: '#132a4a', via: '#0d1c33', to: '#070d18', ink: '#eaf2fb', inkMuted: '#a9bdd4', label: 'Clear night sky' },
-  'partly-cloudy': { from: '#182a41', via: '#111d2e', to: '#080d15', ink: '#e9eff7', inkMuted: '#a6b7cb', label: 'Partly cloudy night sky' },
-  cloudy: { from: '#1d2733', via: '#141b24', to: '#090c11', ink: '#e8ecf1', inkMuted: '#a5b0bd', label: 'Overcast night sky' },
-  rain: { from: '#152532', via: '#0e1a24', to: '#070b10', ink: '#e6eef4', inkMuted: '#9fb4c4', label: 'Rainy night sky' },
-  snow: { from: '#1d2a3a', via: '#141d29', to: '#090d13', ink: '#edf3f9', inkMuted: '#aebccd', label: 'Snowy night sky' },
-  storm: { from: '#1a1f2e', via: '#111420', to: '#07090f', ink: '#e8eaf2', inkMuted: '#a4abbd', label: 'Stormy night sky' },
-  fog: { from: '#20262d', via: '#171b21', to: '#0b0d10', ink: '#e9ecef', inkMuted: '#a8b0b8', label: 'Foggy night sky' },
+  sunny: { from: '#1a1a16', via: '#0d0d0b', to: '#000000', ink: '#f5f3ee', inkMuted: '#a5a299', label: 'Clear night sky' },
+  'partly-cloudy': { from: '#181815', via: '#0c0c0a', to: '#000000', ink: '#f2f0eb', inkMuted: '#a29f96', label: 'Partly cloudy night sky' },
+  cloudy: { from: '#151513', via: '#0a0a09', to: '#000000', ink: '#efede8', inkMuted: '#9f9c93', label: 'Overcast night sky' },
+  rain: { from: '#121211', via: '#090908', to: '#000000', ink: '#ecebe6', inkMuted: '#9c9990', label: 'Rainy night sky' },
+  snow: { from: '#1c1c1a', via: '#0e0e0d', to: '#000000', ink: '#f7f6f2', inkMuted: '#a8a59c', label: 'Snowy night sky' },
+  storm: { from: '#0e0e0d', via: '#070706', to: '#000000', ink: '#e9e7e2', inkMuted: '#99968d', label: 'Stormy night sky' },
+  fog: { from: '#191918', via: '#0d0d0c', to: '#000000', ink: '#f0efec', inkMuted: '#a09e97', label: 'Foggy night sky' },
 };
 
 /** Used before any weather has loaded, and whenever the condition is unknown. */
 export const NEUTRAL_ATMOSPHERE: AtmospherePalette = {
-  from: '#dbeafe',
-  via: '#e0f2fe',
-  to: '#f1f5f9',
-  ink: '#0f172a',
-  inkMuted: '#334155',
+  from: '#eceae4',
+  via: '#f4f3f0',
+  to: '#e4e1d9',
+  ink: '#16150f',
+  inkMuted: '#4a4840',
   label: 'Daytime sky',
 };
 

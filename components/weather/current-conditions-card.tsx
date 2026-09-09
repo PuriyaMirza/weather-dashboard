@@ -30,7 +30,7 @@ export function CurrentConditionsCard({ data, isLoading, errorMessage, unitSyste
               </p>
               <p className="mt-2 text-base font-medium text-ink">{current.conditionLabel}</p>
             </div>
-            <span className="rounded-full bg-accent-soft px-3 py-1 text-sm font-semibold text-accent-soft-ink">
+            <span className="bg-accent-soft px-3 py-1 text-sm font-semibold text-accent-soft-ink">
               Feels {formatTemperature(current.feelsLikeF, unitSystem)}
             </span>
           </div>

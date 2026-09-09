@@ -27,7 +27,7 @@ export function SavedLocations({ active, saved, onSelect, onSave, onRemove }: Sa
         return (
           <span
             key={location.id}
-            className={`inline-flex items-center rounded-full border text-xs font-semibold ${
+            className={`inline-flex items-center border text-xs font-semibold ${
               isActive ? 'border-transparent bg-ink text-card' : 'border-line bg-card text-ink'
             }`}
           >
@@ -35,7 +35,7 @@ export function SavedLocations({ active, saved, onSelect, onSave, onRemove }: Sa
               type="button"
               onClick={() => onSelect(location)}
               aria-current={isActive ? 'true' : undefined}
-              className="rounded-l-full py-1.5 pl-3 pr-2 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="py-1.5 pl-3 pr-2 outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               {location.name}
               <span className="sr-only">{`Show weather for ${label}`}</span>
@@ -44,7 +44,7 @@ export function SavedLocations({ active, saved, onSelect, onSave, onRemove }: Sa
               type="button"
               onClick={() => onRemove(location.id)}
               aria-label={`Remove ${label} from saved locations`}
-              className="rounded-r-full py-1.5 pl-1 pr-3 opacity-70 outline-none hover:opacity-100 focus-visible:ring-2 focus-visible:ring-accent"
+              className="py-1.5 pl-1 pr-3 opacity-70 outline-none hover:opacity-100 focus-visible:ring-2 focus-visible:ring-accent"
             >
               <span aria-hidden="true">×</span>
             </button>
@@ -56,7 +56,7 @@ export function SavedLocations({ active, saved, onSelect, onSave, onRemove }: Sa
         <button
           type="button"
           onClick={() => onSave(active)}
-          className="inline-flex items-center gap-1 rounded-full border border-dashed border-line-strong bg-transparent px-3 py-1.5 text-xs font-semibold text-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-accent"
+          className="inline-flex items-center gap-1 border border-dashed border-line-strong bg-transparent px-3 py-1.5 text-xs font-semibold text-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-accent"
         >
           <span aria-hidden="true">+</span> Save {active.name}
         </button>

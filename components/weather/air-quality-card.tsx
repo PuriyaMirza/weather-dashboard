@@ -3,7 +3,7 @@ import type { WeatherCardProps } from './card-registry';
 import { CardBoundary, Metric } from './card-frame';
 import { formatIndex } from '@/lib/weather/units';
 
-const TITLE = 'Air Quality';
+const TITLE = 'Air Quality Detail';
 const DESCRIPTION = 'Current US AQI and the pollutants behind it.';
 
 /**

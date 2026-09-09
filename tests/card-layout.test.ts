@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_CARD_IDS, DEFAULT_CARD_LAYOUT, moveEntry, reconcileLayout } from '@/lib/weather/card-layout';
+import {
+  ALL_CARD_IDS,
+  DEFAULT_CARD_LAYOUT,
+  defaultSizeFor,
+  moveEntry,
+  reconcileLayout,
+} from '@/lib/weather/card-layout';
 import { weatherCardRegistry } from '@/components/weather/card-registry';
 
 describe('ALL_CARD_IDS', () => {
@@ -41,29 +47,43 @@ describe('moveEntry', () => {
 });
 
 describe('reconcileLayout', () => {
-  it('keeps a valid saved layout, preserving order and spans', () => {
+  it('keeps a valid saved layout, preserving order and sizes', () => {
     const saved = [
-      { id: 'wind', span: 'wide' },
-      { id: 'comfort', span: 'single' },
+      { id: 'wind', size: 'large' },
+      { id: 'comfort', size: 'small' },
     ];
     expect(reconcileLayout(saved)).toEqual(saved);
   });
 
   it('drops ids the current version no longer knows about', () => {
-    const saved = [{ id: 'wind', span: 'single' }, { id: 'retired-card', span: 'single' }];
-    expect(reconcileLayout(saved)).toEqual([{ id: 'wind', span: 'single' }]);
+    const saved = [{ id: 'wind', size: 'small' }, { id: 'retired-card', size: 'small' }];
+    expect(reconcileLayout(saved)).toEqual([{ id: 'wind', size: 'small' }]);
   });
 
   it('drops duplicate entries, which would otherwise collide as React keys', () => {
     const saved = [
-      { id: 'wind', span: 'single' },
-      { id: 'wind', span: 'wide' },
+      { id: 'wind', size: 'small' },
+      { id: 'wind', size: 'large' },
     ];
-    expect(reconcileLayout(saved)).toEqual([{ id: 'wind', span: 'single' }]);
+    expect(reconcileLayout(saved)).toEqual([{ id: 'wind', size: 'small' }]);
   });
 
-  it('coerces an unrecognised span to single rather than trusting it', () => {
-    expect(reconcileLayout([{ id: 'wind', span: 'enormous' }])).toEqual([{ id: 'wind', span: 'single' }]);
+  it('coerces an unrecognised size to the module default rather than trusting it', () => {
+    expect(reconcileLayout([{ id: 'wind', size: 'enormous' }])).toEqual([
+      { id: 'wind', size: defaultSizeFor('wind') },
+    ]);
+  });
+
+  /**
+   * Layouts saved before modular sizing used span: 'single' | 'wide'. Translating rather than
+   * discarding them means an existing dashboard survives the upgrade instead of silently
+   * resetting to defaults.
+   */
+  it('migrates a pre-sizing layout that still uses span', () => {
+    expect(reconcileLayout([{ id: 'wind', span: 'wide' }, { id: 'comfort', span: 'single' }])).toEqual([
+      { id: 'wind', size: 'medium' },
+      { id: 'comfort', size: 'small' },
+    ]);
   });
 
   it('falls back to defaults for input that is not an array', () => {
@@ -78,7 +98,7 @@ describe('reconcileLayout', () => {
   });
 
   it('ignores malformed entries without discarding the good ones', () => {
-    const saved = [null, 42, { span: 'wide' }, { id: 'wind', span: 'wide' }];
-    expect(reconcileLayout(saved)).toEqual([{ id: 'wind', span: 'wide' }]);
+    const saved = [null, 42, { size: 'large' }, { id: 'wind', size: 'large' }];
+    expect(reconcileLayout(saved)).toEqual([{ id: 'wind', size: 'large' }]);
   });
 });

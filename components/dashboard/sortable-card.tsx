@@ -3,7 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { WeatherCardDefinition, WeatherCardProps } from '@/components/weather/card-registry';
-import type { CardLayoutEntry } from '@/lib/weather/card-layout';
+import { CARD_SIZE_CLASS, type CardLayoutEntry, type CardSize } from '@/lib/weather/card-layout';
 import { CardControls } from './card-controls';
 
 interface SortableCardProps {
@@ -17,7 +17,7 @@ interface SortableCardProps {
   total: number;
   onMoveUp: () => void;
   onMoveDown: () => void;
-  onToggleSpan: () => void;
+  onSetSize: (size: CardSize) => void;
   onRemove: () => void;
 }
 
@@ -32,12 +32,12 @@ export function SortableCard({
   total,
   onMoveUp,
   onMoveDown,
-  onToggleSpan,
+  onSetSize,
   onRemove,
 }: SortableCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: entry.id,
-    // Dragging is only possible in edit mode; outside it the card is inert.
+    // Dragging is only possible in edit mode; outside it the module is inert.
     disabled: !isEditing,
   });
 
@@ -46,7 +46,7 @@ export function SortableCard({
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    // Lifted card sits above its neighbours while dragging.
+    // Lifted module sits above its neighbours while dragging.
     zIndex: isDragging ? 10 : undefined,
     opacity: isDragging ? 0.85 : undefined,
   };
@@ -55,26 +55,28 @@ export function SortableCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`${entry.span === 'wide' ? 'lg:col-span-2' : ''} ${
-        isEditing ? 'rounded-3xl outline-2 outline-dashed outline-accent outline-offset-4' : ''
+      className={`flex min-w-0 flex-col border-b border-r border-line ${CARD_SIZE_CLASS[entry.size]} ${
+        isEditing ? 'outline-1 outline-dashed outline-line-strong outline-offset-2' : ''
       }`}
     >
       {isEditing && (
         <CardControls
           title={definition.title}
-          span={entry.span}
+          size={entry.size}
           isFirst={isFirst}
           isLast={isLast}
           position={position}
           total={total}
           onMoveUp={onMoveUp}
           onMoveDown={onMoveDown}
-          onToggleSpan={onToggleSpan}
+          onSetSize={onSetSize}
           onRemove={onRemove}
           dragHandleProps={{ ...attributes, ...listeners }}
         />
       )}
-      <Component {...cardProps} />
+      <div className="min-h-0 flex-1">
+        <Component {...cardProps} />
+      </div>
     </div>
   );
 }

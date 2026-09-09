@@ -1,51 +1,80 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+async function openMenu(page: Page) {
+  await page.getByRole('button', { name: /open menu/i }).click();
+  return page.getByRole('dialog', { name: /dashboard settings/i });
+}
+
+async function enterArrangeMode(page: Page) {
+  const menu = await openMenu(page);
+  await menu.getByRole('button', { name: /arrange modules/i }).click();
+  await page.keyboard.press('Escape');
+}
 
 test('layout customization survives a reload', async ({ page }) => {
   await page.goto('/');
 
-  // Default layout renders.
-  await expect(page.getByRole('heading', { name: 'Comfort' })).toBeVisible();
+  const grid = page.getByLabel('Weather modules');
+  await expect(grid.getByRole('heading', { name: 'Humidity', exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: /edit dashboard/i }).click();
+  const menu = await openMenu(page);
 
-  // Remove a default card and add one that isn't shown by default.
-  await page.getByRole('button', { name: /remove comfort from the dashboard/i }).click();
-  await expect(page.getByRole('heading', { name: 'Comfort' })).toHaveCount(0);
+  // Switch off a default module and switch on one that isn't shown by default.
+  await menu.getByRole('checkbox', { name: 'Humidity', exact: true }).locator('xpath=ancestor::label[1]').click();
+  await expect(grid.getByRole('heading', { name: 'Humidity', exact: true })).toHaveCount(0);
 
-  await page.getByRole('button', { name: /add a card/i }).click();
-  await page.getByRole('button', { name: /add wind/i }).click();
-  await expect(page.getByRole('heading', { name: 'Wind' })).toBeVisible();
+  await menu.getByRole('checkbox', { name: 'Pressure', exact: true }).locator('xpath=ancestor::label[1]').click();
+  await expect(grid.getByRole('heading', { name: 'Pressure', exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: /done editing/i }).click();
+  await page.keyboard.press('Escape');
 
   // The real test: preferences persist across a full page load.
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Wind' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Comfort' })).toHaveCount(0);
+  await expect(grid.getByRole('heading', { name: 'Pressure', exact: true })).toBeVisible();
+  await expect(grid.getByRole('heading', { name: 'Humidity', exact: true })).toHaveCount(0);
 
-  // Edit mode is transient and must not come back after a reload.
-  await expect(page.getByRole('button', { name: /edit dashboard/i })).toHaveAttribute('aria-pressed', 'false');
+  // Arrange mode is transient and must not come back after a reload.
+  await expect(page.getByRole('button', { name: /^move /i })).toHaveCount(0);
 });
 
-test('cards can be reordered by keyboard alone, with no dragging', async ({ page }) => {
+test('modules can be reordered by keyboard alone, with no dragging', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /edit dashboard/i }).click();
+  await enterArrangeMode(page);
 
-  // Scoped to the grid: the page also has headings for the hero, saved locations, and edit panels.
-  const cardHeadings = page.getByLabel('Weather cards').getByRole('heading', { level: 2 });
-  const headingsBefore = await cardHeadings.allTextContents();
+  // Scoped to the grid: the page also has headings in the hero and the menu.
+  const moduleHeadings = page.getByLabel('Weather modules').getByRole('heading', { level: 2 });
+  const before = await moduleHeadings.allTextContents();
 
-  // Move the second card earlier using its button — no pointer drag involved.
-  await page.getByRole('button', { name: /^move comfort earlier$/i }).click();
+  // Move a module earlier using its button — no pointer drag involved.
+  await page.getByRole('button', { name: /^move humidity earlier$/i }).click();
 
-  const headingsAfter = await cardHeadings.allTextContents();
-  expect(headingsAfter).not.toEqual(headingsBefore);
-  expect(headingsAfter[0]).toBe('Comfort');
+  const after = await moduleHeadings.allTextContents();
+  expect(after).not.toEqual(before);
+  expect(after.indexOf('Humidity')).toBe(before.indexOf('Humidity') - 1);
 
   await page.reload();
-  // The grid shows a placeholder until persisted preferences rehydrate, so wait for real cards
+  // The grid shows a placeholder until persisted preferences rehydrate, so wait for real modules
   // before reading the order.
-  await expect(page.getByRole('heading', { name: 'Comfort' })).toBeVisible();
-  const headingsAfterReload = await page.getByLabel('Weather cards').getByRole('heading', { level: 2 }).allTextContents();
-  expect(headingsAfterReload[0]).toBe('Comfort');
+  await expect(page.getByLabel('Weather modules').getByRole('heading', { name: 'Humidity', exact: true })).toBeVisible();
+  const afterReload = await page.getByLabel('Weather modules').getByRole('heading', { level: 2 }).allTextContents();
+  expect(afterReload.indexOf('Humidity')).toBe(before.indexOf('Humidity') - 1);
+});
+
+test('a module can be resized without dragging a corner handle', async ({ page }) => {
+  await page.goto('/');
+  await enterArrangeMode(page);
+
+  const group = page.getByRole('radiogroup', { name: /size of humidity/i });
+  await expect(group.getByRole('radio', { name: /small humidity/i })).toBeChecked();
+
+  await group.getByRole('radio', { name: /large humidity/i }).click();
+  await expect(group.getByRole('radio', { name: /large humidity/i })).toBeChecked();
+
+  // Size is part of the saved layout, so it has to survive a reload like everything else.
+  await page.reload();
+  await expect(page.getByLabel('Weather modules').getByRole('heading', { name: 'Humidity', exact: true })).toBeVisible();
+  await enterArrangeMode(page);
+  await expect(
+    page.getByRole('radiogroup', { name: /size of humidity/i }).getByRole('radio', { name: /large humidity/i }),
+  ).toBeChecked();
 });

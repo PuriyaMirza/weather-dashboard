@@ -59,10 +59,29 @@ export interface OpenMeteoForecastParams {
   timezone: string;
 }
 
+/**
+ * Why the call failed, in terms a caller can act on.
+ *
+ * - `network`   — never reached Open-Meteo (DNS, refused connection, timeout, blocked egress).
+ * - `upstream`  — reached it, but it answered with an error status.
+ * - `malformed` — reached it, but the body was not the shape we require.
+ *
+ * The distinction exists so route handlers can pick a message a *person* can act on. The
+ * `message` itself is diagnostic — it can contain a Zod report or an upstream parser complaint —
+ * and belongs in the server log, never on someone's screen.
+ */
+export type OpenMeteoErrorKind = 'network' | 'upstream' | 'malformed';
+
 export class OpenMeteoError extends Error {
-  constructor(message: string) {
+  readonly kind: OpenMeteoErrorKind;
+  /** Upstream HTTP status, when there was a response at all. */
+  readonly status?: number;
+
+  constructor(message: string, kind: OpenMeteoErrorKind = 'upstream', status?: number) {
     super(message);
     this.name = 'OpenMeteoError';
+    this.kind = kind;
+    this.status = status;
   }
 }
 
@@ -96,25 +115,36 @@ export async function fetchOpenMeteoForecast(
   try {
     response = await fetchImpl(buildOpenMeteoForecastUrl(params));
   } catch (error) {
-    throw new OpenMeteoError(`Could not reach Open-Meteo: ${error instanceof Error ? error.message : 'network error'}`);
+    throw new OpenMeteoError(
+      `Could not reach Open-Meteo: ${error instanceof Error ? error.message : 'network error'}`,
+      'network',
+    );
   }
 
   let json: unknown;
   try {
     json = await response.json();
   } catch {
-    throw new OpenMeteoError(`Open-Meteo response was not valid JSON (status ${response.status})`);
+    throw new OpenMeteoError(
+      `Open-Meteo response was not valid JSON (status ${response.status})`,
+      response.ok ? 'malformed' : 'upstream',
+      response.status,
+    );
   }
 
   if (!response.ok) {
     const errorBody = openMeteoErrorResponseSchema.safeParse(json);
     const reason = errorBody.success ? errorBody.data.reason : `request failed with status ${response.status}`;
-    throw new OpenMeteoError(`Open-Meteo error: ${reason}`);
+    throw new OpenMeteoError(`Open-Meteo error: ${reason}`, 'upstream', response.status);
   }
 
   const parsed = openMeteoForecastResponseSchema.safeParse(json);
   if (!parsed.success) {
-    throw new OpenMeteoError(`Open-Meteo response failed validation: ${parsed.error.message}`);
+    throw new OpenMeteoError(
+      `Open-Meteo response failed validation: ${parsed.error.message}`,
+      'malformed',
+      response.status,
+    );
   }
 
   return parsed.data;

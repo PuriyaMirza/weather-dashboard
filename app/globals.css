@@ -8,52 +8,58 @@
   `dark:` variant on every element — which is what previously made dark mode impractical, with 43
   distinct palette classes spread across 115 places.
 
+  The palette is deliberately monochrome: paper and ink, with hairline rules and no shadows,
+  gradients or fills doing structural work. Hierarchy comes from type size, weight and space
+  instead of from colour. The one place colour survives is the severity scales, and even there the
+  band is always spelled out in words, so nothing depends on seeing the hue.
+
   Light is the default; dark applies either when the user picks it explicitly ([data-theme="dark"])
   or when the system asks for it and the user hasn't overridden it.
 */
 
 :root {
-  --canvas: #f1f5f9;
-  --card: #ffffff;
+  --canvas: #f4f3f0;
+  --card: #faf9f7;
   --card-raised: #ffffff;
-  --ink: #0f172a;
-  --ink-strong: #020617;
-  --muted: #52616f;
-  --line: #d3dbe4;
-  --line-strong: #b6c2cf;
-  --accent: #0369a1;
-  --accent-ink: #ffffff;
-  --accent-soft: #e0f2fe;
-  --accent-soft-ink: #075985;
-  --danger: #b91c1c;
-  --danger-soft: #fef2f2;
-  --danger-line: #fca5a5;
+  --ink: #16150f;
+  --ink-strong: #000000;
+  --muted: #5c5a51;
+  --line: #c9c6bd;
+  --line-strong: #16150f;
+  --accent: #16150f;
+  --accent-ink: #faf9f7;
+  --accent-soft: #e6e4dd;
+  --accent-soft-ink: #16150f;
+  --danger: #8a1c10;
+  --danger-soft: #f3e7e4;
+  --danger-line: #8a1c10;
 
   /* Charts read these directly — SVG accepts var() in stroke/fill. */
-  --chart-grid: #e2e8f0;
-  --chart-axis: #475569;
-  --chart-line: #0369a1;
-  --chart-fill: #bae6fd;
-  --chart-bar: #0284c7;
+  --chart-grid: #ddd9d0;
+  --chart-axis: #5c5a51;
+  --chart-line: #16150f;
+  --chart-fill: #dedad1;
+  --chart-bar: #16150f;
 
-  /* Qualitative scale for severity bands (UV, air quality). Always paired with a word. */
-  --scale-1: #047857;
-  --scale-1-bg: #d1fae5;
-  --scale-2: #92400e;
-  --scale-2-bg: #fef3c7;
-  --scale-3: #9a3412;
-  --scale-3-bg: #ffedd5;
-  --scale-4: #9f1239;
-  --scale-4-bg: #ffe4e6;
-  --scale-5: #6b21a8;
-  --scale-5-bg: #f3e8ff;
+  /* Qualitative scale for severity bands (UV, air quality). Always paired with a word, so the
+     hue is reinforcement rather than the signal. Muted to sit inside a monochrome page. */
+  --scale-1: #2f5d3f;
+  --scale-1-bg: #e4ebe4;
+  --scale-2: #6b551b;
+  --scale-2-bg: #efe9d8;
+  --scale-3: #8a4a1c;
+  --scale-3-bg: #f2e6dc;
+  --scale-4: #8a1c10;
+  --scale-4-bg: #f3e2df;
+  --scale-5: #4a2063;
+  --scale-5-bg: #e8e2ee;
 
   /* Overridden per weather condition by lib/weather/atmosphere.ts. Defaults are a calm daytime sky. */
-  --sky-from: #dbeafe;
-  --sky-via: #e0f2fe;
-  --sky-to: #f1f5f9;
-  --sky-ink: #0f172a;
-  --sky-ink-muted: #334155;
+  --sky-from: #eceae4;
+  --sky-via: #f4f3f0;
+  --sky-to: #e4e1d9;
+  --sky-ink: #16150f;
+  --sky-ink-muted: #4a4840;
 
   color-scheme: light;
 }
@@ -62,88 +68,88 @@
    preference — because CSS has no way to share a declaration block between two selectors that
    must stay independently addressable. */
 :root[data-theme="dark"] {
-  --canvas: #070b14;
-  --card: #101827;
-  --card-raised: #16202f;
-  --ink: #e9eef5;
+  --canvas: #000000;
+  --card: #000000;
+  --card-raised: #0d0d0c;
+  --ink: #e8e6e0;
   --ink-strong: #ffffff;
-  --muted: #a3b0c0;
-  --line: #27354a;
-  --line-strong: #3a4a63;
-  --accent: #7cc6f5;
-  --accent-ink: #04121f;
-  --accent-soft: #10283a;
-  --accent-soft-ink: #b6e2fb;
-  --danger: #fda4a4;
-  --danger-soft: #2a1315;
-  --danger-line: #7f2a2a;
+  --muted: #96938a;
+  --line: #33322e;
+  --line-strong: #e8e6e0;
+  --accent: #f5f3ee;
+  --accent-ink: #000000;
+  --accent-soft: #1a1a18;
+  --accent-soft-ink: #f5f3ee;
+  --danger: #f0a8a0;
+  --danger-soft: #1c0f0d;
+  --danger-line: #f0a8a0;
 
-  --chart-grid: #253248;
-  --chart-axis: #a3b0c0;
-  --chart-line: #7cc6f5;
-  --chart-fill: #17364d;
-  --chart-bar: #4aa8e0;
+  --chart-grid: #2a2926;
+  --chart-axis: #96938a;
+  --chart-line: #f5f3ee;
+  --chart-fill: #232320;
+  --chart-bar: #e8e6e0;
 
-  --scale-1: #6ee7b7;
-  --scale-1-bg: #06281f;
-  --scale-2: #fcd34d;
-  --scale-2-bg: #2e2206;
-  --scale-3: #fdba74;
-  --scale-3-bg: #331a08;
-  --scale-4: #fda4af;
-  --scale-4-bg: #350f18;
-  --scale-5: #d8b4fe;
-  --scale-5-bg: #241033;
+  --scale-1: #a8ceb2;
+  --scale-1-bg: #10180f;
+  --scale-2: #e0c579;
+  --scale-2-bg: #1a1608;
+  --scale-3: #eaad78;
+  --scale-3-bg: #1d130a;
+  --scale-4: #f0a8a0;
+  --scale-4-bg: #1c0f0d;
+  --scale-5: #c9aede;
+  --scale-5-bg: #17101d;
 
-  --sky-from: #0b1220;
-  --sky-via: #101a2e;
-  --sky-to: #070b14;
-  --sky-ink: #e9eef5;
-  --sky-ink-muted: #a3b0c0;
+  --sky-from: #14140f;
+  --sky-via: #0a0a08;
+  --sky-to: #000000;
+  --sky-ink: #f5f3ee;
+  --sky-ink-muted: #a5a299;
 
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --canvas: #070b14;
-    --card: #101827;
-    --card-raised: #16202f;
-    --ink: #e9eef5;
+    --canvas: #000000;
+    --card: #000000;
+    --card-raised: #0d0d0c;
+    --ink: #e8e6e0;
     --ink-strong: #ffffff;
-    --muted: #a3b0c0;
-    --line: #27354a;
-    --line-strong: #3a4a63;
-    --accent: #7cc6f5;
-    --accent-ink: #04121f;
-    --accent-soft: #10283a;
-    --accent-soft-ink: #b6e2fb;
-    --danger: #fda4a4;
-    --danger-soft: #2a1315;
-    --danger-line: #7f2a2a;
+    --muted: #96938a;
+    --line: #33322e;
+    --line-strong: #e8e6e0;
+    --accent: #f5f3ee;
+    --accent-ink: #000000;
+    --accent-soft: #1a1a18;
+    --accent-soft-ink: #f5f3ee;
+    --danger: #f0a8a0;
+    --danger-soft: #1c0f0d;
+    --danger-line: #f0a8a0;
 
-    --chart-grid: #253248;
-    --chart-axis: #a3b0c0;
-    --chart-line: #7cc6f5;
-    --chart-fill: #17364d;
-    --chart-bar: #4aa8e0;
+    --chart-grid: #2a2926;
+    --chart-axis: #96938a;
+    --chart-line: #f5f3ee;
+    --chart-fill: #232320;
+    --chart-bar: #e8e6e0;
 
-    --scale-1: #6ee7b7;
-    --scale-1-bg: #06281f;
-    --scale-2: #fcd34d;
-    --scale-2-bg: #2e2206;
-    --scale-3: #fdba74;
-    --scale-3-bg: #331a08;
-    --scale-4: #fda4af;
-    --scale-4-bg: #350f18;
-    --scale-5: #d8b4fe;
-    --scale-5-bg: #241033;
+    --scale-1: #a8ceb2;
+    --scale-1-bg: #10180f;
+    --scale-2: #e0c579;
+    --scale-2-bg: #1a1608;
+    --scale-3: #eaad78;
+    --scale-3-bg: #1d130a;
+    --scale-4: #f0a8a0;
+    --scale-4-bg: #1c0f0d;
+    --scale-5: #c9aede;
+    --scale-5-bg: #17101d;
 
-    --sky-from: #0b1220;
-    --sky-via: #101a2e;
-    --sky-to: #070b14;
-    --sky-ink: #e9eef5;
-    --sky-ink-muted: #a3b0c0;
+    --sky-from: #14140f;
+    --sky-via: #0a0a08;
+    --sky-to: #000000;
+    --sky-ink: #f5f3ee;
+    --sky-ink-muted: #a5a299;
 
     color-scheme: dark;
   }
@@ -152,6 +158,7 @@
 /* Expose the tokens to Tailwind so `bg-card`, `text-ink`, `border-line` etc. exist as utilities. */
 @theme inline {
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), ui-serif, Georgia, serif;
   --color-canvas: var(--canvas);
   --color-card: var(--card);
   --color-card-raised: var(--card-raised);
@@ -169,6 +176,15 @@
   --color-danger-line: var(--danger-line);
   --color-sky-ink: var(--sky-ink);
   --color-sky-ink-muted: var(--sky-ink-muted);
+  /* Sharp corners everywhere: the radius scale is flattened to zero rather than policed per
+     component, so a stray `rounded-xl` can't reintroduce a soft edge. */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
 }
 
 body {
@@ -177,12 +193,20 @@ body {
   color: var(--ink);
 }
 
-/* The atmospheric backdrop behind the hero. Its colours come from atmosphere.ts and change with
-   the weather; it is decorative only, and never the sole carrier of information. */
+/* The small all-caps label used for every field name, module title and control. */
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+/* The atmospheric backdrop behind the hero. Its tones come from atmosphere.ts and change with the
+   weather; it is decorative only, and never the sole carrier of information. Kept as a low-contrast
+   tonal wash rather than colour, so it reads as paper stock rather than as a picture of the sky. */
 .atmosphere {
   background-image:
-    radial-gradient(120% 90% at 15% 0%, var(--sky-from) 0%, transparent 60%),
-    radial-gradient(100% 80% at 85% 10%, var(--sky-via) 0%, transparent 55%),
+    radial-gradient(130% 100% at 12% 0%, var(--sky-from) 0%, transparent 62%),
     linear-gradient(180deg, var(--sky-via) 0%, var(--sky-to) 100%);
 }
 
