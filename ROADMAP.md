@@ -105,3 +105,23 @@ and Co-Star's visual language as the reference.
   otherwise have been forecast as "null island".
 - Air-quality upstream failures were swallowed silently, so a permanently broken upstream looked
   identical to a location with no data. They are logged now.
+
+## v4 — Refresh, retry, and graceful staleness — done
+
+The last functional gap: the forecast could only be updated by reloading the page, and any failure
+emptied the dashboard with no way back.
+
+- **Refresh.** A button in the hero beside the existing "Updated HH:MM" stamp. It sends
+  `cache: 'no-store'` — a refresh re-requests the same URL, so without that the browser or CDN can
+  answer from cache and the button appears to do nothing. The first load still uses the normal
+  cache path.
+- **Try again.** A failed load is no longer a dead end.
+- **Graceful staleness.** A failed *refresh* keeps the last good reading on screen, labelled
+  "Showing the last reading that loaded" plus the reason, rather than replacing a working dashboard
+  with errors. Held in memory only: a fresh page load that fails still shows the error, because
+  weather recovered from storage could be arbitrarily old.
+- **One alert, not seven.** There is exactly one request behind the whole dashboard, so repeating
+  its failure in every module produced seven identical `role="alert"` nodes — announced seven times
+  by a screen reader, and a wall of red on a phone. The hero states the failure once; modules fall
+  back to their quiet "unavailable" state, which is what an absent reading looks like everywhere
+  else in the app.
