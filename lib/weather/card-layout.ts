@@ -64,6 +64,7 @@ export const ALL_CARD_IDS: WeatherCardId[] = [
   'cloud-cover',
   'air-quality-index',
   'sunrise-sunset',
+  'activity-windows',
   'hourly-temperature',
   'precipitation',
   'daily-forecast',
@@ -108,6 +109,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       { id: 'temperature', size: 'medium' },
       { id: 'feels-like', size: 'small' },
       { id: 'wind-speed', size: 'small' },
+      { id: 'activity-windows', size: 'medium' },
       { id: 'wind', size: 'medium' },
       { id: 'air-quality-index', size: 'small' },
       { id: 'precipitation-chance', size: 'small' },
@@ -122,6 +124,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       { id: 'temperature', size: 'medium' },
       { id: 'humidity', size: 'small' },
       { id: 'dew-point', size: 'small' },
+      { id: 'activity-windows', size: 'medium' },
       { id: 'daily-forecast', size: 'large' },
       { id: 'uv-index', size: 'small' },
       { id: 'sunrise-sunset', size: 'small' },
@@ -139,6 +142,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
 /** Panels carrying a chart or a table need the room; single readings do not. */
 function defaultSizeFor(id: WeatherCardId): CardSize {
   if (id === 'hourly-temperature' || id === 'precipitation' || id === 'daily-forecast') return 'large';
+  if (id === 'activity-windows') return 'medium';
   if (id === 'current-conditions' || id === 'comfort' || id === 'wind' || id === 'sun-uv') return 'medium';
   if (id === 'atmospheric-details' || id === 'air-quality') return 'medium';
   return 'small';

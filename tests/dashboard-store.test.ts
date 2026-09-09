@@ -40,7 +40,7 @@ describe('dashboard store', () => {
     expect(persisted.state.location).toEqual(SEATTLE);
     // partialize should keep actions out of storage.
     expect(persisted.state.setLocation).toBeUndefined();
-    expect(persisted.version).toBe(5);
+    expect(persisted.version).toBe(6);
   });
 
   it('does not read persisted state until rehydrate is called (skipHydration)', async () => {

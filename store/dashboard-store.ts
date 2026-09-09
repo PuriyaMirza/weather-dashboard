@@ -218,7 +218,7 @@ export const useDashboardStore = create<DashboardState>()(
       },
       // Bump when the persisted shape changes so old saved state is never deserialized into a
       // shape the code no longer understands.
-      version: 5,
+      version: 6,
       // Without a migrate, zustand *discards* state saved under an older version — which would
       // throw away every existing dashboard on upgrade and make reconcileLayout's span-to-size
       // translation dead code. Older state is handed through instead, because `merge` below

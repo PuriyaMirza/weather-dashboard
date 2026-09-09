@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import { METRIC_MODULES, type MetricModuleId } from '@/lib/weather/metrics';
 import type { WeatherDashboardData } from '@/lib/weather/types';
 import type { UnitSystem } from '@/lib/weather/units';
+import { ActivityWindowsCard } from './activity-windows-card';
 import { AirQualityCard } from './air-quality-card';
 import { AtmosphericDetailsCard } from './atmospheric-details-card';
 import { ComfortCard } from './comfort-card';
@@ -26,7 +27,8 @@ export type CompositeCardId =
   | 'daily-forecast'
   | 'sun-uv'
   | 'atmospheric-details'
-  | 'air-quality';
+  | 'air-quality'
+  | 'activity-windows';
 
 export type WeatherCardId = CompositeCardId | MetricModuleId;
 
@@ -49,6 +51,13 @@ export interface WeatherCardDefinition {
 }
 
 const compositeCards: WeatherCardDefinition[] = [
+  {
+    id: 'activity-windows',
+    title: 'Best Time To Go Out',
+    description: 'The best stretch of the next day for walking, running, cycling, and gardening.',
+    kind: 'panel',
+    Component: ActivityWindowsCard,
+  },
   {
     id: 'current-conditions',
     title: 'Current Conditions',

@@ -255,6 +255,7 @@ function buildHourlyPoints(response: OpenMeteoForecastResponse): HourlyPoint[] {
       windDirection: windDirectionDegrees == null ? null : degreesToCompass(windDirectionDegrees),
       cloudCoverPercent: hourly.cloud_cover[index] ?? null,
       pressureInHg: nullableHectopascalsToInHg(hourly.pressure_msl[index]),
+      uvIndex: hourly.uv_index[index] ?? null,
     });
   }
 
