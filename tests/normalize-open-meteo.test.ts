@@ -47,15 +47,17 @@ describe('normalizeOpenMeteoForecast', () => {
     expect(data.comfort?.pressureInHg).toBeCloseTo(30.08, 1);
     expect(data.comfort?.airQualityIndex).toBeNull();
 
-    expect(data.hourly).toHaveLength(6);
+    // current.time (15:15) is closest to 15:00, so the series starts there — not at the raw
+    // array's first entry (13:00, which is already in the past by the time of this reading).
+    expect(data.hourly).toHaveLength(4);
     expect(data.hourly[0]).toMatchObject({
-      time: '2026-07-18T13:00:00-07:00',
-      temperatureF: 70,
-      feelsLikeF: 71,
-      precipitationChance: 10,
+      time: '2026-07-18T15:00:00-07:00',
+      temperatureF: 74,
+      feelsLikeF: 75,
+      precipitationChance: 12,
       condition: 'partly-cloudy',
     });
-    expect(data.hourly[3].condition).toBe('sunny');
+    expect(data.hourly[1].condition).toBe('sunny');
 
     expect(data.updatedAt).toBe('2026-07-18T15:15:00-07:00');
   });
@@ -78,12 +80,27 @@ describe('normalizeOpenMeteoForecast', () => {
 
   it('skips individual hourly points that are missing required fields instead of fabricating values', () => {
     const data = normalizeOpenMeteoForecast(parse(partialResponse), PLACE);
-    // Index 1 (14:00) has a null temperature_2m in the fixture and should be skipped.
-    expect(data.hourly).toHaveLength(3);
+    // Index 1 (14:00, null temperature_2m) is now excluded twice over: current.time is 15:15,
+    // so the window starts at 15:00 regardless, and 14:00 sits before it either way. That leaves
+    // only the two remaining hours, both complete.
+    expect(data.hourly).toHaveLength(2);
     expect(data.hourly.map((point) => point.time)).toEqual([
-      '2026-07-18T13:00:00-07:00',
       '2026-07-18T15:00:00-07:00',
       '2026-07-18T16:00:00-07:00',
+    ]);
+  });
+
+  it('skips a missing hour inside the forward window too, not just past ones', () => {
+    // A null placed *after* the window start proves the skip logic still runs once windowing is
+    // anchored to "now" — the previous fixture's null happens to fall before the window either way.
+    const response = parse(validResponse);
+    response.hourly.temperature_2m[3] = null; // 2026-07-18T16:00, inside the 15:00-onward window
+
+    const data = normalizeOpenMeteoForecast(response, PLACE);
+    expect(data.hourly.map((point) => point.time)).toEqual([
+      '2026-07-18T15:00:00-07:00',
+      '2026-07-18T17:00:00-07:00',
+      '2026-07-18T18:00:00-07:00',
     ]);
   });
 
@@ -127,9 +144,14 @@ describe('normalizeOpenMeteoForecast — wind, sun, atmospheric, daily', () => {
     expect(data.sun?.uvIndexMax).toBe(7);
   });
 
-  it('derives a rising pressure trend from the hourly series', () => {
-    // The fixture's hourly pressure climbs steadily.
-    const data = normalizeOpenMeteoForecast(parse(validResponse), PLACE);
+  it('derives a rising pressure trend from the hourly series starting at the current hour', () => {
+    // The fixture's own default rise (1018.5 -> 1019.5 hPa across all six hours) is too small to
+    // clear the threshold once windowed to the four hours from "now" onward, so the pressures are
+    // set explicitly here rather than relying on values engineered for the old, unwindowed slice.
+    const rising = parse(validResponse);
+    rising.hourly.pressure_msl = rising.hourly.pressure_msl.map((_, index) => 1015 + index * 2);
+
+    const data = normalizeOpenMeteoForecast(rising, PLACE);
     expect(data.atmospheric?.pressureTrend).toBe('rising');
   });
 
@@ -177,12 +199,13 @@ describe('normalizeOpenMeteoForecast — wind, sun, atmospheric, daily', () => {
   it('carries the new per-hour fields onto hourly points, nulling only what is missing', () => {
     const data = normalizeOpenMeteoForecast(parse(validResponse), PLACE);
 
+    // hourly[0] is the 15:00 reading (closest to current.time 15:15), not the array's first entry.
     expect(data.hourly[0]).toMatchObject({
-      precipitationInches: 0,
-      windMph: 5,
-      windGustMph: 9,
+      precipitationInches: 0.02,
+      windMph: 7,
+      windGustMph: 11,
       windDirection: 'WNW',
-      cloudCoverPercent: 20,
+      cloudCoverPercent: 22,
     });
   });
 
@@ -194,5 +217,60 @@ describe('normalizeOpenMeteoForecast — wind, sun, atmospheric, daily', () => {
     const withoutWind = data.hourly.find((point) => point.windMph === null);
     expect(withoutWind).toBeDefined();
     expect(withoutWind?.temperatureF).toBeTypeOf('number');
+  });
+});
+
+/**
+ * Regression: the upstream hourly array always begins at local midnight, including hours already
+ * gone. Taking its first entries showed the small hours of the morning no matter what time it was
+ * — at 1:30pm the strip opened at 12am and ran to 7am. Every one of these assertions is about the
+ * *anchor*, which is the thing that was wrong.
+ */
+describe('normalizeOpenMeteoForecast — the hourly window is anchored to now', () => {
+  it('starts at the hour closest to the current reading, not at the start of the array', () => {
+    const data = normalizeOpenMeteoForecast(parse(validResponse), PLACE);
+
+    // The fixture's array opens at 13:00; current.time is 15:15.
+    expect(data.hourly[0]?.time).toBe('2026-07-18T15:00:00-07:00');
+  });
+
+  it('never opens on an hour earlier than the current reading', () => {
+    const data = normalizeOpenMeteoForecast(parse(validResponse), PLACE);
+
+    const first = new Date(data.hourly[0]!.time).getTime();
+    // current.time 15:15 rounds to the 15:00 slot, so "not before" allows that same hour.
+    const now = new Date('2026-07-18T15:15:00-07:00').getTime();
+    expect(first).toBeGreaterThan(now - 60 * 60 * 1000);
+  });
+
+  it('runs past midnight into the next day rather than stopping at the end of today', () => {
+    // The real failure mode this guards: a window that stops at the end of the current day would
+    // leave someone checking the forecast at 11pm with almost nothing. The fixtures all sit at
+    // 15:15, so this builds a late-evening reading spanning the date boundary.
+    const response = parse(validResponse);
+    response.current.time = '2026-07-18T22:30';
+    response.hourly.time = ['2026-07-18T22:00', '2026-07-18T23:00', '2026-07-19T00:00', '2026-07-19T01:00'];
+    response.hourly.temperature_2m = [64, 63, 62, 61];
+    response.hourly.apparent_temperature = [63, 62, 61, 60];
+    response.hourly.precipitation_probability = [5, 5, 6, 6];
+    response.hourly.weather_code = [1, 1, 2, 2];
+
+    const data = normalizeOpenMeteoForecast(response, PLACE);
+
+    expect(data.hourly.map((point) => point.time)).toEqual([
+      '2026-07-18T22:00:00-07:00',
+      '2026-07-18T23:00:00-07:00',
+      '2026-07-19T00:00:00-07:00',
+      '2026-07-19T01:00:00-07:00',
+    ]);
+  });
+
+  it('falls back to the start of the array when there is no current hour to match', () => {
+    const response = parse(validResponse);
+    response.hourly.time = [];
+    response.hourly.temperature_2m = [];
+
+    // An empty series must produce an empty window, not a crash or a negative slice index.
+    expect(normalizeOpenMeteoForecast(response, PLACE).hourly).toEqual([]);
   });
 });

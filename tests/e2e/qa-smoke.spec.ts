@@ -143,3 +143,34 @@ test('one broken module degrades to its own tile, leaving the dashboard usable',
   await page.getByRole('button', { name: /open menu/i }).click();
   await expect(page.getByRole('dialog', { name: /dashboard settings/i })).toBeVisible();
 });
+
+test('the hourly strip opens at the current hour, not at the start of the day', async ({ page }) => {
+  // The QA suite previously checked that the page renders, hydrates and is accessible — but never
+  // that the numbers on it are the right numbers. It stayed green while the hourly strip showed
+  // 12am-7am at half past one in the afternoon, because the upstream array starts at local
+  // midnight and the window was anchored to its first entry rather than to "now".
+  const observedAt = '2026-09-09T13:30:00-04:00';
+  const payload = {
+    ...mockWeatherData,
+    location: { ...mockWeatherData.location, timezone: 'America/New_York' },
+    current: { ...mockWeatherData.current!, observedAt },
+    updatedAt: observedAt,
+    // What the fixed normalizer produces: the window already begins at the current hour.
+    hourly: Array.from({ length: 8 }, (_, offset) => ({
+      ...mockWeatherData.hourly[0],
+      time: `2026-09-09T${String(13 + offset).padStart(2, '0')}:00:00-04:00`,
+    })),
+  };
+
+  await page.route('**/api/weather*', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(payload) }),
+  );
+
+  await page.goto('/');
+
+  const hero = page.locator('section[aria-labelledby="hero-heading"]');
+  await expect(hero.getByText('1 PM', { exact: true })).toBeVisible();
+  // The overnight hours are the signature of the old, midnight-anchored window.
+  await expect(hero.getByText('12 AM', { exact: true })).toHaveCount(0);
+  await expect(hero.getByText('3 AM', { exact: true })).toHaveCount(0);
+});
