@@ -92,6 +92,8 @@ export interface HourlyPoint {
   windDirection: string | null;
   cloudCoverPercent: number | null;
   pressureInHg: number | null;
+  /** Already requested per hour upstream; carried here so sun exposure can be judged hour by hour. */
+  uvIndex: number | null;
 }
 
 export interface DailyForecastDay {

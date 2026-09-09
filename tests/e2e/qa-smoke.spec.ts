@@ -174,3 +174,46 @@ test('the hourly strip opens at the current hour, not at the start of the day', 
   await expect(hero.getByText('12 AM', { exact: true })).toHaveCount(0);
   await expect(hero.getByText('3 AM', { exact: true })).toHaveCount(0);
 });
+
+test('the activity module states a real window, in words', async ({ page }) => {
+  // Values, not just rendering — the gap that let the midnight-anchor bug ship green. A module
+  // that answers a question is only useful if the answer is right, so this asserts the actual
+  // window rather than merely that the tile appeared.
+  const observedAt = '2026-07-18T12:00:00-07:00';
+  const payload = {
+    ...mockWeatherData,
+    current: { ...mockWeatherData.current!, observedAt },
+    updatedAt: observedAt,
+    sun: { ...mockWeatherData.sun!, sunset: '2026-07-18T20:00:00-07:00' },
+    // Four calm, dry, mild hours from noon: every activity should find this acceptable.
+    hourly: Array.from({ length: 4 }, (_, offset) => ({
+      ...mockWeatherData.hourly[0],
+      time: `2026-07-18T${String(12 + offset).padStart(2, '0')}:00:00-07:00`,
+      feelsLikeF: 68,
+      precipitationChance: 0,
+      windMph: 5,
+      windGustMph: 8,
+      uvIndex: 3,
+    })),
+  };
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'weather-dashboard',
+      JSON.stringify({ state: { cards: [{ id: 'activity-windows', size: 'medium' }] }, version: 6 }),
+    );
+  });
+  await page.route('**/api/weather*', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(payload) }),
+  );
+
+  await page.goto('/');
+
+  const panel = page.getByRole('article', { name: /best time to go out/i });
+  await expect(panel).toBeVisible();
+
+  // The window itself, stated as times a person can act on.
+  await expect(panel.getByText('12 PM – 4 PM').first()).toBeVisible();
+  // And the reasoning in words, never colour alone.
+  await expect(panel.getByText(/no rain expected/i).first()).toBeVisible();
+});

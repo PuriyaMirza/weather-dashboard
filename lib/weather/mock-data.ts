@@ -20,6 +20,7 @@ function hour(
     windDirection: 'NW',
     cloudCoverPercent: 40,
     pressureInHg: 30.08,
+    uvIndex: 4,
     ...overrides,
   };
 }
