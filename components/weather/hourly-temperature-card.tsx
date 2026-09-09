@@ -35,7 +35,7 @@ export function HourlyTemperatureCard({ data, isLoading, errorMessage, unitSyste
         <>
           {/* aria-hidden: the chart is decorative for assistive tech, which reads the table below
               instead. Without this the SVG's text nodes are announced as meaningless fragments. */}
-          <div className="min-h-52 w-full flex-1" aria-hidden="true">
+          <div className="min-h-52 w-full flex-1" aria-hidden="true" inert>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 12, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />

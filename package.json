@@ -3,13 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "dev": "next dev",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "qa": "npm run lint && npm run typecheck && npm run test && npm run build && npm run qa:browser",
+    "qa:browser": "CI=1 playwright test",
+    "start": "next start",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@dnd-kit/accessibility": "^3.1.1",
@@ -17,7 +19,7 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "next": "^16.2.10",
+    "next": "^16.3.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "recharts": "^3.9.2",
@@ -25,6 +27,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/eslintrc": "^3.3.6",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4.3.3",
