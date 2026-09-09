@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Weather Dashboard">
+  <rect width="32" height="32" fill="#000000"/>
+  <circle cx="16" cy="13" r="6.5" fill="none" stroke="#f5f3ee" stroke-width="2"/>
+  <line x1="6" y1="23.5" x2="26" y2="23.5" stroke="#f5f3ee" stroke-width="2"/>
+  <line x1="9" y1="27.5" x2="23" y2="27.5" stroke="#f5f3ee" stroke-width="2"/>
+</svg>

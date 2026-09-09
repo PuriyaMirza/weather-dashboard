@@ -202,7 +202,7 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
             setDismissedQuery(null);
           }}
           onKeyDown={handleKeyDown}
-          className="w-full rounded-2xl border border-line-strong bg-card px-4 py-2.5 text-ink shadow-sm outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent"
+          className="w-full rounded-2xl border border-line-strong bg-card px-4 py-2.5 text-ink outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent"
         />
 
         <ul
@@ -210,7 +210,7 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
           role="listbox"
           aria-label="Location results"
           hidden={!isOpen}
-          className="absolute z-10 mt-1 max-h-72 w-full overflow-auto rounded-2xl border border-line bg-card py-1 shadow-lg"
+          className="absolute z-10 mt-1 max-h-72 w-full overflow-auto rounded-2xl border border-line bg-card py-1 "
         >
           {results.map((location, index) => (
             <li
@@ -250,7 +250,7 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
           type="button"
           onClick={requestCurrentLocation}
           disabled={isLocating}
-          className="rounded-full border border-line-strong bg-card px-4 py-2 text-sm font-medium text-ink shadow-sm outline-none hover:bg-canvas focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60"
+          className="border border-line-strong bg-card px-4 py-2 text-sm font-medium text-ink outline-none hover:bg-canvas focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isLocating ? 'Finding your location…' : 'Use my current location'}
         </button>

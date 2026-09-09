@@ -2,12 +2,26 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { CACHE_CONTROL, clientKey, jsonError, rateLimitHeaders } from '@/lib/api/http';
 import { normalizeOpenMeteoAirQuality, normalizeOpenMeteoForecast } from '@/lib/weather/normalize-open-meteo';
-import { OpenMeteoError, fetchOpenMeteoForecast } from '@/lib/weather/providers/open-meteo';
+import { OpenMeteoError, fetchOpenMeteoForecast, type OpenMeteoErrorKind } from '@/lib/weather/providers/open-meteo';
 import { fetchOpenMeteoAirQuality } from '@/lib/weather/providers/open-meteo-air-quality';
 import type { AirQualityMetrics } from '@/lib/weather/types';
 import { createRateLimiter } from '@/lib/rate-limit';
 
 const rateLimiter = createRateLimiter({ limit: 30, windowMs: 60_000 });
+
+/**
+ * What the *user* is told, keyed by why the call failed.
+ *
+ * The provider's own message is a diagnostic — it can carry an upstream parser complaint or a
+ * whole Zod report — and putting it on screen tells the reader nothing they can act on. ("Open-Meteo
+ * response was not valid JSON (status 403)" was, briefly, real user-facing copy.) The diagnostic
+ * goes to the server log instead; the reader gets a sentence and a Try again button.
+ */
+const USER_MESSAGE: Record<OpenMeteoErrorKind, string> = {
+  network: "Couldn't reach the weather service. Check your connection and try again.",
+  upstream: 'The weather service is having trouble right now. Please try again in a moment.',
+  malformed: "The weather service sent back something we couldn't read. Please try again shortly.",
+};
 
 const querySchema = z.object({
   latitude: z.coerce.number().min(-90).max(90),
@@ -61,6 +75,10 @@ export async function GET(request: Request) {
     let airQuality: AirQualityMetrics | null = null;
     if (airQualityResult.status === 'fulfilled') {
       airQuality = normalizeOpenMeteoAirQuality(airQualityResult.value);
+    } else {
+      // Degrading to null is deliberate, but degrading *silently* means a permanently broken
+      // air-quality upstream would look identical to a location that simply has no data.
+      console.error('[weather] air quality unavailable, continuing without it:', airQualityResult.reason);
     }
 
     const data = normalizeOpenMeteoForecast(
@@ -77,7 +95,10 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     if (error instanceof OpenMeteoError) {
-      return jsonError(error.message, 502, rateLimitHeaders(limit));
+      console.error('[weather] forecast failed:', error.kind, error.message);
+      // 504 when we never got an answer, 502 when we got one we couldn't use.
+      const status = error.kind === 'network' ? 504 : 502;
+      return jsonError(USER_MESSAGE[error.kind], status, rateLimitHeaders(limit));
     }
     throw error;
   }

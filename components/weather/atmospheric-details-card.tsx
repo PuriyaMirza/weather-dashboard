@@ -46,7 +46,7 @@ export function AtmosphericDetailsCard({ data, isLoading, errorMessage, unitSyst
               {formatPressure(atmospheric.pressureInHg, unitSystem)}
             </p>
             {atmospheric.pressureTrend && (
-              <span className="rounded-full bg-canvas px-3 py-1 text-sm font-semibold text-ink">
+              <span className="bg-canvas px-3 py-1 text-sm font-semibold text-ink">
                 {PRESSURE_TREND_LABEL[atmospheric.pressureTrend]}
               </span>
             )}

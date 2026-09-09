@@ -65,3 +65,43 @@ A round of product work after v1.0 shipped.
 - **Layout presets.** Commuter, Cyclist, Gardener, and Everything, built from the PRD's personas.
 
 **Bug fixed along the way:** times rendered in the *viewer's* timezone rather than the location's, so looking up another city showed its sunrise at your own local hour. `formatTime`/`formatHour` now take the location's IANA zone.
+
+## v3 — Modular widgets, a menu, and a new visual language — done
+
+A product and design round after v2, driven by three requests: a hamburger menu holding a toggle
+list of weather info, modules that are modular in position *and* size like home-screen widgets,
+and Co-Star's visual language as the reference.
+
+- **Finer-grained modules.** The eight cards were composites — Comfort alone bundled humidity, dew
+  point, UV, visibility, pressure and air quality — so there was no way to put dew point on its own
+  on the dashboard. `lib/weather/metrics.ts` adds twelve single readings (Temperature, Feels Like,
+  Rain Chance, Wind, Humidity, Dew Point, UV Index, Pressure, Visibility, Cloud Cover, Air Quality,
+  Sun) as one data-driven table plus one shared component, rather than twelve near-identical files.
+  The nine composite panels stay available. Adding a reading is now a table entry.
+- **Widget sizing.** `CardSpan = 'single' | 'wide'` became `CardSize = 'small' | 'medium' | 'large'`
+  on a four-column grid — 1x1, 2x1, 2x2 — collapsing to two columns on a phone. Resizing is a
+  labelled radio group, never a drag-only corner handle.
+- **The menu.** A hamburger top-right opens a dialog holding the module toggle list, units, theme,
+  presets, restore-defaults and arrange mode. It replaces the header toolbar, the add-card drawer,
+  and the inline preset row, which are deleted. Escape closes, Tab is trapped, focus returns to the
+  hamburger.
+- **Co-Star visual language.** Monochrome tokens (warm paper / near-black, true black / warm
+  white), radius flattened to zero at the token level so a stray `rounded-xl` cannot reintroduce a
+  soft edge, hairline rules, no shadows, `Instrument Serif` for readings, ALL-CAPS letter-spaced
+  labels. The weather-reactive hero survives as a low-contrast tonal wash; condition and day/night
+  are still stated in words.
+- **App identity.** `app/icon.svg` and `app/manifest.ts` — there was no favicon at all before.
+
+**Bugs fixed along the way:**
+
+- User-facing error copy leaked the upstream diagnostic. Real users saw
+  `Open-Meteo response was not valid JSON (status 403)` repeated once per card, and a schema failure
+  would have printed a whole Zod report. `OpenMeteoError` now carries a `kind`; the route maps it to
+  a sentence and logs the diagnostic. A network failure returns 504 rather than 502.
+- The store version bump would have **discarded every existing dashboard**: without a `migrate`,
+  zustand drops state saved under an older version, which would also have made the span-to-size
+  translation dead code. Older state is now carried through, and `merge` re-validates location and
+  unit system as well as layout and theme — a persisted location missing a coordinate would
+  otherwise have been forecast as "null island".
+- Air-quality upstream failures were swallowed silently, so a permanently broken upstream looked
+  identical to a location with no data. They are logged now.

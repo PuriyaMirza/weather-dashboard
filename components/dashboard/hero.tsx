@@ -3,7 +3,7 @@
 import { atmosphereStyle, getAtmosphere, inferIsDay, NEUTRAL_ATMOSPHERE } from '@/lib/weather/atmosphere';
 import { formatLocationLabel, type SelectedLocation } from '@/lib/weather/location';
 import type { WeatherDashboardData } from '@/lib/weather/types';
-import { describeTemperature, formatPercent, formatSpeed, formatTemperature } from '@/lib/weather/units';
+import { formatHour, formatTemperature, formatTime } from '@/lib/weather/units';
 import type { UnitSystem } from '@/lib/weather/units';
 
 interface HeroProps {
@@ -17,21 +17,29 @@ interface HeroProps {
   hasHydrated: boolean;
 }
 
+/** Hours shown in the strip. Enough to plan an afternoon without becoming a chart. */
+const STRIP_HOURS = 8;
+
 /**
- * The headline treatment: current conditions set against a sky that changes with the weather.
+ * The masthead: where you are, when the reading is from, and what the sky is doing.
  *
- * The gradient is decorative. Everything it hints at — the condition, whether it is day or night —
- * is also stated in text, so nothing is conveyed by colour alone.
+ * It deliberately does *not* restate the temperature — that is the Temperature module's job, and
+ * printing 72° twice on one screen was the most obvious flaw in the previous design. What the hero
+ * adds instead is the near-term shape of the day, which no single module carries.
+ *
+ * The tonal wash is decorative. The condition and whether it is day or night are also stated in
+ * words, so nothing is conveyed by tone alone.
  */
 export function Hero({ location, data, isLoading, errorMessage, unitSystem, hasHydrated, resolvedTheme }: HeroProps) {
   const current = data?.current;
+  const timeZone = data?.location.timezone;
 
   const isDay = current
     ? (current.isDay ?? inferIsDay(current.observedAt, data?.sun?.sunrise ?? null, data?.sun?.sunset ?? null))
     : true;
 
-  // In dark mode the sky always uses the night palette — a bright hero above dark cards reads as a
-  // rendering bug. The weather still drives the hue, so the sky remains reactive either way.
+  // In dark mode the sky always uses the night palette — a bright hero above dark modules reads as
+  // a rendering bug. The weather still drives the tone, so it remains reactive either way.
   const useNightSky = resolvedTheme === 'dark' || !isDay;
   const atmosphere = current
     ? getAtmosphere(current.condition, !useNightSky)
@@ -39,63 +47,67 @@ export function Hero({ location, data, isLoading, errorMessage, unitSystem, hasH
       ? getAtmosphere('cloudy', false)
       : NEUTRAL_ATMOSPHERE;
 
+  const hours = (data?.hourly ?? []).slice(0, STRIP_HOURS);
+
   return (
     <section
       aria-labelledby="hero-heading"
-      className="atmosphere relative overflow-hidden rounded-[2rem] border border-line px-6 py-8 sm:px-10 sm:py-12"
+      className="atmosphere mt-6 border border-line px-5 py-6 sm:px-8 sm:py-8"
       style={atmosphereStyle(atmosphere)}
     >
       <h2 id="hero-heading" className="sr-only">
         Current conditions
       </h2>
 
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-ink-muted">
-        {hasHydrated ? formatLocationLabel(location) : 'Loading…'}
-      </p>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+        <p className="font-display text-3xl leading-none text-sky-ink sm:text-5xl">
+          {hasHydrated ? formatLocationLabel(location) : 'Loading…'}
+        </p>
+        {data?.updatedAt && (
+          <p className="eyebrow text-sky-ink-muted">Updated {formatTime(data.updatedAt, timeZone)}</p>
+        )}
+      </div>
 
       {errorMessage ? (
-        <p role="alert" className="mt-6 max-w-lg text-lg font-medium text-sky-ink">
+        <p role="alert" className="mt-5 max-w-xl text-sm text-sky-ink">
           {errorMessage}
         </p>
       ) : isLoading || !current ? (
-        <p role="status" className="mt-6 text-lg font-medium text-sky-ink-muted">
+        <p role="status" className="mt-5 text-sm text-sky-ink-muted">
           {isLoading ? 'Loading current conditions…' : 'Current conditions are unavailable.'}
         </p>
       ) : (
         <>
-          <div className="mt-5 flex flex-wrap items-end gap-x-6 gap-y-2">
-            <p
-              className="text-7xl font-bold leading-none tracking-tight text-sky-ink sm:text-8xl"
-              aria-label={describeTemperature(current.temperatureF, unitSystem)}
-            >
-              {formatTemperature(current.temperatureF, unitSystem)}
-            </p>
-            <div className="pb-2">
-              <p className="text-2xl font-semibold text-sky-ink">{current.conditionLabel}</p>
-              <p className="text-base text-sky-ink-muted">
-                Feels like {formatTemperature(current.feelsLikeF, unitSystem)} · {isDay ? 'Daytime' : 'Night'}
-              </p>
-            </div>
-          </div>
+          <p className="mt-4 text-sm text-sky-ink">
+            {current.conditionLabel} · {isDay ? 'Daytime' : 'Night'}
+            {data?.sun?.sunset && isDay && <> · Sunset {formatTime(data.sun.sunset, timeZone)}</>}
+            {data?.sun?.sunrise && !isDay && <> · Sunrise {formatTime(data.sun.sunrise, timeZone)}</>}
+          </p>
 
-          <dl className="mt-8 flex flex-wrap gap-x-10 gap-y-4 text-sky-ink">
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-wider text-sky-ink-muted">High / Low</dt>
-              <dd className="mt-1 text-lg font-semibold">
-                {formatTemperature(current.highF, unitSystem)} / {formatTemperature(current.lowF, unitSystem)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-wider text-sky-ink-muted">Wind</dt>
-              <dd className="mt-1 text-lg font-semibold">
-                {current.windDirection} {formatSpeed(current.windMph, unitSystem)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-wider text-sky-ink-muted">Rain chance</dt>
-              <dd className="mt-1 text-lg font-semibold">{formatPercent(current.precipitationChance)}</dd>
-            </div>
-          </dl>
+          {hours.length > 0 && (
+            <>
+              <h3 className="sr-only">Next hours</h3>
+              {/*
+                A row of hairline-separated columns rather than a chart: this is the shape of the
+                next few hours at a glance, and it stays readable in greyscale and at phone width.
+                It scrolls horizontally rather than shrinking below legibility.
+              */}
+              <ul className="mt-6 flex overflow-x-auto border-t border-line-strong pt-4">
+                {hours.map((hour) => (
+                  <li
+                    key={hour.time}
+                    className="flex min-w-[4.5rem] flex-1 flex-col gap-1 border-l border-line px-3 first:border-l-0 first:pl-0"
+                  >
+                    <span className="eyebrow text-sky-ink-muted">{formatHour(hour.time, timeZone)}</span>
+                    <span className="font-display text-2xl leading-none text-sky-ink tabular-nums">
+                      {formatTemperature(hour.temperatureF, unitSystem)}
+                    </span>
+                    <span className="text-[0.6875rem] text-sky-ink-muted">{hour.precipitationChance}% rain</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </>
       )}
     </section>

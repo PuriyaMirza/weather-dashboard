@@ -80,16 +80,39 @@ describe('GET /api/weather', () => {
     expect(response.headers.get('Cache-Control')).toBe('no-store');
   });
 
-  it('returns a 502 with the standard error shape when the network itself fails', async () => {
+  it('returns a 504 with the standard error shape when the network itself fails', async () => {
     // Regression: a transport-level rejection used to escape the route as a raw TypeError, which
     // Next.js renders as a 500 HTML page instead of our { error } JSON shape.
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValueOnce(new TypeError('fetch failed')));
+    //
+    // 504 rather than 502: we never reached Open-Meteo at all, so there is no bad gateway response
+    // to report — only a request that went nowhere.
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fetch failed')));
 
     const response = await GET(requestFor('http://localhost/api/weather?latitude=45.5&longitude=-122.6', '10.0.0.9'));
 
-    expect(response.status).toBe(502);
+    expect(response.status).toBe(504);
     expect(response.headers.get('content-type')).toContain('application/json');
     expect(await response.json()).toHaveProperty('error');
+  });
+
+  /**
+   * Regression: the provider's diagnostic string used to be forwarded to the browser verbatim and
+   * printed on every module — real users saw "Open-Meteo response was not valid JSON (status 403)",
+   * and a schema failure would have put a whole Zod report on screen. The diagnostic belongs in the
+   * server log; the reader gets a sentence they can act on.
+   */
+  it('never leaks the upstream diagnostic into the response body', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response('<html>forbidden</html>', { status: 403 })),
+    );
+
+    const response = await GET(requestFor('http://localhost/api/weather?latitude=45.5&longitude=-122.7', '10.0.0.11'));
+    const body = (await response.json()) as { error: string };
+
+    expect(body.error).not.toMatch(/open-meteo/i);
+    expect(body.error).not.toMatch(/json|zod|status \d{3}/i);
+    expect(body.error.length).toBeLessThan(120);
   });
 
   it('returns 429 with Retry-After once the per-client limit is exceeded', async () => {

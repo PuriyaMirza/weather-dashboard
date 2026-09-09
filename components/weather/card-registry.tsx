@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import { METRIC_MODULES, type MetricModuleId } from '@/lib/weather/metrics';
 import type { WeatherDashboardData } from '@/lib/weather/types';
 import type { UnitSystem } from '@/lib/weather/units';
 import { AirQualityCard } from './air-quality-card';
@@ -8,10 +9,15 @@ import { CurrentConditionsCard } from './current-conditions-card';
 import { DailyForecastCard } from './daily-forecast-card';
 import { HourlyTemperatureCard } from './hourly-temperature-card';
 import { PrecipitationCard } from './precipitation-card';
+import { createStatModule } from './stat-module';
 import { SunUvCard } from './sun-uv-card';
 import { WindCard } from './wind-card';
 
-export type WeatherCardId =
+/**
+ * Panels that combine several readings, or render a chart or table. Distinct from the single
+ * readings below, which are generated from `METRIC_MODULES`.
+ */
+export type CompositeCardId =
   | 'current-conditions'
   | 'comfort'
   | 'hourly-temperature'
@@ -22,6 +28,8 @@ export type WeatherCardId =
   | 'atmospheric-details'
   | 'air-quality';
 
+export type WeatherCardId = CompositeCardId | MetricModuleId;
+
 export interface WeatherCardProps {
   data?: WeatherDashboardData;
   isLoading?: boolean;
@@ -29,79 +37,97 @@ export interface WeatherCardProps {
   unitSystem: UnitSystem;
 }
 
+/** How a module presents in the menu's toggle list: a single reading, or a grouped panel. */
+export type CardKind = 'reading' | 'panel';
+
 export interface WeatherCardDefinition {
   id: WeatherCardId;
   title: string;
   description: string;
-  columnSpan: 'single' | 'wide';
+  kind: CardKind;
   Component: ComponentType<WeatherCardProps>;
 }
 
-export const weatherCardRegistry: WeatherCardDefinition[] = [
+const compositeCards: WeatherCardDefinition[] = [
   {
     id: 'current-conditions',
     title: 'Current Conditions',
     description: 'Snapshot of temperature, conditions, wind, and precipitation chance.',
-    columnSpan: 'single',
+    kind: 'panel',
     Component: CurrentConditionsCard,
   },
   {
     id: 'comfort',
     title: 'Comfort',
     description: 'Humidity, dew point, UV, visibility, pressure, and air quality.',
-    columnSpan: 'single',
+    kind: 'panel',
     Component: ComfortCard,
   },
   {
     id: 'hourly-temperature',
     title: 'Hourly Temperature',
     description: 'Temperature trend for the next several hours.',
-    columnSpan: 'wide',
+    kind: 'panel',
     Component: HourlyTemperatureCard,
   },
   {
     id: 'precipitation',
     title: 'Precipitation',
     description: 'Chance and amount of rain or snow over the coming hours.',
-    columnSpan: 'wide',
+    kind: 'panel',
     Component: PrecipitationCard,
   },
   {
     id: 'wind',
-    title: 'Wind',
+    title: 'Wind Detail',
     description: 'Current speed, gusts, and direction.',
-    columnSpan: 'single',
+    kind: 'panel',
     Component: WindCard,
   },
   {
     id: 'daily-forecast',
     title: 'Daily Forecast',
     description: 'Highs, lows, and conditions for the week ahead.',
-    columnSpan: 'wide',
+    kind: 'panel',
     Component: DailyForecastCard,
   },
   {
     id: 'sun-uv',
     title: 'Sun and UV',
     description: 'Sunrise, sunset, daylight, and UV exposure.',
-    columnSpan: 'single',
+    kind: 'panel',
     Component: SunUvCard,
   },
   {
     id: 'air-quality',
-    title: 'Air Quality',
+    title: 'Air Quality Detail',
     description: 'Current US AQI and the pollutants behind it.',
-    columnSpan: 'single',
+    kind: 'panel',
     Component: AirQualityCard,
   },
   {
     id: 'atmospheric-details',
     title: 'Atmospheric Details',
     description: 'Pressure, cloud cover, visibility, and humidity.',
-    columnSpan: 'single',
+    kind: 'panel',
     Component: AtmosphericDetailsCard,
   },
 ];
+
+/**
+ * Single readings, generated from the metric table. They share one component, so a new reading is
+ * a table entry in `lib/weather/metrics.ts` rather than a new file — and it automatically appears
+ * in the menu's toggle list.
+ */
+const readingModules: WeatherCardDefinition[] = METRIC_MODULES.map((metric) => ({
+  id: metric.id,
+  title: metric.title,
+  description: metric.description,
+  kind: 'reading' as const,
+  Component: createStatModule(metric),
+}));
+
+export const weatherCardRegistry: WeatherCardDefinition[] = [...readingModules, ...compositeCards];
 
 export function getCardDefinition(id: WeatherCardId): WeatherCardDefinition | undefined {
   return weatherCardRegistry.find((card) => card.id === id);

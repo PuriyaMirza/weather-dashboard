@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DASHBOARD_STORAGE_KEY, MAX_SAVED_LOCATIONS, useDashboardStore } from '@/store/dashboard-store';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
-import { ALL_CARD_IDS, DEFAULT_CARD_LAYOUT, LAYOUT_PRESETS } from '@/lib/weather/card-layout';
+import { ALL_CARD_IDS, DEFAULT_CARD_LAYOUT, LAYOUT_PRESETS, defaultSizeFor } from '@/lib/weather/card-layout';
 
 const SEATTLE: SelectedLocation = {
   id: '5809844',
@@ -40,13 +40,13 @@ describe('dashboard store', () => {
     expect(persisted.state.location).toEqual(SEATTLE);
     // partialize should keep actions out of storage.
     expect(persisted.state.setLocation).toBeUndefined();
-    expect(persisted.version).toBe(4);
+    expect(persisted.version).toBe(5);
   });
 
   it('does not read persisted state until rehydrate is called (skipHydration)', async () => {
     window.localStorage.setItem(
       DASHBOARD_STORAGE_KEY,
-      JSON.stringify({ state: { location: SEATTLE }, version: 4 }),
+      JSON.stringify({ state: { location: SEATTLE }, version: 5 }),
     );
 
     // Nothing has rehydrated yet, so the store still holds its initial state — this is what keeps
@@ -57,14 +57,51 @@ describe('dashboard store', () => {
     expect(useDashboardStore.getState().location).toEqual(SEATTLE);
   });
 
-  it('discards persisted state saved under an older schema version', async () => {
+  /**
+   * State written by an older version is carried forward rather than thrown away — losing
+   * someone's saved location and layout on every upgrade is a worse failure than an unfamiliar
+   * field, and `merge` re-validates everything it reads.
+   */
+  it('migrates persisted state saved under an older schema version', async () => {
     window.localStorage.setItem(
       DASHBOARD_STORAGE_KEY,
-      JSON.stringify({ state: { location: SEATTLE }, version: 3 }),
+      JSON.stringify({ state: { location: SEATTLE }, version: 1 }),
+    );
+
+    await useDashboardStore.persist.rehydrate();
+    expect(useDashboardStore.getState().location).toEqual(SEATTLE);
+  });
+
+  it('falls back rather than trusting a persisted location that is missing coordinates', async () => {
+    window.localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      // A latitude of undefined coerces to 0 downstream, which is a valid coordinate in the
+      // Atlantic — so this has to be rejected here rather than quietly forecast.
+      JSON.stringify({ state: { location: { id: 'x', name: 'Nowhere' } }, version: 5 }),
     );
 
     await useDashboardStore.persist.rehydrate();
     expect(useDashboardStore.getState().location).toEqual(DEFAULT_LOCATION);
+  });
+
+  it('drops malformed saved locations without discarding the good ones', async () => {
+    window.localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      JSON.stringify({ state: { savedLocations: [SEATTLE, null, { id: 'broken' }] }, version: 5 }),
+    );
+
+    await useDashboardStore.persist.rehydrate();
+    expect(useDashboardStore.getState().savedLocations).toEqual([SEATTLE]);
+  });
+
+  it('falls back rather than trusting an unrecognised unit system', async () => {
+    window.localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      JSON.stringify({ state: { unitSystem: 'furlongs' }, version: 5 }),
+    );
+
+    await useDashboardStore.persist.rehydrate();
+    expect(useDashboardStore.getState().unitSystem).toBe('imperial');
   });
 });
 
@@ -82,20 +119,54 @@ describe('dashboard store — card layout', () => {
     addCard('wind');
 
     const afterFirstAdd = useDashboardStore.getState().cards;
-    expect(afterFirstAdd.at(-1)).toEqual({ id: 'wind', span: 'single' });
+    expect(afterFirstAdd.at(-1)).toEqual({ id: 'wind', size: defaultSizeFor('wind') });
 
     addCard('wind');
     expect(useDashboardStore.getState().cards).toEqual(afterFirstAdd);
   });
 
   it('removes a card', () => {
-    useDashboardStore.getState().removeCard('comfort');
-    expect(useDashboardStore.getState().cards.map((card) => card.id)).not.toContain('comfort');
+    useDashboardStore.getState().removeCard('humidity');
+    expect(useDashboardStore.getState().cards.map((card) => card.id)).not.toContain('humidity');
   });
 
-  it('changes a card span', () => {
-    useDashboardStore.getState().setCardSpan('comfort', 'wide');
-    expect(useDashboardStore.getState().cards.find((card) => card.id === 'comfort')?.span).toBe('wide');
+  it('changes a module size', () => {
+    useDashboardStore.getState().setCardSize('humidity', 'large');
+    expect(useDashboardStore.getState().cards.find((card) => card.id === 'humidity')?.size).toBe('large');
+  });
+
+  it('cycles a module through the sizes and wraps back round', () => {
+    useDashboardStore.getState().setCardSize('humidity', 'small');
+    const sizeOf = () => useDashboardStore.getState().cards.find((card) => card.id === 'humidity')?.size;
+
+    useDashboardStore.getState().cycleCardSize('humidity');
+    expect(sizeOf()).toBe('medium');
+    useDashboardStore.getState().cycleCardSize('humidity');
+    expect(sizeOf()).toBe('large');
+    // Wrapping matters: without it the control becomes a dead end at the largest size.
+    useDashboardStore.getState().cycleCardSize('humidity');
+    expect(sizeOf()).toBe('small');
+  });
+
+  /** What the menu's toggle list drives: one control that both adds and removes. */
+  it('toggles a module off and back on', () => {
+    const has = (id: string) => useDashboardStore.getState().cards.some((card) => card.id === id);
+    expect(has('humidity')).toBe(true);
+
+    useDashboardStore.getState().toggleCard('humidity');
+    expect(has('humidity')).toBe(false);
+
+    useDashboardStore.getState().toggleCard('humidity');
+    expect(has('humidity')).toBe(true);
+    expect(useDashboardStore.getState().cards.at(-1)).toEqual({
+      id: 'humidity',
+      size: defaultSizeFor('humidity'),
+    });
+
+    // A panel that was never in the default layout toggles on just the same.
+    expect(has('comfort')).toBe(false);
+    useDashboardStore.getState().toggleCard('comfort');
+    expect(has('comfort')).toBe(true);
   });
 
   it('moves a card up and down', () => {
@@ -133,7 +204,7 @@ describe('dashboard store — card layout', () => {
   });
 
   it('restores the default layout', () => {
-    useDashboardStore.getState().removeCard('comfort');
+    useDashboardStore.getState().removeCard('humidity');
     useDashboardStore.getState().restoreDefaults();
 
     expect(useDashboardStore.getState().cards).toEqual(DEFAULT_CARD_LAYOUT);
@@ -158,7 +229,8 @@ describe('dashboard store — card layout', () => {
     );
 
     await useDashboardStore.persist.rehydrate();
-    expect(useDashboardStore.getState().cards).toEqual([{ id: 'wind', span: 'wide' }]);
+    // The persisted entry predates modular sizing, so it is migrated rather than dropped.
+    expect(useDashboardStore.getState().cards).toEqual([{ id: 'wind', size: 'medium' }]);
   });
 });
 

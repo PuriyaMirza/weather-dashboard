@@ -1,27 +1,23 @@
 import { expect, test } from '@playwright/test';
 
-test('renders the default dashboard layout with location and unit controls', async ({ page }) => {
+test('renders the default dashboard layout with location and menu controls', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.getByRole('heading', { name: 'Weather Dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Weather', level: 1 })).toBeVisible();
 
-  // Scoped to the grid: the hero carries its own screen-reader-only "Current conditions" heading,
-  // so an unscoped query would match two elements.
-  const grid = page.getByLabel('Weather cards');
+  // Scoped to the grid: the hero carries its own screen-reader-only headings, so an unscoped
+  // query would match more than one element.
+  const grid = page.getByLabel('Weather modules');
   await expect(grid).toBeVisible();
 
-  // The default layout is deliberately curated rather than showing all eight cards.
-  await expect(grid.getByRole('heading', { name: 'Current Conditions' })).toBeVisible();
-  await expect(grid.getByRole('heading', { name: 'Comfort' })).toBeVisible();
-  await expect(grid.getByRole('heading', { name: 'Hourly Temperature' })).toBeVisible();
-  await expect(grid.getByRole('heading', { name: 'Daily Forecast' })).toBeVisible();
+  // The default layout is deliberately curated rather than showing everything available.
+  for (const name of ['Temperature', 'Rain Chance', 'Wind', 'Humidity', 'UV Index', 'Daily Forecast']) {
+    await expect(grid.getByRole('heading', { name, exact: true })).toBeVisible();
+  }
 
-  // The rest are available through the add-card drawer, not shown by default.
-  await expect(grid.getByRole('heading', { name: 'Wind' })).toHaveCount(0);
-  await expect(grid.getByRole('heading', { name: 'Precipitation' })).toHaveCount(0);
-
-  // Unit preference is a radio group so the active choice is announced, not just coloured.
-  await expect(page.getByRole('radio', { name: /fahrenheit/i })).toBeChecked();
+  // The rest are reachable through the menu, not shown by default.
+  await expect(grid.getByRole('heading', { name: 'Dew Point', exact: true })).toHaveCount(0);
+  await expect(grid.getByRole('heading', { name: 'Comfort', exact: true })).toHaveCount(0);
 
   const search = page.getByRole('combobox', { name: /search for a city or postal code/i });
   await expect(search).toBeVisible();
@@ -34,13 +30,26 @@ test('renders the default dashboard layout with location and unit controls', asy
   await expect(page.getByText(/how your location is used/i)).toBeVisible();
 });
 
-test('every available card can be added from the drawer', async ({ page }) => {
+test('the menu offers every module, grouped into readings and panels', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /edit dashboard/i }).click();
-  await page.getByRole('button', { name: /add a card/i }).click();
+  await page.getByRole('button', { name: /open menu/i }).click();
 
-  const panel = page.getByRole('region', { name: /add a card/i });
-  for (const name of [/add precipitation/i, /add wind/i, /add sun and uv/i, /add atmospheric details/i]) {
-    await expect(panel.getByRole('button', { name })).toBeVisible();
+  const menu = page.getByRole('dialog', { name: /dashboard settings/i });
+  await expect(menu).toBeVisible();
+
+  // exact, because Playwright matches accessible names by substring: several titles are prefixes
+  // of others ("Temperature" / "Hourly Temperature", "Wind" / "Wind Detail").
+  // Single readings — the granularity that makes "just show me dew point" possible at all.
+  for (const name of ['Temperature', 'Feels Like', 'Dew Point', 'Pressure', 'Visibility', 'Cloud Cover']) {
+    await expect(menu.getByRole('checkbox', { name, exact: true })).toHaveCount(1);
   }
+
+  // Grouped panels, still available for anyone who wants the whole set at once.
+  for (const name of ['Comfort', 'Hourly Temperature', 'Daily Forecast', 'Wind Detail']) {
+    await expect(menu.getByRole('checkbox', { name, exact: true })).toHaveCount(1);
+  }
+
+  // Unit and appearance controls live here too, rather than cluttering the header.
+  await expect(menu.getByRole('radio', { name: /fahrenheit/i })).toBeChecked();
+  await expect(menu.getByRole('radio', { name: /match my system/i })).toBeChecked();
 });
