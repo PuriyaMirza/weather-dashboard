@@ -20,7 +20,8 @@ const COMPASS_POINTS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', '
 const METERS_PER_MILE = 1609.344;
 const INCHES_OF_MERCURY_PER_HECTOPASCAL = 0.0295299830714;
 
-/** Hours shown in the hourly series. A week of data is fetched for the daily card; the hourly
+/** Hours shown in the hourly series, counted forward from the current hour (not from local
+ *  midnight — see buildHourlyPoints). A week of data is fetched for the daily card; the hourly
  *  cards only ever show the near-term window. */
 const HOURLY_WINDOW = 24;
 
@@ -173,9 +174,16 @@ function buildAtmosphericMetrics(response: OpenMeteoForecastResponse): Atmospher
   const visibilityMeters = hourlyIndex >= 0 ? hourly.visibility[hourlyIndex] : null;
   const dewPointF = hourlyIndex >= 0 ? hourly.dew_point_2m[hourlyIndex] : null;
 
+  // Same fix as buildHourlyPoints: slicing from index 0 measured the change from local midnight
+  // to a fixed later point, not the trend from now — a stale reading blended past and future
+  // hours into one number no matter when the request ran. Window forward from "now" instead.
+  const pressureWindowStart = Math.max(0, hourlyIndex);
+
   const metrics: AtmosphericMetrics = {
     pressureInHg,
-    pressureTrend: derivePressureTrend(hourly.pressure_msl.slice(0, HOURLY_WINDOW)),
+    pressureTrend: derivePressureTrend(
+      hourly.pressure_msl.slice(pressureWindowStart, pressureWindowStart + HOURLY_WINDOW),
+    ),
     visibilityMiles: visibilityMeters == null ? null : metersToMiles(visibilityMeters),
     cloudCoverPercent: current.cloud_cover ?? null,
     humidityPercent: current.relative_humidity_2m ?? null,
@@ -207,18 +215,30 @@ function buildSunMetrics(response: OpenMeteoForecastResponse): SunMetrics | null
   return hasAnyValue ? metrics : null;
 }
 
+/**
+ * Open-Meteo's hourly array starts at local midnight of the request day, not at "now" — the
+ * upstream response always includes the hours already passed today. Taking the first N entries
+ * unconditionally showed the overnight hours regardless of the actual time: at 1:30pm the "next
+ * hours" strip and the hourly chart both opened at 12am and ran only to 7am, already ten hours in
+ * the past. `closestHourlyIndex` (already used to align dew point, visibility, etc. to "now") finds
+ * where the current reading actually sits in that array, and the window is built forward from there.
+ */
 function buildHourlyPoints(response: OpenMeteoForecastResponse): HourlyPoint[] {
-  const { hourly, utc_offset_seconds: utcOffsetSeconds } = response;
+  const { current, hourly, utc_offset_seconds: utcOffsetSeconds } = response;
+  const startIndex = Math.max(0, closestHourlyIndex(hourly.time, current.time));
   const points: HourlyPoint[] = [];
 
-  hourly.time.forEach((time, index) => {
+  for (let index = startIndex; index < hourly.time.length && points.length < HOURLY_WINDOW; index += 1) {
+    const time = hourly.time[index];
     const temperatureF = hourly.temperature_2m[index];
     const feelsLikeF = hourly.apparent_temperature[index];
     const precipitationChance = hourly.precipitation_probability[index];
     const weatherCode = hourly.weather_code[index];
 
+    // A missing required field costs this hour, not the whole window — the loop keeps going
+    // rather than stopping, so one gap doesn't truncate every hour after it.
     if (temperatureF == null || feelsLikeF == null || precipitationChance == null || weatherCode == null) {
-      return;
+      continue;
     }
 
     const windDirectionDegrees = hourly.wind_direction_10m[index];
@@ -236,9 +256,9 @@ function buildHourlyPoints(response: OpenMeteoForecastResponse): HourlyPoint[] {
       cloudCoverPercent: hourly.cloud_cover[index] ?? null,
       pressureInHg: nullableHectopascalsToInHg(hourly.pressure_msl[index]),
     });
-  });
+  }
 
-  return points.slice(0, HOURLY_WINDOW);
+  return points;
 }
 
 function buildDailyForecast(response: OpenMeteoForecastResponse): DailyForecastDay[] {
