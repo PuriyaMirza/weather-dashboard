@@ -3,6 +3,7 @@ import {
   openMeteoErrorResponseSchema,
   type OpenMeteoAirQualityResponse,
 } from '../schemas';
+import { withTimeout } from './request-timeout';
 
 // A different host from the forecast API, not just a different path.
 const OPEN_METEO_AIR_QUALITY_URL = 'https://air-quality-api.open-meteo.com/v1/air-quality';
@@ -51,7 +52,7 @@ export async function fetchOpenMeteoAirQuality(
 ): Promise<OpenMeteoAirQualityResponse> {
   let response: Response;
   try {
-    response = await fetchImpl(buildOpenMeteoAirQualityUrl(params));
+    response = await fetchImpl(buildOpenMeteoAirQualityUrl(params), withTimeout());
   } catch (error) {
     throw new OpenMeteoAirQualityError(
       `Could not reach Open-Meteo air quality: ${error instanceof Error ? error.message : 'network error'}`,

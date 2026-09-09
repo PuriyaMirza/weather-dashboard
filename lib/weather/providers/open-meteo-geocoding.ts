@@ -1,4 +1,5 @@
 import { openMeteoErrorResponseSchema, openMeteoGeocodingResponseSchema, type OpenMeteoGeocodingResult } from '../schemas';
+import { withTimeout } from './request-timeout';
 
 const OPEN_METEO_GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 
@@ -37,7 +38,7 @@ export async function fetchOpenMeteoGeocoding(
   // exists. Wrap it so callers only ever see OpenMeteoGeocodingError.
   let response: Response;
   try {
-    response = await fetchImpl(buildOpenMeteoGeocodingUrl(params));
+    response = await fetchImpl(buildOpenMeteoGeocodingUrl(params), withTimeout());
   } catch (error) {
     throw new OpenMeteoGeocodingError(
       `Could not reach Open-Meteo geocoding: ${error instanceof Error ? error.message : 'network error'}`,
