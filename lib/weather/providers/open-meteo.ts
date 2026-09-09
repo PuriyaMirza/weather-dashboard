@@ -1,4 +1,5 @@
 import { openMeteoErrorResponseSchema, openMeteoForecastResponseSchema, type OpenMeteoForecastResponse } from '../schemas';
+import { withTimeout } from './request-timeout';
 
 const OPEN_METEO_FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 
@@ -113,7 +114,7 @@ export async function fetchOpenMeteoForecast(
   // error shape consistent instead of surfacing a raw TypeError as a 500.
   let response: Response;
   try {
-    response = await fetchImpl(buildOpenMeteoForecastUrl(params));
+    response = await fetchImpl(buildOpenMeteoForecastUrl(params), withTimeout());
   } catch (error) {
     throw new OpenMeteoError(
       `Could not reach Open-Meteo: ${error instanceof Error ? error.message : 'network error'}`,
