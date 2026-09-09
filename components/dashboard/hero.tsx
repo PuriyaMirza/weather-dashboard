@@ -15,6 +15,12 @@ interface HeroProps {
   errorMessage?: string;
   unitSystem: UnitSystem;
   hasHydrated: boolean;
+  onRefresh: () => void;
+  isRefreshing: boolean;
+  /** True when the reading on screen is the last good one and the newest attempt failed. */
+  isStale: boolean;
+  /** Why the newest attempt failed, shown whether or not there is stale data behind it. */
+  failureMessage?: string;
 }
 
 /** Hours shown in the strip. Enough to plan an afternoon without becoming a chart. */
@@ -30,7 +36,19 @@ const STRIP_HOURS = 8;
  * The tonal wash is decorative. The condition and whether it is day or night are also stated in
  * words, so nothing is conveyed by tone alone.
  */
-export function Hero({ location, data, isLoading, errorMessage, unitSystem, hasHydrated, resolvedTheme }: HeroProps) {
+export function Hero({
+  location,
+  data,
+  isLoading,
+  errorMessage,
+  unitSystem,
+  hasHydrated,
+  resolvedTheme,
+  onRefresh,
+  isRefreshing,
+  isStale,
+  failureMessage,
+}: HeroProps) {
   const current = data?.current;
   const timeZone = data?.location.timezone;
 
@@ -63,15 +81,50 @@ export function Hero({ location, data, isLoading, errorMessage, unitSystem, hasH
         <p className="font-display text-3xl leading-none text-sky-ink sm:text-5xl">
           {hasHydrated ? formatLocationLabel(location) : 'Loading…'}
         </p>
-        {data?.updatedAt && (
-          <p className="eyebrow text-sky-ink-muted">Updated {formatTime(data.updatedAt, timeZone)}</p>
-        )}
+
+        <div className="flex items-center gap-4">
+          {data?.updatedAt && (
+            <p className="eyebrow text-sky-ink-muted">Updated {formatTime(data.updatedAt, timeZone)}</p>
+          )}
+          {hasHydrated && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="eyebrow border border-sky-ink-muted px-3 py-1.5 text-sky-ink outline-none hover:bg-sky-ink hover:text-canvas focus-visible:ring-2 focus-visible:ring-sky-ink disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isRefreshing ? 'Refreshing…' : 'Refresh'}
+            </button>
+          )}
+        </div>
       </div>
 
-      {errorMessage ? (
-        <p role="alert" className="mt-5 max-w-xl text-sm text-sky-ink">
-          {errorMessage}
+      {/*
+        The reading is real but out of date. Saying so once here — rather than replacing every
+        module with an error — keeps a working dashboard on screen while being honest that it is
+        not current. role="status" rather than "alert": nothing is broken, the data is just old.
+      */}
+      {isStale && (
+        <p role="status" className="mt-4 border border-sky-ink-muted px-3 py-2 text-sm text-sky-ink">
+          Showing the last reading that loaded. {failureMessage}
         </p>
+      )}
+
+      {errorMessage ? (
+        <div className="mt-5 max-w-xl">
+          <p role="alert" className="text-sm text-sky-ink">
+            {errorMessage}
+          </p>
+          {/* Without this the only way out of a failed load is a page reload. */}
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="eyebrow mt-3 border border-sky-ink-muted px-3 py-1.5 text-sky-ink outline-none hover:bg-sky-ink hover:text-canvas focus-visible:ring-2 focus-visible:ring-sky-ink disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isRefreshing ? 'Trying…' : 'Try again'}
+          </button>
+        </div>
       ) : isLoading || !current ? (
         <p role="status" className="mt-5 text-sm text-sky-ink-muted">
           {isLoading ? 'Loading current conditions…' : 'Current conditions are unavailable.'}

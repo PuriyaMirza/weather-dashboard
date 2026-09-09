@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { mockWeatherData } from '../../lib/weather/mock-data';
 
 async function openMenu(page: Page) {
   await page.getByRole('button', { name: /open menu/i }).click();
@@ -101,4 +102,40 @@ test('the menu closes on Escape and returns focus to the hamburger', async ({ pa
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('button', { name: /open menu/i })).toBeFocused();
+});
+
+test('the forecast can be refreshed, and a failed refresh keeps the reading on screen', async ({ page }) => {
+  let attempt = 0;
+  // Both responses are stubbed rather than one being passed through: the upstream is not reachable
+  // from every environment this suite runs in, and the behaviour under test is ours, not theirs.
+  //
+  // First load succeeds; the refresh fails. That is the case worth protecting: a transient blip
+  // must not empty a dashboard that was working a second ago.
+  await page.route('**/api/weather*', async (route) => {
+    attempt += 1;
+    if (attempt === 1) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockWeatherData),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 502,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'The weather service is having trouble right now.' }),
+    });
+  });
+
+  await page.goto('/');
+
+  const refresh = page.getByRole('button', { name: /^refresh$/i });
+  await expect(refresh).toBeVisible();
+
+  await refresh.click();
+
+  await expect(page.getByText(/showing the last reading that loaded/i)).toBeVisible();
+  // The grid is still there rather than replaced by errors.
+  await expect(page.getByLabel('Weather modules')).toBeVisible();
 });

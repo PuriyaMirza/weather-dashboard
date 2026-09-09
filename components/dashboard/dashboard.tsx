@@ -45,11 +45,22 @@ export function Dashboard() {
 
   // Until saved preferences have loaded we don't know which location to request, so no fetch is
   // started and every module shows its loading state.
-  const state = useWeatherData(hasHydrated ? location : null);
+  const { state, refresh, isRefreshing, staleData } = useWeatherData(hasHydrated ? location : null);
 
-  const data = state.status === 'ready' ? state.data : undefined;
   const isLoading = !hasHydrated || state.status === 'loading';
-  const errorMessage = state.status === 'error' ? (state.errorMessage ?? 'Unable to load weather data.') : undefined;
+  const failed = state.status === 'error' ? (state.errorMessage ?? 'Unable to load weather data.') : undefined;
+
+  // A failed *refresh* keeps the last good reading on screen rather than emptying a working
+  // dashboard. The modules are then handed real data with no error, and the hero alone carries
+  // the failure — so the page says "this is old" once, instead of shouting it from every tile.
+  const data = state.status === 'ready' ? state.data : staleData;
+  const isStale = Boolean(failed && staleData);
+
+  // Modules never render the shared failure themselves. There is exactly one request behind the
+  // whole dashboard, so repeating its error in every tile produced seven identical role="alert"
+  // nodes — announced seven times, and a wall of red on a phone. The hero states it once; modules
+  // fall back to their quiet "unavailable" state, which is what an absent reading looks like
+  // everywhere else in the app.
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col">
@@ -96,11 +107,15 @@ export function Dashboard() {
       <Hero
         location={location}
         data={data}
-        isLoading={isLoading}
-        errorMessage={errorMessage}
+        isLoading={isLoading && !data}
+        errorMessage={isStale ? undefined : failed}
         unitSystem={unitSystem}
         hasHydrated={hasHydrated}
         resolvedTheme={resolvedTheme}
+        onRefresh={refresh}
+        isRefreshing={isRefreshing}
+        isStale={isStale}
+        failureMessage={failed}
       />
 
       {isEditing && (
@@ -113,7 +128,7 @@ export function Dashboard() {
       <CardGrid
         cards={cards}
         isHydrated={hasHydrated}
-        cardProps={{ data, isLoading, errorMessage, unitSystem }}
+        cardProps={{ data, isLoading: isLoading && !data, unitSystem }}
         isEditing={isEditing}
         onReorder={reorderCards}
         onMove={moveCard}
