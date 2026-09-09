@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DASHBOARD_STORAGE_KEY, MAX_SAVED_LOCATIONS, useDashboardStore } from '@/store/dashboard-store';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
 import { ALL_CARD_IDS, DEFAULT_CARD_LAYOUT, LAYOUT_PRESETS, defaultSizeFor } from '@/lib/weather/card-layout';
@@ -329,5 +329,77 @@ describe('dashboard store — layout presets', () => {
       const ids = preset.layout.map((entry) => entry.id);
       expect(new Set(ids).size).toBe(ids.length);
     }
+  });
+});
+
+/**
+ * Saved preferences are a convenience; a working page is not. Anything unreadable must be dropped
+ * so the app starts as it would for a first-time visitor.
+ *
+ * Regression: zustand's default storage parses JSON unguarded, and persist swallows the resulting
+ * rejection down a path that never sets `hasHydrated` and never fires its finish-hydration
+ * listeners. `useHasHydrated` is built on exactly those two things, and the dashboard gates both
+ * the card grid and the weather request on it — so one damaged byte left the page stuck on
+ * "Loading your dashboard…" forever, with nothing clearing the bad value on the next visit either.
+ */
+describe('dashboard store — unreadable persisted state', () => {
+  it('still finishes hydration when the saved value is not valid JSON', async () => {
+    window.localStorage.setItem(DASHBOARD_STORAGE_KEY, '{"state":{"location":');
+
+    await useDashboardStore.persist.rehydrate();
+
+    // The load-bearing assertion: without this the whole dashboard hangs.
+    expect(useDashboardStore.persist.hasHydrated()).toBe(true);
+    expect(useDashboardStore.getState().location).toEqual(DEFAULT_LOCATION);
+    expect(useDashboardStore.getState().cards).toEqual(DEFAULT_CARD_LAYOUT);
+  });
+
+  it('clears the unreadable value so it cannot fail again on the next visit', async () => {
+    window.localStorage.setItem(DASHBOARD_STORAGE_KEY, 'not json at all');
+
+    await useDashboardStore.persist.rehydrate();
+
+    expect(window.localStorage.getItem(DASHBOARD_STORAGE_KEY)).toBeNull();
+  });
+
+  it('still finishes hydration when storage itself refuses to be read', async () => {
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    });
+
+    try {
+      await useDashboardStore.persist.rehydrate();
+      expect(useDashboardStore.persist.hasHydrated()).toBe(true);
+    } finally {
+      getItem.mockRestore();
+    }
+  });
+
+  it('does not throw when storage refuses to be written', () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('QuotaExceededError', 'QuotaExceededError');
+    });
+
+    try {
+      // A blocked write should cost the user persistence, not crash the interaction.
+      expect(() => useDashboardStore.getState().setUnitSystem('metric')).not.toThrow();
+      expect(useDashboardStore.getState().unitSystem).toBe('metric');
+    } finally {
+      setItem.mockRestore();
+      useDashboardStore.setState({ unitSystem: 'imperial' });
+    }
+  });
+
+  /** Guards against over-correcting the above into "ignore storage entirely". */
+  it('still restores a perfectly good saved value', async () => {
+    window.localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      JSON.stringify({ state: { location: SEATTLE, unitSystem: 'metric' }, version: 5 }),
+    );
+
+    await useDashboardStore.persist.rehydrate();
+
+    expect(useDashboardStore.getState().location).toEqual(SEATTLE);
+    expect(useDashboardStore.getState().unitSystem).toBe('metric');
   });
 });

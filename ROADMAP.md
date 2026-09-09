@@ -125,3 +125,24 @@ emptied the dashboard with no way back.
   by a screen reader, and a wall of red on a phone. The hero states the failure once; modules fall
   back to their quiet "unavailable" state, which is what an absent reading looks like everywhere
   else in the app.
+
+## Fix — unreadable saved preferences no longer brick the dashboard
+
+A latent bug, found by auditing failure paths rather than features.
+
+If the browser's saved preferences became unreadable — an interrupted write, or a browser that
+blocks site data — the dashboard hung on "Loading your dashboard…" **forever**, with no error, no
+retry, and nothing to clear the bad value on the next visit.
+
+Traced through zustand's source: `createJSONStorage`'s `getItem` calls `JSON.parse` unguarded, and
+`persist` handles the rejection down a path that never sets `hasHydrated` and never fires its
+finish-hydration listeners. `useHasHydrated` is built on exactly those two things, and
+`Dashboard` gates both the card grid and the weather request on it — so nothing ever loaded.
+
+`store/dashboard-store.ts` now supplies its own `storage` that treats unreadable state as *no*
+state: the bad value is dropped, the app starts as it would for a first-time visitor, and writes
+are guarded too, so a browser refusing to store data costs persistence rather than the page.
+
+Covered by unit tests and an end-to-end test that seeds truncated JSON before load — both verified
+to fail against the unfixed store.
+

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, type PersistStorage, type StorageValue } from 'zustand/middleware';
 import type { WeatherCardId } from '@/components/weather/card-registry';
 import {
   DEFAULT_CARD_LAYOUT,
@@ -71,6 +71,60 @@ function isSelectedLocation(value: unknown): value is SelectedLocation {
     typeof candidate.longitude === 'number' &&
     Number.isFinite(candidate.longitude)
   );
+}
+
+/**
+ * Storage that treats unreadable saved state as *no* saved state.
+ *
+ * zustand's default `createJSONStorage` calls `JSON.parse` unguarded, and `persist` handles the
+ * resulting rejection by taking a catch branch that never sets `hasHydrated` and never notifies
+ * its finish-hydration listeners. Since `useHasHydrated` is built on exactly those two things, and
+ * the dashboard gates both the card grid and the weather request on it, one damaged byte in
+ * localStorage left the page stuck on "Loading your dashboard…" forever — with no error, no retry,
+ * and nothing to clear the bad value on the next visit either.
+ *
+ * Saved preferences are a convenience, so losing them is a far better outcome than a dead page:
+ * anything unreadable is dropped and the app starts as it would for a first-time visitor. Writes
+ * are guarded for the same reason — a browser that refuses to store data should cost the user
+ * persistence, not the application.
+ */
+function createSafeStorage<S>(): PersistStorage<S> {
+  const read = (name: string): StorageValue<S> | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(name);
+      if (raw === null) return null;
+      return JSON.parse(raw) as StorageValue<S>;
+    } catch {
+      // Drop the unreadable value rather than leaving it to fail again on every future visit.
+      try {
+        window.localStorage.removeItem(name);
+      } catch {
+        // Storage is unreadable *and* unwritable. Nothing more to do; defaults still apply.
+      }
+      return null;
+    }
+  };
+
+  return {
+    getItem: read,
+    setItem: (name, value) => {
+      if (typeof window === 'undefined') return;
+      try {
+        window.localStorage.setItem(name, JSON.stringify(value));
+      } catch {
+        // Quota exceeded, or storage blocked. Preferences simply won't survive this session.
+      }
+    },
+    removeItem: (name) => {
+      if (typeof window === 'undefined') return;
+      try {
+        window.localStorage.removeItem(name);
+      } catch {
+        // As above.
+      }
+    },
+  };
 }
 
 export const useDashboardStore = create<DashboardState>()(
@@ -156,6 +210,12 @@ export const useDashboardStore = create<DashboardState>()(
     }),
     {
       name: DASHBOARD_STORAGE_KEY,
+      storage: createSafeStorage(),
+      // Hydration should never fail now, but if it somehow does, say so rather than leaving a
+      // silent stall — that silence is what made the original bug so hard to notice.
+      onRehydrateStorage: () => (_state, error) => {
+        if (error) console.error('[dashboard] could not restore saved preferences:', error);
+      },
       // Bump when the persisted shape changes so old saved state is never deserialized into a
       // shape the code no longer understands.
       version: 5,

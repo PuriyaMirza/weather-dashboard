@@ -139,3 +139,20 @@ test('the forecast can be refreshed, and a failed refresh keeps the reading on s
   // The grid is still there rather than replaced by errors.
   await expect(page.getByLabel('Weather modules')).toBeVisible();
 });
+
+test('a damaged saved layout does not leave the dashboard stuck loading', async ({ page }) => {
+  await page.route('**/api/weather*', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWeatherData) }));
+
+  // Seed truncated JSON under the app's storage key before any script runs, which is what an
+  // interrupted write leaves behind. The page must start as a first visit would, not hang.
+  await page.addInitScript(() => {
+    window.localStorage.setItem('weather-dashboard', '{"state":{"cards":[{"id":"tem');
+  });
+
+  await page.goto('/');
+
+  await expect(page.getByLabel('Weather modules')).toBeVisible();
+  await expect(page.getByText('Loading your dashboard…')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Temperature', exact: true })).toBeVisible();
+});
