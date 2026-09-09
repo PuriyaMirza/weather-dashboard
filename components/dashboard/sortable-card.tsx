@@ -4,6 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { WeatherCardDefinition, WeatherCardProps } from '@/components/weather/card-registry';
 import { CARD_SIZE_CLASS, type CardLayoutEntry, type CardSize } from '@/lib/weather/card-layout';
+import { ModuleBoundary } from '@/components/weather/module-boundary';
 import { CardControls } from './card-controls';
 
 interface SortableCardProps {
@@ -75,7 +76,10 @@ export function SortableCard({
         />
       )}
       <div className="min-h-0 flex-1">
-        <Component {...cardProps} />
+        {/* Per module, not per page: a throw here costs this tile, not the whole dashboard. */}
+        <ModuleBoundary title={definition.title} description={definition.description}>
+          <Component {...cardProps} />
+        </ModuleBoundary>
       </div>
     </div>
   );
