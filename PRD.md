@@ -1,6 +1,6 @@
 # Weather Dashboard — Product Requirements Document
 
-**Version:** 2.0 · **Last updated:** 26 August 2026 · **Reflects:** `main` after the v2 visual identity work
+**Version:** 3.0 · **Last updated:** 9 September 2026 · **Reflects:** `main` after the v3 modular-widget and visual-language work
 
 **Status key used throughout:**
 
@@ -375,3 +375,45 @@ The product ships when all of the following are true:
 | `lib/weather/mock-data.ts` | Mock fixture, test-only | ✅ |
 | `.github/workflows/ci.yml` | CI: lint, typecheck, test, build | ✅ |
 | `ROADMAP.md` | Milestone execution order | ✅ |
+
+
+---
+
+## Appendix — v3 addendum (modular widgets, menu, monochrome language)
+
+Three changes that alter how the product is described above.
+
+**Cards became modules, at two grain sizes.** The original eight were composites: the Comfort card
+bundled humidity, dew point, UV, visibility, pressure and air quality into one tile. That made
+"show me only dew point" impossible. There are now **twelve single readings** — Temperature, Feels
+Like, Rain Chance, Wind, Humidity, Dew Point, UV Index, Pressure, Visibility, Cloud Cover, Air
+Quality, Sun — alongside the **nine composite panels**, which remain available. Single readings are
+generated from a table (`lib/weather/metrics.ts`) rather than written as individual components, so
+the list is cheap to extend.
+
+**Sizing follows the home-screen widget model.** `small` (1×1), `medium` (2×1) and `large` (2×2) on
+a four-column grid, collapsing to two columns on a phone. This replaces the earlier binary
+narrow/wide span. Layouts saved under the old shape are translated, not discarded.
+
+**All customization lives in one menu.** A hamburger in the top-right opens a dialog containing the
+module toggle list, units, appearance, presets, restore-defaults, and arrange mode — replacing the
+header toolbar, the add-card drawer, and the inline preset row.
+
+**Visual language.** Monochrome, square-cornered, hairline-ruled, with an editorial serif for
+readings. Both palettes remain WCAG AA verified. Severity bands (UV, AQI) still carry their word,
+so nothing depends on seeing a hue.
+
+### Limitations closed in v3
+
+| # | Limitation | Resolution |
+|---|---|---|
+| — | ~~Error copy exposed upstream diagnostics to users~~ | Provider errors carry a `kind`; the route maps it to actionable copy and logs the diagnostic. ✅ Resolved |
+| — | ~~A persist version bump discarded saved dashboards~~ | A `migrate` carries older state through, and `merge` re-validates location, units, layout and theme. ✅ Resolved |
+| — | ~~Air-quality upstream failures were silent~~ | Logged server-side while still degrading to `null`. ✅ Resolved |
+| — | ~~No favicon, manifest, or social metadata~~ | `app/icon.svg`, `app/manifest.ts`, `themeColor`, OpenGraph. ✅ Resolved |
+
+### Still open
+
+**There is no refresh control and no auto-refresh.** The hero states when the reading was taken, but
+the only way to get a newer one is to reload the page. The route's `s-maxage=600` means a response
+can legitimately be ten minutes old.
