@@ -111,8 +111,19 @@ export interface ActivityWindow {
   hours: number;
   /** Short phrases explaining why this window was chosen. Words, never colour. */
   reasons: string[];
-  /** True when any part of the window falls after sunset. Stated rather than hidden. */
-  afterDark: boolean;
+  /**
+   * The sunset timestamp, present when `start`–`end` itself straddles it — the window opens in
+   * daylight and is still running when the sun goes down. Null whenever it doesn't, including when
+   * the window has been trimmed to end at sunset (see `extendsUntil` for that case instead).
+   */
+  darkFrom: string | null;
+  /**
+   * Set only when a longer run of suitable weather continues past `end` into the dark: the window
+   * itself is trimmed to the daylight portion (because that portion alone already meets the
+   * activity's own minimum), and this carries the exclusive end of the fuller run, so the card can
+   * still say the stretch after dark holds too, instead of silently dropping it.
+   */
+  extendsUntil: string | null;
 }
 
 export interface ActivityOutlook {
@@ -205,6 +216,53 @@ function describe(run: HourlyPoint[], activity: ActivityDefinition): string[] {
   return reasons;
 }
 
+function finalizeWindow(
+  run: HourlyPoint[],
+  activity: ActivityDefinition,
+  darkFrom: string | null,
+  extendsUntil: string | null,
+): ActivityWindow {
+  const last = run[run.length - 1];
+  return {
+    activity: activity.id,
+    start: run[0].time,
+    end: hourEnd(last.time),
+    hours: run.length,
+    reasons: describe(run, activity),
+    darkFrom,
+    extendsUntil,
+  };
+}
+
+/**
+ * Turns a run of suitable hours into the window actually reported.
+ *
+ * A run entirely on one side of sunset is reported as-is. A run that straddles it is trimmed to
+ * the daylight portion when that portion alone already meets the activity's own minimum — "until
+ * 8 PM, and also fine after dark" is more actionable than one span silently covering both, and
+ * `extendsUntil` still carries the fuller run so nothing is dropped, just separated. When the
+ * daylight portion alone isn't enough to stand on its own, the whole straddling run is reported,
+ * same as before this split existed.
+ *
+ * Daylight-required activities never reach a straddling run here, since `findActivityWindows`
+ * already bounds their candidate hours to before sunset.
+ */
+function buildWindow(run: HourlyPoint[], activity: ActivityDefinition, sunsetIso: string | null): ActivityWindow {
+  const sunsetMs = sunsetIso ? Date.parse(sunsetIso) : NaN;
+  if (sunsetIso == null || Number.isNaN(sunsetMs)) return finalizeWindow(run, activity, null, null);
+
+  const daylightPortion = run.filter((hour) => new Date(hour.time).getTime() < sunsetMs);
+
+  if (daylightPortion.length === run.length) return finalizeWindow(run, activity, null, null);
+  if (daylightPortion.length === 0) return finalizeWindow(run, activity, sunsetIso, null);
+
+  if (daylightPortion.length >= activity.minimumHours) {
+    return finalizeWindow(daylightPortion, activity, null, hourEnd(run[run.length - 1].time));
+  }
+
+  return finalizeWindow(run, activity, sunsetIso, null);
+}
+
 /**
  * Builds the outlook for every activity.
  *
@@ -217,7 +275,8 @@ function describe(run: HourlyPoint[], activity: ActivityDefinition): string[] {
  */
 export function findActivityWindows(data: WeatherDashboardData, selected?: ActivityId[]): ActivityOutlook[] {
   const hourly = data.hourly ?? [];
-  const sunsetMs = data.sun?.sunset ? new Date(data.sun.sunset).getTime() : null;
+  const sunsetIso = data.sun?.sunset ?? null;
+  const sunsetMs = sunsetIso ? new Date(sunsetIso).getTime() : null;
 
   const reported =
     selected && selected.length > 0 ? ACTIVITIES.filter((activity) => selected.includes(activity.id)) : ACTIVITIES;
@@ -231,20 +290,6 @@ export function findActivityWindows(data: WeatherDashboardData, selected?: Activ
     const run = longestRun(candidates, definition);
     if (run === null) return { definition, window: null };
 
-    const last = run[run.length - 1];
-    const afterDark =
-      sunsetMs != null && new Date(last.time).getTime() >= sunsetMs;
-
-    return {
-      definition,
-      window: {
-        activity: definition.id,
-        start: run[0].time,
-        end: hourEnd(last.time),
-        hours: run.length,
-        reasons: describe(run, definition),
-        afterDark,
-      },
-    };
+    return { definition, window: buildWindow(run, definition, sunsetIso) };
   });
 }
