@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ACTIVITIES, findActivityWindows } from '@/lib/weather/activity-windows';
 import { composeLayoutForActivities, DEFAULT_CARD_LAYOUT } from '@/lib/weather/card-layout';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
@@ -72,10 +72,24 @@ describe('validatePreferences', () => {
     expect(validatePreferences({ hasOnboarded: true }).hasOnboarded).toBe(true);
   });
 
-  it('falls back on an unknown unit system or theme', () => {
+  it('falls back to a locale guess on an unknown unit system, and to system on an unknown theme', () => {
+    // jsdom's default navigator.language is en-US, so the unstubbed fallback lands on imperial —
+    // the same value it always fell back to before locale guessing existed.
     const result = validatePreferences({ unitSystem: 'furlongs', theme: 'neon' });
     expect(result.unitSystem).toBe('imperial');
     expect(result.theme).toBe('system');
+  });
+
+  it('guesses units from the browser locale when none was ever saved, but a saved choice always wins', () => {
+    vi.stubGlobal('navigator', { ...globalThis.navigator, language: 'en-GB', languages: ['en-GB'] });
+    try {
+      expect(validatePreferences({}).unitSystem).toBe('metric');
+      // An explicit choice — including one made before this locale guessing existed — is never
+      // second-guessed by the visitor's locale.
+      expect(validatePreferences({ unitSystem: 'imperial' }).unitSystem).toBe('imperial');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 

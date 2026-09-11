@@ -14,7 +14,7 @@ import {
 import { isActivityId, type ActivityId } from '@/lib/weather/activity-windows';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
 import { isThemePreference, type ThemePreference } from '@/lib/theme';
-import type { UnitSystem } from '@/lib/weather/units';
+import { defaultUnitSystem, type UnitSystem } from '@/lib/weather/units';
 
 /** Keeps the saved list from growing without bound and the chip row from wrapping endlessly. */
 export const MAX_SAVED_LOCATIONS = 8;
@@ -124,7 +124,11 @@ export function validatePreferences(raw: unknown): PersistedPreferences {
     savedLocations: Array.isArray(saved.savedLocations)
       ? saved.savedLocations.filter(isSelectedLocation).slice(0, MAX_SAVED_LOCATIONS)
       : [],
-    unitSystem: saved.unitSystem === 'metric' || saved.unitSystem === 'imperial' ? saved.unitSystem : 'imperial',
+    // No saved choice yet falls back to a guess from the browser's own locale, not a US default —
+    // this only ever runs client-side (merge, or a shared link someone opens), so `navigator` is
+    // always present here despite the store's SSR-safe literal default below.
+    unitSystem:
+      saved.unitSystem === 'metric' || saved.unitSystem === 'imperial' ? saved.unitSystem : defaultUnitSystem(),
     activities: Array.isArray(saved.activities)
       ? [...new Set(saved.activities.filter(isActivityId))]
       : [],

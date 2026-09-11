@@ -94,19 +94,51 @@ describe('findActivityWindows', () => {
     expect(outlook(data, 'walk').window?.hours).toBe(1);
   });
 
-  it('keeps gardening in daylight and lets running go past sunset', () => {
+  it('keeps gardening bounded to daylight', () => {
     const evening = [18, 19, 20, 21].map((h) => hour(h, { feelsLikeF: 60, uvIndex: 0 }));
     const data = forecast(evening, `2026-07-18T20:00:00${OFFSET}`);
 
-    // Sunset is 20:00, so gardening only has 18:00 and 19:00 — exactly its two-hour minimum.
+    // Sunset is 20:00, so gardening only has 18:00 and 19:00 — exactly its two-hour minimum. It
+    // never straddles sunset in the first place, so neither dark field is set.
     const garden = outlook(data, 'garden').window;
     expect(garden?.hours).toBe(2);
     expect(garden?.end).toBe(`2026-07-18T20:00:00${OFFSET}`);
+    expect(garden?.darkFrom).toBeNull();
+    expect(garden?.extendsUntil).toBeNull();
+  });
 
-    // Running has no daylight requirement, so it can use the whole evening — and says so.
+  it('splits a straddling run at sunset when the daylight portion alone is enough, without dropping the rest', () => {
+    const evening = [18, 19, 20, 21].map((h) => hour(h, { feelsLikeF: 60, uvIndex: 0 }));
+    const data = forecast(evening, `2026-07-18T20:00:00${OFFSET}`);
+
+    // Running has no daylight requirement, and its whole evening (18:00–22:00) clears the bar. But
+    // its one-hour minimum is already met by 18:00–20:00 alone, so that's the reported window — a
+    // span ending mid-evening reads better than one silently covering both daylight and dark. The
+    // two hours after sunset are still surfaced, just separately.
     const run = outlook(data, 'run').window;
-    expect(run?.hours).toBe(4);
-    expect(run?.afterDark).toBe(true);
+    expect(run?.start).toBe(`2026-07-18T18:00:00${OFFSET}`);
+    expect(run?.hours).toBe(2);
+    expect(run?.end).toBe(`2026-07-18T20:00:00${OFFSET}`);
+    expect(run?.darkFrom).toBeNull();
+    expect(run?.extendsUntil).toBe(`2026-07-18T22:00:00${OFFSET}`);
+  });
+
+  it('reports a run entirely after dark as such, with no extension to speak of', () => {
+    const lateEvening = [19, 20, 21].map((h) => hour(h, { feelsLikeF: 60, uvIndex: 0 }));
+    const data = forecast(lateEvening, `2026-07-18T18:00:00${OFFSET}`);
+
+    const run = outlook(data, 'run').window;
+    expect(run?.hours).toBe(3);
+    expect(run?.darkFrom).toBe(`2026-07-18T18:00:00${OFFSET}`);
+    expect(run?.extendsUntil).toBeNull();
+  });
+
+  it('leaves a run that never reaches sunset with both dark fields null', () => {
+    const data = forecast([hour(12), hour(13), hour(14)], `2026-07-18T22:00:00${OFFSET}`);
+
+    const walk = outlook(data, 'walk').window;
+    expect(walk?.darkFrom).toBeNull();
+    expect(walk?.extendsUntil).toBeNull();
   });
 
   it('fails a threshold it cannot evaluate rather than passing by default', () => {

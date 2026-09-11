@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   UNAVAILABLE,
+  defaultUnitSystem,
   describeTemperature,
   formatDistance,
   formatDuration,
@@ -20,6 +21,11 @@ import {
   toKilometresPerHour,
   toMillimetres,
 } from '@/lib/weather/units';
+
+/** Overrides the locale `defaultUnitSystem` reads, restored after each test. */
+function stubLanguages(...tags: string[]) {
+  vi.stubGlobal('navigator', { ...globalThis.navigator, language: tags[0], languages: tags });
+}
 
 describe('conversions', () => {
   it('converts Fahrenheit to Celsius at known reference points', () => {
@@ -135,5 +141,46 @@ describe('formatTime / formatHour — location timezone', () => {
   it('still reports unavailable for missing or unparseable timestamps', () => {
     expect(formatTime(null, 'America/Los_Angeles')).toBe(UNAVAILABLE);
     expect(formatHour('nonsense', 'America/Los_Angeles')).toBe(UNAVAILABLE);
+  });
+});
+
+describe('defaultUnitSystem', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('guesses metric for a locale outside the handful of imperial countries', () => {
+    stubLanguages('en-GB');
+    expect(defaultUnitSystem()).toBe('metric');
+    stubLanguages('fr-FR');
+    expect(defaultUnitSystem()).toBe('metric');
+    stubLanguages('ja-JP');
+    expect(defaultUnitSystem()).toBe('metric');
+  });
+
+  it('guesses imperial for the United States, Liberia and Myanmar', () => {
+    stubLanguages('en-US');
+    expect(defaultUnitSystem()).toBe('imperial');
+    stubLanguages('en-LR');
+    expect(defaultUnitSystem()).toBe('imperial');
+    stubLanguages('my-MM');
+    expect(defaultUnitSystem()).toBe('imperial');
+  });
+
+  it('prefers navigator.languages over the single-value navigator.language', () => {
+    vi.stubGlobal('navigator', { ...globalThis.navigator, language: 'en-US', languages: ['en-GB', 'en-US'] });
+    expect(defaultUnitSystem()).toBe('metric');
+  });
+
+  it('falls back to imperial when a locale carries no region at all', () => {
+    // A bare "en" is not enough signal to guess metric from — flipping a real US user with a
+    // stripped-down locale string would be a worse outcome than staying with today's default.
+    stubLanguages('en');
+    expect(defaultUnitSystem()).toBe('imperial');
+  });
+
+  it('falls back to imperial when navigator is unavailable, so the module stays SSR-safe', () => {
+    vi.stubGlobal('navigator', undefined);
+    expect(defaultUnitSystem()).toBe('imperial');
   });
 });

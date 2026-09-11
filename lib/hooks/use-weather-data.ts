@@ -6,6 +6,13 @@ import type { WeatherDashboardData, WeatherDataState } from '@/lib/weather/types
 
 const LOADING: WeatherDataState = { status: 'loading' };
 
+/**
+ * How long a reading is trusted before a tab returning to the foreground triggers a silent
+ * refetch. Matched to the weather route's `s-maxage=600` — the CDN would hand back the same
+ * payload sooner than this anyway, so refetching earlier would be pure noise, not freshness.
+ */
+const STALE_AFTER_MS = 10 * 60 * 1000;
+
 export interface UseWeatherDataResult {
   state: WeatherDataState;
   /** Re-requests the current location's forecast. A no-op while no location is selected. */
@@ -24,6 +31,8 @@ interface StoredResult {
   state: WeatherDataState;
   /** Carried across a failed refresh so a blip doesn't blank a working dashboard. */
   lastGood?: WeatherDashboardData;
+  /** When `state` became ready, for judging staleness on a tab returning to the foreground. */
+  fetchedAt?: number;
 }
 
 /** Carries a good reading forward, but only within the same location. */
@@ -92,7 +101,7 @@ export function useWeatherData(location: SelectedLocation | null): UseWeatherDat
           }));
           return;
         }
-        setResult({ key, state: { status: 'ready', data: body } });
+        setResult({ key, state: { status: 'ready', data: body }, fetchedAt: Date.now() });
       } catch (error) {
         // An aborted request means a newer one superseded it; its result is no longer wanted.
         if (error instanceof DOMException && error.name === 'AbortError') return;
@@ -118,6 +127,24 @@ export function useWeatherData(location: SelectedLocation | null): UseWeatherDat
   }, [key]);
 
   const current = result?.key === key ? result : null;
+
+  // A tab left open across a lunch break still shows the morning's numbers with no visible sign
+  // anything is wrong — the only tell today is a quiet "Updated" timestamp in the hero. Refetching
+  // when the tab comes back to the foreground, but only past the CDN's own freshness window,
+  // closes that gap without turning every tab switch into a request.
+  useEffect(() => {
+    if (!current || current.state.status !== 'ready' || current.fetchedAt === undefined || isRefreshing) return;
+
+    function onVisibilityChange() {
+      if (document.visibilityState !== 'visible') return;
+      if (!current || current.fetchedAt === undefined) return;
+      if (Date.now() - current.fetchedAt < STALE_AFTER_MS) return;
+      refresh();
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [current, isRefreshing, refresh]);
 
   return {
     state: current?.state ?? LOADING,

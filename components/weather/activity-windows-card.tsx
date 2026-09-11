@@ -47,7 +47,10 @@ export function ActivityWindowsCard({ data, isLoading, errorMessage, activities 
                     <p className="mt-1 text-xs text-muted">
                       {window.reasons.join(' · ')}
                       {/* Stated rather than implied: a window can be perfectly good and still dark. */}
-                      {window.afterDark && ' · After sunset'}
+                      {window.darkFrom && ' · After sunset'}
+                      {/* The daylight portion alone was enough to report on its own, but the
+                          suitable stretch keeps going after dark — said, not dropped. */}
+                      {window.extendsUntil && ` · Also fine until ${formatHour(window.extendsUntil, timeZone)} after dark`}
                     </p>
                   </>
                 ) : (

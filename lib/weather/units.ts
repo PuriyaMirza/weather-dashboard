@@ -11,6 +11,34 @@ const MM_PER_INCH = 25.4;
 const KM_PER_MILE = 1.609344;
 const HPA_PER_INHG = 33.863886667;
 
+/** The handful of places that weigh weather in imperial units. Everywhere else is metric. */
+const IMPERIAL_REGIONS = new Set(['US', 'LR', 'MM']);
+
+/**
+ * A first guess at units from the browser's own locale, used only to seed a first-time visitor —
+ * `store/dashboard-store.ts` never calls this once a choice has been saved. Reads
+ * `navigator.languages` before the single-value `navigator.language`, since the list is ordered by
+ * the user's actual preference and a browser's `Accept-Language` fallback chain can otherwise mask
+ * the region that matters.
+ *
+ * Falls back to imperial — same as today's hardcoded default — whenever nothing here can be
+ * resolved: no `navigator` (server-side), or a locale reported without a region subtag at all
+ * (bare "en", not "en-GB"). Guessing metric from that little signal would wrongly flip users this
+ * app already serves correctly today.
+ */
+export function defaultUnitSystem(): UnitSystem {
+  if (typeof navigator === 'undefined') return 'imperial';
+
+  const tags = navigator.languages && navigator.languages.length > 0 ? navigator.languages : [navigator.language];
+
+  for (const tag of tags) {
+    const region = tag?.split('-')[1]?.toUpperCase();
+    if (region) return IMPERIAL_REGIONS.has(region) ? 'imperial' : 'metric';
+  }
+
+  return 'imperial';
+}
+
 export function toCelsius(fahrenheit: number): number {
   return ((fahrenheit - 32) * 5) / 9;
 }
