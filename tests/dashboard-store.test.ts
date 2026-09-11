@@ -40,7 +40,7 @@ describe('dashboard store', () => {
     expect(persisted.state.location).toEqual(SEATTLE);
     // partialize should keep actions out of storage.
     expect(persisted.state.setLocation).toBeUndefined();
-    expect(persisted.version).toBe(6);
+    expect(persisted.version).toBe(7);
   });
 
   it('does not read persisted state until rehydrate is called (skipHydration)', async () => {
@@ -70,6 +70,30 @@ describe('dashboard store', () => {
 
     await useDashboardStore.persist.rehydrate();
     expect(useDashboardStore.getState().location).toEqual(SEATTLE);
+  });
+
+  /**
+   * Someone holding a dashboard from before onboarding existed has already arranged it by hand.
+   * Defaulting them to "not yet onboarded" would greet a returning user with a first-run wall over
+   * the dashboard they built, which is a regression dressed as a welcome.
+   */
+  it('treats a dashboard saved before onboarding existed as already set up', async () => {
+    window.localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      JSON.stringify({ state: { location: SEATTLE }, version: 6 }),
+    );
+
+    await useDashboardStore.persist.rehydrate();
+    expect(useDashboardStore.getState().hasOnboarded).toBe(true);
+  });
+
+  it('does not mark a browser with nothing saved as already set up', async () => {
+    // The migration above is deliberately generous; this is the other side of it. An empty store
+    // must stay "not yet onboarded", or a first-time visitor would never be offered the flow.
+    useDashboardStore.setState({ hasOnboarded: false });
+
+    await useDashboardStore.persist.rehydrate();
+    expect(useDashboardStore.getState().hasOnboarded).toBe(false);
   });
 
   it('falls back rather than trusting a persisted location that is missing coordinates', async () => {

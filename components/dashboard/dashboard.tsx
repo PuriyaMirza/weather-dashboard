@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CardGrid } from '@/components/dashboard/card-grid';
 import { Hero } from '@/components/dashboard/hero';
 import { Menu } from '@/components/dashboard/menu';
 import { SavedLocations } from '@/components/dashboard/saved-locations';
 import { LocationSearch } from '@/components/location/location-search';
+import { Onboarding } from '@/components/onboarding/onboarding';
 import { useHasHydrated } from '@/lib/hooks/use-has-hydrated';
 import { useResolvedTheme } from '@/lib/hooks/use-resolved-theme';
 import { useWeatherData } from '@/lib/hooks/use-weather-data';
 import { applyThemePreference } from '@/lib/theme';
+import { buildShareUrl, decodePreferences, SHARE_PARAM } from '@/lib/weather/share-link';
 import { useDashboardStore } from '@/store/dashboard-store';
 
 export function Dashboard() {
@@ -36,6 +38,53 @@ export function Dashboard() {
   const reorderCards = useDashboardStore((state) => state.reorderCards);
   const applyPreset = useDashboardStore((state) => state.applyPreset);
   const restoreDefaults = useDashboardStore((state) => state.restoreDefaults);
+  const activities = useDashboardStore((state) => state.activities);
+  const hasOnboarded = useDashboardStore((state) => state.hasOnboarded);
+  const completeOnboarding = useDashboardStore((state) => state.completeOnboarding);
+  const skipOnboarding = useDashboardStore((state) => state.skipOnboarding);
+  const restartOnboarding = useDashboardStore((state) => state.restartOnboarding);
+  const applyPreferences = useDashboardStore((state) => state.applyPreferences);
+
+  const hasReadShareLink = useRef(false);
+
+  /**
+   * Applies a shared setup link, once, after rehydration — running earlier would have the restored
+   * preferences land on top of it.
+   *
+   * The parameter is stripped whether or not it was usable: a good link must not re-apply over
+   * later edits every time the page is refreshed, and a bad one should not sit in the address bar
+   * inviting another try. A link that fails to decode is simply ignored — `decodePreferences`
+   * validates it exactly as stored preferences are validated, because a URL can come from anyone.
+   */
+  useEffect(() => {
+    if (!hasHydrated || hasReadShareLink.current) return;
+    hasReadShareLink.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has(SHARE_PARAM)) return;
+
+    const shared = decodePreferences(params.get(SHARE_PARAM));
+    if (shared) applyPreferences(shared);
+
+    params.delete(SHARE_PARAM);
+    const query = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
+  }, [hasHydrated, applyPreferences]);
+
+  // Read at click time rather than render time, so the link always carries the current setup.
+  const getShareUrl = useCallback(
+    () =>
+      buildShareUrl(window.location.href, {
+        location,
+        savedLocations,
+        unitSystem,
+        theme,
+        cards,
+        activities,
+        hasOnboarded,
+      }),
+    [location, savedLocations, unitSystem, theme, cards, activities, hasOnboarded],
+  );
 
   // The inline script in layout.tsx sets the theme before paint; this keeps the attribute in step
   // when the user changes it afterwards.
@@ -64,6 +113,16 @@ export function Dashboard() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col">
+      {/* Waits for hydration like the grid does: rendering before saved preferences load would show
+          the first-run flow to someone who finished it months ago. */}
+      {hasHydrated && !hasOnboarded && (
+        <Onboarding
+          initialLocation={location}
+          onComplete={completeOnboarding}
+          onSkip={skipOnboarding}
+        />
+      )}
+
       <header className="flex items-start justify-between gap-4 border-b border-line-strong pb-4">
         <div>
           <h1 className="font-display text-3xl leading-none tracking-tight text-ink-strong sm:text-4xl">
@@ -86,6 +145,8 @@ export function Dashboard() {
           onEditingChange={setEditing}
           onApplyPreset={applyPreset}
           onRestoreDefaults={restoreDefaults}
+          getShareUrl={getShareUrl}
+          onRestartOnboarding={restartOnboarding}
         />
       </header>
 
@@ -128,7 +189,7 @@ export function Dashboard() {
       <CardGrid
         cards={cards}
         isHydrated={hasHydrated}
-        cardProps={{ data, isLoading: isLoading && !data, unitSystem }}
+        cardProps={{ data, isLoading: isLoading && !data, unitSystem, activities }}
         isEditing={isEditing}
         onReorder={reorderCards}
         onMove={moveCard}

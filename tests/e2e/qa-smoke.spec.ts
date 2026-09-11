@@ -1,6 +1,12 @@
 import { expect, test, type ConsoleMessage, type Page } from '@playwright/test';
 import { mockWeatherData } from '../../lib/weather/mock-data';
 import { ALL_CARD_IDS } from '../../lib/weather/card-layout';
+import { encodeSetup, markFirstVisit, markOnboarded } from './support';
+
+// These specs exercise the returning-visitor dashboard; the first-run flow would sit over it.
+test.beforeEach(async ({ page }) => {
+  await markOnboarded(page);
+});
 
 /**
  * Smoke checks for things unit tests structurally cannot see.
@@ -216,4 +222,106 @@ test('the activity module states a real window, in words', async ({ page }) => {
   await expect(panel.getByText('12 PM – 4 PM').first()).toBeVisible();
   // And the reasoning in words, never colour alone.
   await expect(panel.getByText(/no rain expected/i).first()).toBeVisible();
+});
+
+/**
+ * The first-run flow and the shareable setup link.
+ *
+ * These exist because the app has no accounts: a setup lives in one browser's localStorage, and a
+ * link is the only way it reaches another. Both halves are worth a browser check — the flow renders
+ * over everything, and the link is the one input a stranger can hand the user.
+ */
+
+test('a first-time visitor is offered setup, and the answers stick', async ({ page }) => {
+  await markFirstVisit(page);
+  await stubWeather(page);
+  await page.goto('/');
+
+  await expect(page.getByRole('dialog', { name: /where are you/i })).toBeVisible();
+
+  await page.getByRole('button', { name: /continue/i }).click();
+  // The checkbox is visually hidden inside its label, so a real user clicks the label. Doing the
+  // same proves the label/input association works — the property that makes the control usable.
+  await page.getByRole('checkbox', { name: 'Cycle' }).locator('xpath=ancestor::label[1]').click();
+  await expect(page.getByRole('checkbox', { name: 'Cycle' })).toBeChecked();
+  await page.getByRole('button', { name: /continue/i }).click();
+  await page.getByRole('button', { name: /use this dashboard/i }).click();
+
+  // The answer shaped the grid: a cyclist gets wind, which is not in the default layout.
+  const grid = page.getByLabel('Weather modules');
+  await expect(grid.getByRole('heading', { name: 'Wind Detail', exact: true })).toBeVisible();
+  await expect(grid.getByRole('heading', { name: 'Best Time To Go Out', exact: true })).toBeVisible();
+
+  // And it is not asked again — the failure mode that would make the flow intolerable.
+  await page.reload();
+  await expect(page.getByRole('dialog', { name: /where are you/i })).toHaveCount(0);
+  await expect(grid.getByRole('heading', { name: 'Wind Detail', exact: true })).toBeVisible();
+});
+
+test('the setup flow can be skipped, and stays skipped', async ({ page }) => {
+  await markFirstVisit(page);
+  await stubWeather(page);
+  await page.goto('/');
+
+  await page.getByRole('button', { name: /skip setup/i }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  // Skipping leaves the curated default layout, not an empty page.
+  const grid = page.getByLabel('Weather modules');
+  await expect(grid.getByRole('heading', { name: 'Temperature', exact: true })).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole('dialog', { name: /where are you/i })).toHaveCount(0);
+});
+
+test('a shared setup link applies the dashboard and clears itself from the address', async ({ page }) => {
+  await markFirstVisit(page);
+  await stubWeather(page);
+
+  const shared = encodeSetup({
+    v: 1,
+    l: { id: '2643743', name: 'London', region: 'England', country: 'United Kingdom', latitude: 51.5, longitude: -0.12 },
+    s: [],
+    u: 'metric',
+    t: 'system',
+    c: [['dew-point', 'small'], ['wind', 'medium']],
+    a: ['cycle'],
+  });
+
+  await page.goto(`/?p=${shared}`);
+
+  const grid = page.getByLabel('Weather modules');
+  await expect(grid.getByRole('heading', { name: 'Dew Point', exact: true })).toBeVisible();
+  await expect(grid.getByRole('heading', { name: 'Wind Detail', exact: true })).toBeVisible();
+  // A module from the default layout the link did not ask for.
+  await expect(grid.getByRole('heading', { name: 'Rain Chance', exact: true })).toHaveCount(0);
+
+  // Arriving by link counts as being set up, so the flow does not then interrupt.
+  await expect(page.getByRole('dialog', { name: /where are you/i })).toHaveCount(0);
+
+  // The parameter is dropped: left in place it would re-apply over later edits on every refresh.
+  await expect(page).toHaveURL((url) => !url.searchParams.has('p'));
+
+  await page.reload();
+  await expect(grid.getByRole('heading', { name: 'Dew Point', exact: true })).toBeVisible();
+});
+
+test('a malformed setup link is ignored rather than breaking the page', async ({ page }) => {
+  const problems = collectBrowserProblems(page);
+  await stubWeather(page);
+
+  // A link is attacker-supplied input. The worst outcome is a dashboard that will not start —
+  // exactly the failure that unreadable saved preferences once caused.
+  await page.goto('/?p=this-is-not-a-real-payload');
+
+  const grid = page.getByLabel('Weather modules');
+  await expect(grid).toBeVisible();
+  await expect(grid.getByRole('heading', { name: 'Temperature', exact: true })).toBeVisible();
+  await expect(page).toHaveURL((url) => !url.searchParams.has('p'));
+
+  // Still usable, not merely rendered.
+  await page.getByRole('button', { name: /open menu/i }).click();
+  await expect(page.getByRole('dialog', { name: /dashboard settings/i })).toBeVisible();
+
+  expect(problems, `browser reported problems:\n${problems.join('\n')}`).toEqual([]);
 });

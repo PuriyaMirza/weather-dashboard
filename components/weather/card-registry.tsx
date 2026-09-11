@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import type { ActivityId } from '@/lib/weather/activity-windows';
 import { METRIC_MODULES, type MetricModuleId } from '@/lib/weather/metrics';
 import type { WeatherDashboardData } from '@/lib/weather/types';
 import type { UnitSystem } from '@/lib/weather/units';
@@ -37,6 +38,12 @@ export interface WeatherCardProps {
   isLoading?: boolean;
   errorMessage?: string;
   unitSystem: UnitSystem;
+  /**
+   * The activities this person said they care about. A preference passed down like `unitSystem`
+   * above — modules still receive only `WeatherDashboardData` plus presentation choices, and still
+   * never reach for the store or a request of their own.
+   */
+  activities?: ActivityId[];
 }
 
 /** How a module presents in the menu's toggle list: a single reading, or a grouped panel. */

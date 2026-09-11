@@ -1,4 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { markOnboarded } from './support';
+
+// These specs exercise the returning-visitor dashboard; the first-run flow would sit over it.
+test.beforeEach(async ({ page }) => {
+  await markOnboarded(page);
+});
 
 test('renders the default dashboard layout with location and menu controls', async ({ page }) => {
   await page.goto('/');

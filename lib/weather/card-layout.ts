@@ -1,4 +1,5 @@
 import type { WeatherCardId } from '@/components/weather/card-registry';
+import type { ActivityId } from './activity-windows';
 
 /**
  * Module footprints, modelled on the way home-screen widgets size: a fixed set of shapes rather
@@ -149,6 +150,44 @@ function defaultSizeFor(id: WeatherCardId): CardSize {
 }
 
 export { defaultSizeFor };
+
+/**
+ * The readings each activity actually depends on.
+ *
+ * This is the onboarding's whole point: someone who says "I cycle" is really saying "wind and rain
+ * decide my day", and the dashboard can compose itself from that rather than making them pick
+ * modules from a list of twenty-two. It sits beside the presets above because it is the same kind
+ * of mapping — a persona expressed as a layout — just derived from an answer instead of a label.
+ */
+export const ACTIVITY_MODULES: Record<ActivityId, WeatherCardId[]> = {
+  walk: ['precipitation-chance', 'feels-like'],
+  run: ['feels-like', 'uv-index', 'air-quality-index'],
+  cycle: ['wind-speed', 'wind', 'precipitation-chance'],
+  garden: ['uv-index', 'humidity', 'dew-point', 'daily-forecast'],
+};
+
+/** Present whatever the answers: the headline reading and the shape of the day ahead. */
+const CORE_MODULES: WeatherCardId[] = ['temperature', 'hourly-temperature'];
+
+/**
+ * Builds a starting layout from the activities someone chose.
+ *
+ * Ordered by `ALL_CARD_IDS` rather than by selection order, so the same answers always produce the
+ * same dashboard and the result still reads headline-first like the defaults do. Passed through
+ * `reconcileLayout` like any other layout, so a future id rename cannot leave a hole here either.
+ */
+export function composeLayoutForActivities(activities: ActivityId[]): CardLayoutEntry[] {
+  const wanted = new Set<WeatherCardId>(CORE_MODULES);
+
+  // Only worth showing the "best time to go out" panel if there is an activity to answer for.
+  if (activities.length > 0) wanted.add('activity-windows');
+
+  for (const activity of activities) {
+    for (const id of ACTIVITY_MODULES[activity] ?? []) wanted.add(id);
+  }
+
+  return reconcileLayout(ALL_CARD_IDS.filter((id) => wanted.has(id)).map((id) => ({ id, size: defaultSizeFor(id) })));
+}
 
 export function moveEntry<T>(items: T[], from: number, to: number): T[] {
   if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length) return items;
