@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { mockWeatherData } from '../../lib/weather/mock-data';
-import { markOnboarded } from './support';
+import { markOnboarded, openLocationPanel } from './support';
 
 // These specs exercise the returning-visitor dashboard; the first-run flow would sit over it.
 test.beforeEach(async ({ page }) => {
@@ -57,11 +57,14 @@ test('dark theme actually recolours the page, not just the attribute', async ({ 
 test('locations can be saved and switched between', async ({ page }) => {
   await page.goto('/');
 
-  // Portland is the default and starts unsaved.
+  // Portland is the default and starts unsaved. Saving and the chip it produces both live behind
+  // the hero's location button now.
+  await openLocationPanel(page);
   await page.getByRole('button', { name: /save portland/i }).click();
   await expect(page.getByRole('button', { name: /show weather for portland/i })).toBeVisible();
 
   await page.reload();
+  await openLocationPanel(page);
   await expect(page.getByRole('button', { name: /show weather for portland/i })).toBeVisible();
 
   await page.getByRole('button', { name: /remove portland.*from saved locations/i }).click();
@@ -99,6 +102,15 @@ test('every module in the menu can be switched on and off', async ({ page }) => 
 
   await dewPoint.locator('xpath=ancestor::label[1]').click();
   await expect(grid.getByRole('heading', { name: 'Dew Point', exact: true })).toHaveCount(0);
+});
+
+test('the location dialog closes on Escape and returns focus to the location button', async ({ page }) => {
+  await page.goto('/');
+  await openLocationPanel(page);
+
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /change location/i })).toBeFocused();
 });
 
 test('the menu closes on Escape and returns focus to the hamburger', async ({ page }) => {
@@ -160,5 +172,5 @@ test('a damaged saved layout does not leave the dashboard stuck loading', async 
 
   await expect(page.getByLabel('Weather modules')).toBeVisible();
   await expect(page.getByText('Loading your dashboard…')).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Temperature', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Rain Chance', exact: true })).toBeVisible();
 });

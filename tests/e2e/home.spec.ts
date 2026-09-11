@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { markOnboarded } from './support';
+import { markOnboarded, openLocationPanel } from './support';
 
 // These specs exercise the returning-visitor dashboard; the first-run flow would sit over it.
 test.beforeEach(async ({ page }) => {
@@ -17,14 +17,19 @@ test('renders the default dashboard layout with location and menu controls', asy
   await expect(grid).toBeVisible();
 
   // The default layout is deliberately curated rather than showing everything available.
-  for (const name of ['Temperature', 'Rain Chance', 'Wind', 'Humidity', 'UV Index', 'Daily Forecast']) {
+  // Temperature is not among them — the hero already carries the current reading.
+  for (const name of ['Rain Chance', 'Wind', 'Humidity', 'UV Index', 'Daily Forecast']) {
     await expect(grid.getByRole('heading', { name, exact: true })).toBeVisible();
   }
+  await expect(grid.getByRole('heading', { name: 'Temperature', exact: true })).toHaveCount(0);
 
   // The rest are reachable through the menu, not shown by default.
   await expect(grid.getByRole('heading', { name: 'Dew Point', exact: true })).toHaveCount(0);
   await expect(grid.getByRole('heading', { name: 'Comfort', exact: true })).toHaveCount(0);
 
+  // Changing location lives behind the hero's location button, not on the page by default.
+  await expect(page.getByRole('combobox', { name: /search for a city or postal code/i })).toHaveCount(0);
+  await openLocationPanel(page);
   const search = page.getByRole('combobox', { name: /search for a city or postal code/i });
   await expect(search).toBeVisible();
   await expect(search).toHaveAttribute('aria-expanded', 'false');

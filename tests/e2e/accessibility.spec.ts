@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { mockWeatherData } from '../../lib/weather/mock-data';
-import { markOnboarded } from './support';
+import { markOnboarded, openLocationPanel } from './support';
 
 // These specs exercise the returning-visitor dashboard; the first-run flow would sit over it.
 test.beforeEach(async ({ page }) => {
@@ -66,6 +66,17 @@ test('the open menu has no serious accessibility violations', async ({ page }) =
 
   await page.getByRole('button', { name: /open menu/i }).click();
   await expect(page.getByRole('dialog', { name: /dashboard settings/i })).toBeVisible();
+
+  const violations = await scan(page);
+  expect(violations, describe(violations)).toEqual([]);
+});
+
+test('the open location dialog has no serious accessibility violations', async ({ page }) => {
+  await stubWeather(page);
+  await page.goto('/');
+
+  await openLocationPanel(page);
+  await expect(page.getByRole('dialog', { name: /change location/i })).toBeVisible();
 
   const violations = await scan(page);
   expect(violations, describe(violations)).toEqual([]);

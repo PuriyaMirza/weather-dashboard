@@ -4,8 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { CardGrid } from '@/components/dashboard/card-grid';
 import { Hero } from '@/components/dashboard/hero';
 import { Menu } from '@/components/dashboard/menu';
-import { SavedLocations } from '@/components/dashboard/saved-locations';
-import { LocationSearch } from '@/components/location/location-search';
+import { LocationPanel } from '@/components/location/location-panel';
 import { Onboarding } from '@/components/onboarding/onboarding';
 import { useHasHydrated } from '@/lib/hooks/use-has-hydrated';
 import { useResolvedTheme } from '@/lib/hooks/use-resolved-theme';
@@ -17,6 +16,8 @@ import { useDashboardStore } from '@/store/dashboard-store';
 export function Dashboard() {
   const hasHydrated = useHasHydrated();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
+  const locationButtonRef = useRef<HTMLButtonElement>(null);
 
   const location = useDashboardStore((state) => state.location);
   const setLocation = useDashboardStore((state) => state.setLocation);
@@ -150,21 +151,6 @@ export function Dashboard() {
         />
       </header>
 
-      <div className="flex flex-col gap-4 border-b border-line py-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="w-full max-w-md">
-          <LocationSearch onSelect={setLocation} />
-        </div>
-        {hasHydrated && (
-          <SavedLocations
-            active={location}
-            saved={savedLocations}
-            onSelect={setLocation}
-            onSave={saveLocation}
-            onRemove={removeSavedLocation}
-          />
-        )}
-      </div>
-
       <Hero
         location={location}
         data={data}
@@ -177,6 +163,20 @@ export function Dashboard() {
         isRefreshing={isRefreshing}
         isStale={isStale}
         failureMessage={failed}
+        onOpenLocationPanel={() => setIsLocationPanelOpen(true)}
+        locationButtonRef={locationButtonRef}
+      />
+
+      <LocationPanel
+        isOpen={isLocationPanelOpen}
+        onClose={() => setIsLocationPanelOpen(false)}
+        triggerRef={locationButtonRef}
+        hasHydrated={hasHydrated}
+        active={location}
+        saved={savedLocations}
+        onSelect={setLocation}
+        onSave={saveLocation}
+        onRemove={removeSavedLocation}
       />
 
       {isEditing && (

@@ -1,9 +1,10 @@
 'use client';
 
+import type { RefObject } from 'react';
 import { atmosphereStyle, getAtmosphere, inferIsDay, NEUTRAL_ATMOSPHERE } from '@/lib/weather/atmosphere';
 import { formatLocationLabel, type SelectedLocation } from '@/lib/weather/location';
 import type { WeatherDashboardData } from '@/lib/weather/types';
-import { formatHour, formatTemperature, formatTime } from '@/lib/weather/units';
+import { describeTemperature, formatHour, formatTemperature, formatTime } from '@/lib/weather/units';
 import type { UnitSystem } from '@/lib/weather/units';
 
 interface HeroProps {
@@ -21,17 +22,23 @@ interface HeroProps {
   isStale: boolean;
   /** Why the newest attempt failed, shown whether or not there is stale data behind it. */
   failureMessage?: string;
+  /** Opens the location dialog — location changing moved here from a permanent row on the page. */
+  onOpenLocationPanel: () => void;
+  /** Attached to the location button, so closing the dialog can return focus to it. */
+  locationButtonRef: RefObject<HTMLButtonElement | null>;
 }
 
 /** Hours shown in the strip. Enough to plan an afternoon without becoming a chart. */
 const STRIP_HOURS = 8;
 
 /**
- * The masthead: where you are, when the reading is from, and what the sky is doing.
+ * The masthead: where you are, what it's doing right now, and the near-term shape of the day.
  *
- * It deliberately does *not* restate the temperature — that is the Temperature module's job, and
- * printing 72° twice on one screen was the most obvious flaw in the previous design. What the hero
- * adds instead is the near-term shape of the day, which no single module carries.
+ * The temperature now lives here rather than only in the Temperature module — the module is still
+ * the one showing high/low and staying on screen when this reading is stale, but repeating "72°" on
+ * a page that otherwise has nothing above the fold but a location name and a search box was a worse
+ * trade than the duplication. `Temperature` is dropped from the default layout for the same reason;
+ * anyone who wants the module back can switch it on from the menu.
  *
  * The tonal wash is decorative. The condition and whether it is day or night are also stated in
  * words, so nothing is conveyed by tone alone.
@@ -48,6 +55,8 @@ export function Hero({
   isRefreshing,
   isStale,
   failureMessage,
+  onOpenLocationPanel,
+  locationButtonRef,
 }: HeroProps) {
   const current = data?.current;
   const timeZone = data?.location.timezone;
@@ -78,9 +87,33 @@ export function Hero({
       </h2>
 
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <p className="font-display text-3xl leading-none text-sky-ink sm:text-5xl">
-          {hasHydrated ? formatLocationLabel(location) : 'Loading…'}
-        </p>
+        {hasHydrated ? (
+          <button
+            ref={locationButtonRef}
+            type="button"
+            onClick={onOpenLocationPanel}
+            aria-label={`Change location. Currently ${formatLocationLabel(location)}.`}
+            className="group flex items-baseline gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-sky-ink"
+          >
+            <span className="font-display text-3xl leading-none text-sky-ink sm:text-5xl">
+              {formatLocationLabel(location)}
+            </span>
+            {/* Signals the name is a control, not a label, without borrowing an icon library. */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 16 16"
+              className="h-3 w-3 shrink-0 stroke-sky-ink-muted group-hover:stroke-sky-ink sm:h-4 sm:w-4"
+              fill="none"
+              strokeWidth="1.5"
+              strokeLinecap="square"
+              strokeLinejoin="round"
+            >
+              <path d="M4 6l4 4 4-4" />
+            </svg>
+          </button>
+        ) : (
+          <p className="font-display text-3xl leading-none text-sky-ink sm:text-5xl">Loading…</p>
+        )}
 
         <div className="flex items-center gap-4">
           {data?.updatedAt && (
@@ -131,11 +164,19 @@ export function Hero({
         </p>
       ) : (
         <>
-          <p className="mt-4 text-sm text-sky-ink">
-            {current.conditionLabel} · {isDay ? 'Daytime' : 'Night'}
-            {data?.sun?.sunset && isDay && <> · Sunset {formatTime(data.sun.sunset, timeZone)}</>}
-            {data?.sun?.sunrise && !isDay && <> · Sunrise {formatTime(data.sun.sunrise, timeZone)}</>}
-          </p>
+          <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <p
+              className="font-display text-5xl leading-none text-sky-ink tabular-nums sm:text-6xl"
+              aria-label={describeTemperature(current.temperatureF, unitSystem)}
+            >
+              {formatTemperature(current.temperatureF, unitSystem)}
+            </p>
+            <p className="text-sm text-sky-ink">
+              {current.conditionLabel} · {isDay ? 'Daytime' : 'Night'}
+              {data?.sun?.sunset && isDay && <> · Sunset {formatTime(data.sun.sunset, timeZone)}</>}
+              {data?.sun?.sunrise && !isDay && <> · Sunrise {formatTime(data.sun.sunrise, timeZone)}</>}
+            </p>
+          </div>
 
           {hours.length > 0 && (
             <>

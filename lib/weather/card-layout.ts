@@ -35,9 +35,12 @@ export interface CardLayoutEntry {
  * The layout a new visitor sees, and what "Restore defaults" returns to. Deliberately a subset of
  * everything available: the dashboard should feel composed on arrival, with the rest discoverable
  * through the menu.
+ *
+ * `temperature` is deliberately absent: the hero now carries the current reading, and printing it
+ * twice on a page that otherwise leads with a location name was the worse trade. The module still
+ * exists in the registry and the menu for anyone who wants it in the grid too.
  */
 export const DEFAULT_CARD_LAYOUT: CardLayoutEntry[] = [
-  { id: 'temperature', size: 'medium' },
   { id: 'precipitation-chance', size: 'small' },
   { id: 'wind-speed', size: 'small' },
   { id: 'hourly-temperature', size: 'large' },
@@ -166,8 +169,11 @@ export const ACTIVITY_MODULES: Record<ActivityId, WeatherCardId[]> = {
   garden: ['uv-index', 'humidity', 'dew-point', 'daily-forecast'],
 };
 
-/** Present whatever the answers: the headline reading and the shape of the day ahead. */
-const CORE_MODULES: WeatherCardId[] = ['temperature', 'hourly-temperature'];
+/**
+ * Present whatever the answers: the shape of the day ahead. Not `temperature` — the hero already
+ * carries the current reading, same as the curated default above.
+ */
+const CORE_MODULES: WeatherCardId[] = ['hourly-temperature'];
 
 /**
  * Builds a starting layout from the activities someone chose.
