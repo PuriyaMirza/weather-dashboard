@@ -144,7 +144,7 @@ test('one broken module degrades to its own tile, leaving the dashboard usable',
   await expect(grid.getByText(/ran into a problem/i)).toBeVisible();
 
   // Everything else still works. Before the boundary existed this was a blank page.
-  await expect(grid.getByRole('heading', { name: 'Temperature', exact: true })).toBeVisible();
+  await expect(grid.getByRole('heading', { name: 'Rain Chance', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: /open menu/i })).toBeVisible();
   await page.getByRole('button', { name: /open menu/i }).click();
   await expect(page.getByRole('dialog', { name: /dashboard settings/i })).toBeVisible();
@@ -268,7 +268,7 @@ test('the setup flow can be skipped, and stays skipped', async ({ page }) => {
 
   // Skipping leaves the curated default layout, not an empty page.
   const grid = page.getByLabel('Weather modules');
-  await expect(grid.getByRole('heading', { name: 'Temperature', exact: true })).toBeVisible();
+  await expect(grid.getByRole('heading', { name: 'Rain Chance', exact: true })).toBeVisible();
 
   await page.reload();
   await expect(page.getByRole('dialog', { name: /where are you/i })).toHaveCount(0);
@@ -316,7 +316,7 @@ test('a malformed setup link is ignored rather than breaking the page', async ({
 
   const grid = page.getByLabel('Weather modules');
   await expect(grid).toBeVisible();
-  await expect(grid.getByRole('heading', { name: 'Temperature', exact: true })).toBeVisible();
+  await expect(grid.getByRole('heading', { name: 'Rain Chance', exact: true })).toBeVisible();
   await expect(page).toHaveURL((url) => !url.searchParams.has('p'));
 
   // Still usable, not merely rendered.

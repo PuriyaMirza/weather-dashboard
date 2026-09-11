@@ -41,6 +41,17 @@ export function encodeSetup(wire: Record<string, unknown>): string {
   return Buffer.from(JSON.stringify(wire), 'utf8').toString('base64url');
 }
 
+/**
+ * Opens the location dialog from the hero's location button.
+ *
+ * Changing location moved off the permanently-visible top row and behind this button, so any spec
+ * that wants the search box or the saved-location chips has to open it first, same as a real
+ * visitor would.
+ */
+export function openLocationPanel(page: Page) {
+  return page.getByRole('button', { name: /change location/i }).click();
+}
+
 export function markOnboarded(page: Page, state: Record<string, unknown> = {}) {
   return page.addInitScript(
     ([key, value]) => {
