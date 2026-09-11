@@ -11,6 +11,7 @@ import {
   type CardLayoutEntry,
   type CardSize,
 } from '@/lib/weather/card-layout';
+import { isActivityId, type ActivityId } from '@/lib/weather/activity-windows';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
 import { isThemePreference, type ThemePreference } from '@/lib/theme';
 import type { UnitSystem } from '@/lib/weather/units';
@@ -20,12 +21,28 @@ export const MAX_SAVED_LOCATIONS = 8;
 
 export const DEFAULT_THEME: ThemePreference = 'system';
 
-export interface DashboardState {
+/**
+ * The preference fields that outlive the session — everything `partialize` writes, and everything a
+ * shared setup link can carry. Kept as its own type because both paths validate against it.
+ */
+export interface PersistedPreferences {
   location: SelectedLocation;
   savedLocations: SelectedLocation[];
   unitSystem: UnitSystem;
   theme: ThemePreference;
   cards: CardLayoutEntry[];
+  activities: ActivityId[];
+  hasOnboarded: boolean;
+}
+
+/** What the onboarding flow hands back when someone finishes it. */
+export interface OnboardingResult {
+  location: SelectedLocation;
+  activities: ActivityId[];
+  cards: CardLayoutEntry[];
+}
+
+export interface DashboardState extends PersistedPreferences {
   /** Transient UI state — deliberately not persisted, so a reload never starts in edit mode. */
   isEditing: boolean;
 
@@ -51,6 +68,14 @@ export interface DashboardState {
   reorderCards: (orderedIds: WeatherCardId[]) => void;
   applyPreset: (presetId: string) => void;
   restoreDefaults: () => void;
+
+  setActivities: (activities: ActivityId[]) => void;
+  /** One atomic write, so a half-finished setup is never persisted. */
+  completeOnboarding: (result: OnboardingResult) => void;
+  skipOnboarding: () => void;
+  restartOnboarding: () => void;
+  /** Replaces every preference at once — used when arriving with a shared setup link. */
+  applyPreferences: (preferences: PersistedPreferences) => void;
 }
 
 export const DASHBOARD_STORAGE_KEY = 'weather-dashboard';
@@ -71,6 +96,40 @@ function isSelectedLocation(value: unknown): value is SelectedLocation {
     typeof candidate.longitude === 'number' &&
     Number.isFinite(candidate.longitude)
   );
+}
+
+/**
+ * Coerces anything claiming to be saved preferences into preferences this version can actually run.
+ *
+ * Two callers depend on this, and the second is why it is a shared function rather than inline code
+ * in `merge`: stored state (which `migrate` deliberately passes through unvalidated, so this is the
+ * only gate) and the payload of a shared setup link. A link is *attacker-supplied* — anyone can
+ * send someone a URL — so it gets exactly the validation stored state gets. Two parallel
+ * implementations would drift, and the weaker one would be the hole.
+ *
+ * Every field falls back rather than throwing: losing a preference is a far better outcome than a
+ * page that will not start, which is the lesson of the unreadable-localStorage bug.
+ */
+export function validatePreferences(raw: unknown): PersistedPreferences {
+  const saved = (typeof raw === 'object' && raw !== null ? raw : {}) as Partial<PersistedPreferences>;
+
+  return {
+    cards: reconcileLayout(saved.cards),
+    // Falls back to the constant rather than the live store value, which at rehydrate time is not
+    // necessarily the default.
+    theme: isThemePreference(saved.theme) ? saved.theme : DEFAULT_THEME,
+    location: isSelectedLocation(saved.location) ? saved.location : DEFAULT_LOCATION,
+    // Capped as well as filtered: the store's own action enforces the ceiling, but a hand-crafted
+    // link would otherwise be free to stuff the chip row with hundreds of entries.
+    savedLocations: Array.isArray(saved.savedLocations)
+      ? saved.savedLocations.filter(isSelectedLocation).slice(0, MAX_SAVED_LOCATIONS)
+      : [],
+    unitSystem: saved.unitSystem === 'metric' || saved.unitSystem === 'imperial' ? saved.unitSystem : 'imperial',
+    activities: Array.isArray(saved.activities)
+      ? [...new Set(saved.activities.filter(isActivityId))]
+      : [],
+    hasOnboarded: saved.hasOnboarded === true,
+  };
 }
 
 /**
@@ -135,6 +194,8 @@ export const useDashboardStore = create<DashboardState>()(
       unitSystem: 'imperial',
       theme: DEFAULT_THEME,
       cards: DEFAULT_CARD_LAYOUT,
+      activities: [],
+      hasOnboarded: false,
       isEditing: false,
 
       setLocation: (location) => set({ location }),
@@ -207,6 +268,23 @@ export const useDashboardStore = create<DashboardState>()(
         }),
 
       restoreDefaults: () => set({ cards: DEFAULT_CARD_LAYOUT }),
+
+      setActivities: (activities) => set({ activities: [...new Set(activities)] }),
+
+      completeOnboarding: ({ location, activities, cards }) =>
+        set({
+          location,
+          activities: [...new Set(activities)],
+          cards: reconcileLayout(cards),
+          hasOnboarded: true,
+        }),
+
+      // Skipping is a real answer, not an absence of one: the flow must not reappear next visit.
+      skipOnboarding: () => set({ hasOnboarded: true }),
+
+      restartOnboarding: () => set({ hasOnboarded: false }),
+
+      applyPreferences: (preferences) => set({ ...validatePreferences(preferences), hasOnboarded: true }),
     }),
     {
       name: DASHBOARD_STORAGE_KEY,
@@ -218,12 +296,20 @@ export const useDashboardStore = create<DashboardState>()(
       },
       // Bump when the persisted shape changes so old saved state is never deserialized into a
       // shape the code no longer understands.
-      version: 6,
+      version: 7,
       // Without a migrate, zustand *discards* state saved under an older version — which would
       // throw away every existing dashboard on upgrade and make reconcileLayout's span-to-size
       // translation dead code. Older state is handed through instead, because `merge` below
       // re-validates every field it cares about anyway.
-      migrate: (persisted) => persisted as DashboardState,
+      migrate: (persisted, version) => {
+        // Anyone holding state from before onboarding existed has already arranged their dashboard
+        // by hand. Defaulting them to "not yet onboarded" would greet a returning user with a
+        // first-run wall over the dashboard they already built, so they are marked done.
+        if (version < 7 && typeof persisted === 'object' && persisted !== null) {
+          return { ...persisted, hasOnboarded: true } as DashboardState;
+        }
+        return persisted as DashboardState;
+      },
       // Persist preferences only. Actions are unserializable, and isEditing is transient.
       partialize: (state) => ({
         location: state.location,
@@ -231,28 +317,18 @@ export const useDashboardStore = create<DashboardState>()(
         unitSystem: state.unitSystem,
         theme: state.theme,
         cards: state.cards,
+        activities: state.activities,
+        hasOnboarded: state.hasOnboarded,
       }),
-      // Every persisted field is re-validated here rather than trusted, because `migrate` above
+      // Every persisted field is re-validated rather than trusted, because `migrate` above
       // deliberately lets state written by older versions through. A stored layout can reference
       // modules this version no longer has (or miss ones it gained); the theme is read by a
       // pre-paint script that must not be handed nonsense; and a location with a missing
       // coordinate would be sent straight to the weather route as a request for "null island".
-      merge: (persisted, current) => {
-        const saved = (persisted ?? {}) as Partial<DashboardState>;
-        return {
-          ...current,
-          ...saved,
-          cards: reconcileLayout(saved.cards),
-          // Falls back to the constant rather than `current.theme`: merge runs against whatever
-          // the store happens to hold at rehydrate time, which is not necessarily the default.
-          theme: isThemePreference(saved.theme) ? saved.theme : DEFAULT_THEME,
-          location: isSelectedLocation(saved.location) ? saved.location : DEFAULT_LOCATION,
-          savedLocations: Array.isArray(saved.savedLocations)
-            ? saved.savedLocations.filter(isSelectedLocation)
-            : [],
-          unitSystem: saved.unitSystem === 'metric' || saved.unitSystem === 'imperial' ? saved.unitSystem : 'imperial',
-        };
-      },
+      //
+      // The validation itself lives in `validatePreferences` because a shared setup link has to run
+      // the very same checks on a payload a stranger may have written.
+      merge: (persisted, current) => ({ ...current, ...validatePreferences(persisted) }),
       // Critical for SSR correctness: without this, the store reads localStorage while the module
       // initializes, so the client's first render differs from the server-rendered HTML and React
       // reports a hydration mismatch. Instead we rehydrate explicitly after mount (see

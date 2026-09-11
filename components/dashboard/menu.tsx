@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 import { weatherCardRegistry, type WeatherCardId } from '@/components/weather/card-registry';
+import { useDialogFocus } from '@/lib/hooks/use-dialog-focus';
 import { LAYOUT_PRESETS } from '@/lib/weather/card-layout';
 import type { ThemePreference } from '@/lib/theme';
 import type { UnitSystem } from '@/lib/weather/units';
@@ -20,14 +21,14 @@ interface MenuProps {
   onEditingChange: (isEditing: boolean) => void;
   onApplyPreset: (presetId: string) => void;
   onRestoreDefaults: () => void;
+  /** Built at click time so the link always carries the setup as it stands. */
+  getShareUrl: () => string;
+  onRestartOnboarding: () => void;
 }
 
 const SECTION_LABEL = 'eyebrow text-muted';
 const ACTION =
   'w-full border border-line-strong px-3 py-2 text-left text-xs uppercase tracking-[0.14em] text-ink outline-none hover:bg-accent hover:text-accent-ink focus-visible:ring-2 focus-visible:ring-accent';
-
-const FOCUSABLE =
-  'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 
 const THEME_OPTIONS: { value: ThemePreference; label: string; description: string }[] = [
   { value: 'light', label: 'Light', description: 'Always use the light theme' },
@@ -64,6 +65,8 @@ export function Menu({
   onEditingChange,
   onApplyPreset,
   onRestoreDefaults,
+  getShareUrl,
+  onRestartOnboarding,
 }: MenuProps) {
   const panelId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -78,42 +81,7 @@ export function Menu({
     triggerRef.current?.focus();
   }, [onClose]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        close();
-        return;
-      }
-      if (event.key !== 'Tab') return;
-
-      // Trap Tab inside the panel. Without this, tabbing past the last control silently moves
-      // focus to the page behind an overlay the user cannot see past.
-      const focusable = panelRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE);
-      if (!focusable || focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, close]);
-
-  // Move focus into the panel when it opens, so the first Tab lands somewhere sensible.
-  useEffect(() => {
-    if (!isOpen) return;
-    panelRef.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
-  }, [isOpen]);
+  useDialogFocus(isOpen, panelRef, close);
 
   return (
     <>
@@ -240,6 +208,16 @@ export function Menu({
                 </div>
               </section>
 
+              <section aria-labelledby={`${panelId}-setup`}>
+                <h3 id={`${panelId}-setup`} className={SECTION_LABEL}>
+                  Setup
+                </h3>
+                <ShareSetup getShareUrl={getShareUrl} />
+                <button type="button" onClick={onRestartOnboarding} className={`${ACTION} mt-2`}>
+                  Redo setup
+                </button>
+              </section>
+
               <section aria-labelledby={`${panelId}-display`}>
                 <h3 id={`${panelId}-display`} className={SECTION_LABEL}>
                   Display
@@ -282,6 +260,68 @@ export function Menu({
         </>
       )}
     </>
+  );
+}
+
+/**
+ * Copies a link that carries the entire setup.
+ *
+ * This is what stands in for an account. Preferences live in this browser; a link is how they reach
+ * another one. Nothing is uploaded and nothing is stored on a server — the setup travels inside the
+ * URL itself, which is the only reason this app can offer portable preferences while keeping its
+ * no-accounts, no-database constraint.
+ *
+ * The warning is not boilerplate. The link contains the coordinates of every saved place, which for
+ * most people is where they live and work. That belongs in plain words next to the button that
+ * copies it, not in a policy page.
+ */
+function ShareSetup({ getShareUrl }: { getShareUrl: () => string }) {
+  const [copied, setCopied] = useState(false);
+  const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
+
+  async function copy() {
+    const url = getShareUrl();
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setFallbackUrl(null);
+    } catch {
+      // Clipboard access is refused over plain HTTP and under some browser configurations. Showing
+      // the link to copy by hand is worse than copying it, but it is not a dead end.
+      setCopied(false);
+      setFallbackUrl(url);
+    }
+  }
+
+  return (
+    <div className="mt-3 flex flex-col gap-2">
+      <button type="button" onClick={copy} className={ACTION}>
+        Copy setup link
+      </button>
+      <p className="text-xs text-muted">
+        Opens this dashboard on another device — no account needed. The link contains your saved
+        places, so treat it like your address before sending it to anyone.
+      </p>
+
+      {copied && (
+        <p role="status" className="eyebrow text-ink">
+          Link copied
+        </p>
+      )}
+
+      {fallbackUrl && (
+        <label className="flex flex-col gap-1">
+          <span className="eyebrow text-muted">Copy this link</span>
+          <input
+            type="text"
+            readOnly
+            value={fallbackUrl}
+            onFocus={(event) => event.currentTarget.select()}
+            className="w-full border border-line bg-canvas px-2 py-1 text-xs text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          />
+        </label>
+      )}
+    </div>
   );
 }
 

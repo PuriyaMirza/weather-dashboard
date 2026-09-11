@@ -24,6 +24,9 @@ beforeEach(() => {
     unitSystem: 'imperial',
     cards: DEFAULT_CARD_LAYOUT,
     isEditing: false,
+    // These suites are about the dashboard a returning visitor sees; without this the
+    // first-run flow renders over it and every query finds the onboarding dialog instead.
+    hasOnboarded: true,
   });
 });
 

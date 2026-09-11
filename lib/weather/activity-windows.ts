@@ -95,6 +95,13 @@ export const ACTIVITIES: ActivityDefinition[] = [
   },
 ];
 
+export const ACTIVITY_IDS: ActivityId[] = ACTIVITIES.map((activity) => activity.id);
+
+/** Guards persisted and link-supplied values, neither of which can be trusted to name a real activity. */
+export function isActivityId(value: unknown): value is ActivityId {
+  return typeof value === 'string' && (ACTIVITY_IDS as string[]).includes(value);
+}
+
 export interface ActivityWindow {
   activity: ActivityId;
   /** ISO timestamps, offset-qualified, matching the rest of the model. */
@@ -203,12 +210,19 @@ function describe(run: HourlyPoint[], activity: ActivityDefinition): string[] {
  *
  * `sunset` bounds the search for activities that need light. Passing it as a plain timestamp keeps
  * this function pure and trivially testable — no clock, no timezone library, no I/O.
+ *
+ * `selected` narrows the report to the activities someone actually cares about. An empty or absent
+ * list means *unspecified* rather than *none* — anyone who has never stated a preference, which
+ * includes every dashboard saved before this existed, still sees all four.
  */
-export function findActivityWindows(data: WeatherDashboardData): ActivityOutlook[] {
+export function findActivityWindows(data: WeatherDashboardData, selected?: ActivityId[]): ActivityOutlook[] {
   const hourly = data.hourly ?? [];
   const sunsetMs = data.sun?.sunset ? new Date(data.sun.sunset).getTime() : null;
 
-  return ACTIVITIES.map((definition) => {
+  const reported =
+    selected && selected.length > 0 ? ACTIVITIES.filter((activity) => selected.includes(activity.id)) : ACTIVITIES;
+
+  return reported.map((definition) => {
     const candidates =
       definition.requiresDaylight && sunsetMs != null
         ? hourly.filter((hour) => new Date(hour.time).getTime() < sunsetMs)

@@ -1,5 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { mockWeatherData } from '../../lib/weather/mock-data';
+import { markOnboarded } from './support';
+
+// These specs exercise the returning-visitor dashboard; the first-run flow would sit over it.
+test.beforeEach(async ({ page }) => {
+  await markOnboarded(page);
+});
 
 async function openMenu(page: Page) {
   await page.getByRole('button', { name: /open menu/i }).click();

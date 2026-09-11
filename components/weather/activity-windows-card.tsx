@@ -13,9 +13,10 @@ const DESCRIPTION = 'The best stretch of the next day for walking, running, cycl
  * activity has no good window it says so plainly; a confident bad recommendation would be worse
  * than an honest blank.
  */
-export function ActivityWindowsCard({ data, isLoading, errorMessage }: WeatherCardProps) {
+export function ActivityWindowsCard({ data, isLoading, errorMessage, activities }: WeatherCardProps) {
   const timeZone = data?.location.timezone;
-  const outlooks = data ? findActivityWindows(data) : [];
+  // An empty selection means "unspecified", not "none" — see findActivityWindows.
+  const outlooks = data ? findActivityWindows(data, activities) : [];
   // Nothing to reason about without an hourly series; that is "unavailable", not "no window".
   const isUnavailable = !data || data.hourly.length === 0;
 
