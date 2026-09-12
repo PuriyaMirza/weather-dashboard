@@ -1,11 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrangeToolbar } from '@/components/dashboard/arrange-toolbar';
 import { CardGrid } from '@/components/dashboard/card-grid';
 import { Hero } from '@/components/dashboard/hero';
 import { Menu } from '@/components/dashboard/menu';
 import { LocationPanel } from '@/components/location/location-panel';
 import { Onboarding } from '@/components/onboarding/onboarding';
+import { useEscapeKey } from '@/lib/hooks/use-escape-key';
 import { useHasHydrated } from '@/lib/hooks/use-has-hydrated';
 import { useResolvedTheme } from '@/lib/hooks/use-resolved-theme';
 import { useWeatherData } from '@/lib/hooks/use-weather-data';
@@ -18,6 +20,9 @@ export function Dashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
   const locationButtonRef = useRef<HTMLButtonElement>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  // A ref, not state: a drag starting and stopping should not re-render the whole dashboard.
+  const isDraggingCardRef = useRef(false);
 
   const location = useDashboardStore((state) => state.location);
   const setLocation = useDashboardStore((state) => state.setLocation);
@@ -112,6 +117,25 @@ export function Dashboard() {
   // fall back to their quiet "unavailable" state, which is what an absent reading looks like
   // everywhere else in the app.
 
+  const exitArranging = useCallback(() => {
+    setEditing(false);
+    // Arrange mode is entered from the menu, so that is where a keyboard user expects to be put
+    // back down — same convention the dialogs already follow.
+    menuTriggerRef.current?.focus();
+  }, [setEditing]);
+
+  // Whichever dialog is open owns Escape, so this stands down entirely rather than trying to
+  // out-order its handler.
+  const isModalOpen = isMenuOpen || isLocationPanelOpen || (hasHydrated && !hasOnboarded);
+
+  useEscapeKey(isEditing && !isModalOpen, () => {
+    // dnd-kit's sensors also cancel on Escape, and they do it without calling preventDefault. With
+    // a module lifted, Escape means "put it back" — leaving arrange mode too would throw away the
+    // drag and the mode in one keystroke.
+    if (isDraggingCardRef.current) return;
+    exitArranging();
+  });
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col">
       {/* Waits for hydration like the grid does: rendering before saved preferences load would show
@@ -148,6 +172,7 @@ export function Dashboard() {
           onRestoreDefaults={restoreDefaults}
           getShareUrl={getShareUrl}
           onRestartOnboarding={restartOnboarding}
+          triggerRef={menuTriggerRef}
         />
       </header>
 
@@ -179,11 +204,7 @@ export function Dashboard() {
         onRemove={removeSavedLocation}
       />
 
-      {isEditing && (
-        <p className="eyebrow mt-6 border border-dashed border-line px-4 py-3 text-muted">
-          Arranging — drag a module, or use the arrows and size buttons on each one.
-        </p>
-      )}
+      {isEditing && <ArrangeToolbar onDone={exitArranging} />}
 
       {/* Rendering the saved layout before rehydration would flash the defaults, so the grid waits. */}
       <CardGrid
@@ -195,6 +216,9 @@ export function Dashboard() {
         onMove={moveCard}
         onSetSize={setCardSize}
         onRemove={removeCard}
+        onDragActiveChange={(isDragActive) => {
+          isDraggingCardRef.current = isDragActive;
+        }}
       />
     </div>
   );

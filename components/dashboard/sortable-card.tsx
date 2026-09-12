@@ -36,20 +36,21 @@ export function SortableCard({
   onSetSize,
   onRemove,
 }: SortableCardProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: entry.id,
-    // Dragging is only possible in edit mode; outside it the module is inert.
-    disabled: !isEditing,
-  });
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
+    useSortable({
+      id: entry.id,
+      // Dragging is only possible in edit mode; outside it the module is inert.
+      disabled: !isEditing,
+    });
 
   const Component = definition.Component;
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    // Lifted module sits above its neighbours while dragging.
-    zIndex: isDragging ? 10 : undefined,
-    opacity: isDragging ? 0.85 : undefined,
+    // The overlay carries the module while it is lifted, so what is left behind is the hole it
+    // came out of rather than a second copy of it.
+    opacity: isDragging ? 0.4 : undefined,
   };
 
   return (
@@ -73,6 +74,11 @@ export function SortableCard({
           onSetSize={onSetSize}
           onRemove={onRemove}
           dragHandleProps={{ ...attributes, ...listeners }}
+          // Separate from the props above because a ref cannot ride along in an HTMLAttributes
+          // bag. Without it dnd-kit never learns which element is the activator, and its
+          // keyboard guard ("did this event come from the handle?") silently passes for every
+          // control in the card.
+          dragHandleRef={setActivatorNodeRef}
         />
       )}
       <div className="min-h-0 flex-1">

@@ -31,5 +31,14 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    // The grid drops to two columns on a phone and the arrange controls live at their most
+    // cramped there, but every spec until now ran at 1280px — which is how a drag handle nothing
+    // could grab survived this long. Scoped with `testMatch` rather than run wholesale: the rest
+    // of the suite has nothing width-dependent to say, and CI minutes are not free.
+    {
+      name: 'mobile-chrome',
+      use: { ...devices['Pixel 7'] },
+      testMatch: /(accessibility|customization)\.spec\.ts/,
+    },
   ],
 });

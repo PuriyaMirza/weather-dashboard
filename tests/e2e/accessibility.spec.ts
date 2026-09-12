@@ -31,8 +31,10 @@ function stubWeather(page: Page) {
  * and a gate that cries wolf gets switched off — which is worse than no gate.
  */
 async function scan(page: Page) {
+  // wcag22aa carries `target-size`, which is the rule that would have caught the 24x20px drag
+  // handle this suite happily passed for months.
   const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze();
 
   return results.violations.filter(
@@ -88,9 +90,10 @@ test('edit mode has no serious accessibility violations', async ({ page }) => {
 
   await page.getByRole('button', { name: /open menu/i }).click();
   await page.getByRole('button', { name: /arrange modules/i }).click();
-  await page.keyboard.press('Escape');
 
-  // The per-module move, size and remove controls only exist here, and there are a lot of them.
+  // The sticky toolbar and the per-module move, size and remove controls only exist here, and
+  // there are a lot of them.
+  await expect(page.getByRole('group', { name: /arranging modules/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /^move .* earlier$/i }).first()).toBeVisible();
 
   const violations = await scan(page);

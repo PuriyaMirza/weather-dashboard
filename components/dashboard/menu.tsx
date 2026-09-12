@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useId, useRef, useState } from 'react';
+import { useCallback, useId, useRef, useState, type RefObject } from 'react';
 import { weatherCardRegistry, type WeatherCardId } from '@/components/weather/card-registry';
 import { useDialogFocus } from '@/lib/hooks/use-dialog-focus';
 import { LAYOUT_PRESETS } from '@/lib/weather/card-layout';
@@ -24,6 +24,8 @@ interface MenuProps {
   /** Built at click time so the link always carries the setup as it stands. */
   getShareUrl: () => string;
   onRestartOnboarding: () => void;
+  /** Lets the dashboard return focus here after arrange mode ends somewhere else on the page. */
+  triggerRef?: RefObject<HTMLButtonElement | null>;
 }
 
 const SECTION_LABEL = 'eyebrow text-muted';
@@ -67,19 +69,23 @@ export function Menu({
   onRestoreDefaults,
   getShareUrl,
   onRestartOnboarding,
+  triggerRef: externalTriggerRef,
 }: MenuProps) {
   const panelId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const internalTriggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = externalTriggerRef ?? internalTriggerRef;
 
   const active = new Set(activeCardIds);
   const readings = weatherCardRegistry.filter((card) => card.kind === 'reading');
   const panels = weatherCardRegistry.filter((card) => card.kind === 'panel');
 
-  const close = useCallback(() => {
+  // Left for the compiler to memoize: hand-written deps cannot express "reads triggerRef.current"
+  // now that the ref may come from the dashboard rather than from here.
+  function close() {
     onClose();
     triggerRef.current?.focus();
-  }, [onClose]);
+  }
 
   useDialogFocus(isOpen, panelRef, close);
 
@@ -172,7 +178,13 @@ export function Menu({
                 <div className="mt-3 flex flex-col gap-2">
                   <button
                     type="button"
-                    onClick={() => onEditingChange(!isEditing)}
+                    onClick={() => {
+                      onEditingChange(!isEditing);
+                      // Entering gets out of the way: the controls this turns on are behind
+                      // the panel. `onClose` rather than the local `close` because the arrange
+                      // toolbar takes focus on mount, and `close` would yank it back here.
+                      if (!isEditing) onClose();
+                    }}
                     aria-pressed={isEditing}
                     className={
                       isEditing
