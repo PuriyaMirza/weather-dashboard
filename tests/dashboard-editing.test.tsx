@@ -38,7 +38,8 @@ function openMenu() {
 function enterEditMode() {
   const menu = openMenu();
   fireEvent.click(within(menu).getByRole('button', { name: /arrange modules/i }));
-  fireEvent.keyDown(document, { key: 'Escape' });
+  // No Escape here: the menu closes itself on the way in, and pressing Escape would now be read
+  // as "leave arrange mode" — putting us straight back where we started.
 }
 
 describe('the menu', () => {

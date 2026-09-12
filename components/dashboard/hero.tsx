@@ -1,6 +1,6 @@
 'use client';
 
-import type { RefObject } from 'react';
+import { useId, type RefObject } from 'react';
 import { atmosphereStyle, getAtmosphere, inferIsDay, NEUTRAL_ATMOSPHERE } from '@/lib/weather/atmosphere';
 import { formatLocationLabel, type SelectedLocation } from '@/lib/weather/location';
 import type { WeatherDashboardData } from '@/lib/weather/types';
@@ -58,6 +58,7 @@ export function Hero({
   onOpenLocationPanel,
   locationButtonRef,
 }: HeroProps) {
+  const hoursLabelId = useId();
   const current = data?.current;
   const timeZone = data?.location.timezone;
 
@@ -180,13 +181,24 @@ export function Hero({
 
           {hours.length > 0 && (
             <>
-              <h3 className="sr-only">Next hours</h3>
+              <h3 id={hoursLabelId} className="sr-only">
+                Next hours
+              </h3>
               {/*
                 A row of hairline-separated columns rather than a chart: this is the shape of the
                 next few hours at a glance, and it stays readable in greyscale and at phone width.
                 It scrolls horizontally rather than shrinking below legibility.
+
+                Because it scrolls, it has to be reachable by keyboard — otherwise the hours past
+                the right edge are simply unavailable without a pointer, which is what happens at
+                phone width where the overflow actually bites. Focusable regions need a name, so it
+                borrows the heading above it.
               */}
-              <ul className="mt-6 flex overflow-x-auto border-t border-line-strong pt-4">
+              <ul
+                tabIndex={0}
+                aria-labelledby={hoursLabelId}
+                className="mt-6 flex overflow-x-auto border-t border-line-strong pt-4 outline-none focus-visible:ring-2 focus-visible:ring-sky-ink"
+              >
                 {hours.map((hour) => (
                   <li
                     key={hour.time}
