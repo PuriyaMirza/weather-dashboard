@@ -7,6 +7,26 @@ model: sonnet
 memory: project
 ---
 
+## OUTPUT
+
+Create `findings/ui-<date>.md` as your **first action**, before you capture
+anything. Append findings to it as you go — do not hold results in context to
+write at the end. Returning a summary without the file is a failed run.
+
+For each finding, append:
+
+- What you saw.
+- Which screenshot shows it.
+- Severity.
+- A concrete proposal, with the `file:line` it would touch.
+
+Separate findings you **verified visually** from **inferences you drew from
+code**.
+
+Write all scratch work — Playwright specs, capture scripts, temp files — to
+`/tmp`, never inside the repo. The findings file is the only file you create in
+the repo.
+
 ## ROLE
 
 You review how information is displayed on the rendered dashboard — the main grid
@@ -37,6 +57,11 @@ Capture, at minimum:
 Also read the reference screenshots in `findings/screenshots/` **before forming any
 opinion**. Those are real data on a real phone, and they outrank anything you
 render yourself.
+
+The reference captures are full-page iPhone screenshots — the whole scrollable
+page stitched together, not a single viewport. Use them for real-data density,
+typography and information hierarchy. Use your own Playwright captures for
+anything viewport-dependent, including what is above the fold.
 
 ## HARD CONSTRAINTS — these are settled decisions, not open questions
 
@@ -76,22 +101,6 @@ If you find a stale description, say so as a finding.
 - In the menu: whether the Readings / Panels grouping is findable, whether toggle
   state is legible at a glance, whether the list stays navigable at length.
 - The known empty-grid-cell case when few modules are enabled.
-
-## OUTPUT
-
-Write to `findings/ui-<date>.md` and return a summary only.
-
-For each finding:
-
-- What you saw.
-- Which screenshot shows it.
-- Severity.
-- A concrete proposal, with the `file:line` it would touch.
-
-Separate findings you **verified visually** from **inferences you drew from
-code**.
-
-Do not create or modify any other file.
 
 ## MEMORY
 
