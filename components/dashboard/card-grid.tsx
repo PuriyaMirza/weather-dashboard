@@ -16,7 +16,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
-import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { SortableContext, arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { getCardDefinition, type WeatherCardId, type WeatherCardProps } from '@/components/weather/card-registry';
 import type { CardLayoutEntry, CardSize } from '@/lib/weather/card-layout';
 import { SortableCard } from './sortable-card';
@@ -32,9 +32,17 @@ interface CardGridProps {
   onMove: (id: WeatherCardId, direction: -1 | 1) => void;
   onSetSize: (id: WeatherCardId, size: CardSize) => void;
   onRemove: (id: WeatherCardId) => void;
-  /** Lets the dashboard know a module is currently lifted, so its Escape handler can stand down —
-   *  mid-drag, Escape means "put this back", not "leave arrange mode". */
+  /** Lets the dashboard know a drag is in flight, so Escape cancels the drag rather than leaving
+   *  arrange mode. */
   onDragActiveChange: (isDragActive: boolean) => void;
+  /**
+   * The module waiting to be placed, owned by the dashboard rather than here: the toolbar's Cancel
+   * and the Escape key both need to control it, and a state two outsiders drive does not belong
+   * behind a callback ref.
+   */
+  liftedId: WeatherCardId | null;
+  onToggleLift: (id: WeatherCardId) => void;
+  onPlaceAt: (targetId: WeatherCardId) => void;
 }
 
 const PLACEHOLDER = 'mt-8 border border-dashed border-line p-10 text-center text-sm text-muted';
@@ -49,8 +57,12 @@ export function CardGrid({
   onSetSize,
   onRemove,
   onDragActiveChange,
+  liftedId,
+  onToggleLift,
+  onPlaceAt,
 }: CardGridProps) {
   const [activeId, setActiveId] = useState<WeatherCardId | null>(null);
+  const [overId, setOverId] = useState<WeatherCardId | null>(null);
   const sensors = useSensors(
     // A small distance threshold keeps a click on the handle from being read as a drag, which
     // would otherwise make the button's own activation unreliable.
@@ -84,6 +96,7 @@ export function CardGrid({
 
   function endDrag() {
     setActiveId(null);
+    setOverId(null);
     onDragActiveChange(false);
   }
 
@@ -121,10 +134,19 @@ export function CardGrid({
       sensors={sensors}
       collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
+      onDragOver={(event) => setOverId((event.over?.id as WeatherCardId) ?? null)}
       onDragEnd={handleDragEnd}
       onDragCancel={endDrag}
     >
-      <SortableContext items={cards.map((card) => card.id)} strategy={rectSortingStrategy}>
+      {/*
+        No sorting strategy, deliberately. rectSortingStrategy derives neighbour displacement
+        assuming every item is the same size, which is false here — modules are 1x1, 2x1 and 2x2 —
+        so the preview was approximate and tiles visibly jumped. Worse, neighbours sliding aside
+        depicts a *swap*, while the committed operation is arrayMove: an *insert*. Even an accurate
+        version would have been describing the wrong verb. The destination outline below says where
+        the module actually lands instead.
+      */}
+      <SortableContext items={cards.map((card) => card.id)} strategy={() => null}>
         {/*
           Two columns on a phone, four from `md` up. A small module is 1x1, medium 2x1, large 2x2 —
           so on a phone medium and large both fill the width, which is the only sensible reading of
@@ -157,6 +179,12 @@ export function CardGrid({
                 isLast={index === cards.length - 1}
                 position={index + 1}
                 total={cards.length}
+                isLifted={liftedId === entry.id}
+                isPlacementTarget={liftedId !== null && liftedId !== entry.id}
+                liftedTitle={liftedId ? (getCardDefinition(liftedId)?.title ?? null) : null}
+                isDropDestination={activeId !== null && overId === entry.id && activeId !== entry.id}
+                onToggleLift={() => onToggleLift(entry.id)}
+                onPlaceHere={() => onPlaceAt(entry.id)}
                 onMoveUp={() => onMove(entry.id, -1)}
                 onMoveDown={() => onMove(entry.id, 1)}
                 onSetSize={(size) => onSetSize(entry.id, size)}

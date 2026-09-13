@@ -9,6 +9,9 @@ interface CardControlsProps {
   isLast: boolean;
   position: number;
   total: number;
+  /** This module is waiting to be placed somewhere. */
+  isLifted: boolean;
+  onToggleLift: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onSetSize: (size: CardSize) => void;
@@ -21,15 +24,22 @@ interface CardControlsProps {
 }
 
 /**
- * The handle is the primary way to reorder, so it gets a real 44px target and full contrast.
+ * The handle does two jobs: hold it and it drags, tap it and the module lifts to be placed with a
+ * second tap. They cannot collide — dnd-kit only starts suppressing clicks once its activation
+ * constraint is met, so a tap shorter than the hold still produces an ordinary click.
+ *
  * `touch-none` is what makes a touch drag possible at all — without it the browser claims the
  * gesture for scrolling — and it is scoped to this button alone, because putting it on the card
- * would stop the page scrolling under a finger.
+ * would stop the page scrolling under a finger. The cost, worth knowing: a swipe that *starts* on
+ * the handle neither scrolls nor drags. The tap path means you rarely need to start one here.
+ *
+ * `touch-callout-none` suppresses the iOS long-press menu, which fires around 500ms and was
+ * arriving mid-hold to fight the drag.
  */
 const HANDLE =
-  'flex h-11 w-11 shrink-0 cursor-grab touch-none select-none items-center justify-center border ' +
-  'border-line-strong bg-card text-sm text-ink outline-none hover:bg-accent hover:text-accent-ink ' +
-  'focus-visible:ring-2 focus-visible:ring-accent active:cursor-grabbing';
+  'flex h-11 w-11 shrink-0 cursor-grab touch-none select-none [-webkit-touch-callout:none] items-center ' +
+  'justify-center border border-line-strong text-sm outline-none focus-visible:ring-2 ' +
+  'focus-visible:ring-accent active:cursor-grabbing';
 
 /** Quieter than the handle now that dragging works, but never hidden: this is the only route that
  *  needs no pointer at all, so it must not sit behind a disclosure. */
@@ -60,6 +70,8 @@ export function CardControls({
   isLast,
   position,
   total,
+  isLifted,
+  onToggleLift,
   onMoveUp,
   onMoveDown,
   onSetSize,
@@ -74,8 +86,24 @@ export function CardControls({
           type="button"
           ref={dragHandleRef}
           {...dragHandleProps}
-          className={HANDLE}
-          aria-label={`Reorder ${title}. Position ${position} of ${total}. Press space or enter, then use the arrow keys.`}
+          onClick={onToggleLift}
+          aria-pressed={isLifted}
+          className={`${HANDLE} ${
+            isLifted ? 'bg-accent text-accent-ink' : 'bg-card text-ink hover:bg-accent hover:text-accent-ink'
+          }`}
+          // Deliberately "Reorder" rather than "Move": the two arrows beside it are already
+          // "Move X earlier" / "Move X later", and three buttons per module opening with the same
+          // verb is worse to listen through than it is to look at.
+          //
+          // The label names both routes because which one you get depends on your input, not on a
+          // setting. Space or Enter reaches dnd-kit's keyboard drag — its sensor calls
+          // preventDefault, which suppresses this button's click, so the two never both fire — and
+          // a pointer or touch tap falls through to the click and picks the module up instead.
+          aria-label={
+            isLifted
+              ? `Cancel moving ${title}`
+              : `Reorder ${title}. Position ${position} of ${total}. Press space or enter, then use the arrow keys, or tap to pick it up and choose a new slot.`
+          }
         >
           <span aria-hidden="true">⠿</span>
         </button>

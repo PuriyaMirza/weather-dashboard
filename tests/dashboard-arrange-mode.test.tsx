@@ -68,7 +68,7 @@ describe('entering arrange mode', () => {
 
     // A role="status" wrapping the button would re-announce it on every render.
     expect(screen.getByRole('button', { name: /^done$/i })).toHaveAccessibleDescription(
-      /drag a module by its handle/i,
+      /tap a handle to move a module/i,
     );
   });
 });

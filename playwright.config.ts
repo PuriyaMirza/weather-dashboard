@@ -4,6 +4,13 @@ import { defineConfig, devices } from '@playwright/test';
 // ships rather than the dev server. Locally `npm run dev` stays the faster feedback loop.
 const isCI = Boolean(process.env.CI);
 
+// Escape hatch for environments that ship their own Chromium (and forbid downloading one). Applied
+// per project rather than globally: set on every project it would hand the WebKit one a Chromium
+// binary to launch.
+const chromiumBinary = process.env.PLAYWRIGHT_CHROMIUM_PATH
+  ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } }
+  : {};
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -16,10 +23,6 @@ export default defineConfig({
     // static HTML.
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
-    // Escape hatch for environments that ship their own Chromium (and forbid downloading one).
-    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_PATH
-      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH }
-      : undefined,
   },
   webServer: {
     command: isCI ? 'npm run start' : 'npm run dev',
@@ -29,7 +32,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], ...chromiumBinary },
     },
     // The grid drops to two columns on a phone and the arrange controls live at their most
     // cramped there, but every spec until now ran at 1280px — which is how a drag handle nothing
@@ -37,7 +40,15 @@ export default defineConfig({
     // of the suite has nothing width-dependent to say, and CI minutes are not free.
     {
       name: 'mobile-chrome',
-      use: { ...devices['Pixel 7'] },
+      use: { ...devices['Pixel 7'], ...chromiumBinary },
+      testMatch: /(accessibility|customization)\.spec\.ts/,
+    },
+    // WebKit on Linux is not iOS Safari, but it is the same engine — and the drag bug that started
+    // all of this was a WebKit behaviour Chromium structurally cannot reproduce. The tap-to-place
+    // path needs no gesture, so unlike the drag it can be asserted here.
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
       testMatch: /(accessibility|customization)\.spec\.ts/,
     },
   ],

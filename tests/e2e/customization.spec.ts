@@ -111,6 +111,51 @@ test('modules can be reordered by dragging the handle', async ({ page }) => {
 });
 
 /**
+ * Reordering without a gesture at all.
+ *
+ * This is the path that exists because a press-and-hold drag is demanding on a phone, and it is
+ * the one that can be asserted everywhere: it is ordinary clicks, so it runs identically on
+ * desktop Chromium, a touch-enabled mobile context, and WebKit — the engine behind the browser
+ * the drag was always hardest in.
+ */
+test('modules can be reordered by tapping a handle and then a slot', async ({ page }) => {
+  await page.goto('/');
+  await enterArrangeMode(page);
+
+  const headings = page.getByLabel('Weather modules').getByRole('heading', { level: 2 });
+  const before = await headings.allTextContents();
+
+  await page.getByRole('button', { name: /^reorder rain chance/i }).click();
+  await expect(page.getByText(/placing rain chance/i)).toBeVisible();
+
+  await page.getByRole('button', { name: /move rain chance to position 4 of 6/i }).click();
+
+  await expect(page.getByText(/placing rain chance/i)).toHaveCount(0);
+  await expect.poll(() => headings.allTextContents()).not.toEqual(before);
+
+  // The real assertion: it reached the store rather than only the DOM.
+  await page.reload();
+  await expect(headings.first()).toBeVisible();
+  await expect.poll(() => headings.allTextContents()).not.toEqual(before);
+});
+
+test('a pending placement can be abandoned without moving anything', async ({ page }) => {
+  await page.goto('/');
+  await enterArrangeMode(page);
+
+  const headings = page.getByLabel('Weather modules').getByRole('heading', { level: 2 });
+  const before = await headings.allTextContents();
+
+  await page.getByRole('button', { name: /^reorder rain chance/i }).click();
+  await page.keyboard.press('Escape');
+
+  await expect(page.getByText(/placing rain chance/i)).toHaveCount(0);
+  // Escape unwound the move, not the mode.
+  await expect(page.getByRole('group', { name: /arranging modules/i })).toBeVisible();
+  expect(await headings.allTextContents()).toEqual(before);
+});
+
+/**
  * The handle carries the CSS that makes a touch drag possible.
  *
  * This asserts the property rather than simulating the gesture, and that is deliberate. A CDP

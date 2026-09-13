@@ -100,6 +100,23 @@ test('edit mode has no serious accessibility violations', async ({ page }) => {
   expect(violations, describe(violations)).toEqual([]);
 });
 
+test('placement mode has no serious accessibility violations', async ({ page }) => {
+  await stubWeather(page);
+  await page.goto('/');
+
+  await page.getByRole('button', { name: /open menu/i }).click();
+  await page.getByRole('button', { name: /arrange modules/i }).click();
+  await page.getByRole('button', { name: /^reorder rain chance/i }).click();
+
+  // Every other module is now a destination button laid over its reading — worth scanning, since
+  // overlaying an interactive surface on existing content is exactly where contrast and naming go
+  // wrong.
+  await expect(page.getByText(/placing rain chance/i)).toBeVisible();
+
+  const violations = await scan(page);
+  expect(violations, describe(violations)).toEqual([]);
+});
+
 test('the failure state has no serious accessibility violations', async ({ page }) => {
   await page.route('**/api/weather*', (route) =>
     route.fulfill({
