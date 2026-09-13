@@ -34,9 +34,9 @@ Capture, at minimum:
 - Two contrasting weather conditions.
 - Main screen, and the menu open.
 
-Also read the reference screenshots in `.claude/findings/screenshots/` **before
-forming any opinion**. Those are real data on a real phone, and they outrank
-anything you render yourself.
+Also read the reference screenshots in `findings/screenshots/` **before forming any
+opinion**. Those are real data on a real phone, and they outrank anything you
+render yourself.
 
 ## HARD CONSTRAINTS — these are settled decisions, not open questions
 
@@ -52,6 +52,20 @@ anything you render yourself.
 
 A proposal that violates any of these is out of scope. **Do not soften them.**
 
+## ARRANGE MODE WAS RECENTLY REWORKED
+
+Do not assume any doc, comment or screenshot describing arrange mode is current —
+**inspect the running implementation and the code before you judge it.** Some of
+what is written down predates the change and is now wrong.
+
+What is actually there now: tapping a module's handle picks it up and every other
+module becomes a "Place here" target, alongside the existing press-and-hold drag;
+neighbouring tiles no longer animate aside during a drag, and the destination tile
+is outlined instead; and a sticky toolbar carries Done, or Cancel while a module is
+in hand.
+
+If you find a stale description, say so as a finding.
+
 ## WHAT TO LOOK FOR
 
 - Hierarchy and scan order.
@@ -65,7 +79,7 @@ A proposal that violates any of these is out of scope. **Do not soften them.**
 
 ## OUTPUT
 
-Write to `.claude/findings/ui-<date>.md` and return a summary only.
+Write to `findings/ui-<date>.md` and return a summary only.
 
 For each finding:
 
