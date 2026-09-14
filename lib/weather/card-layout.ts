@@ -39,14 +39,20 @@ export interface CardLayoutEntry {
  * `temperature` is deliberately absent: the hero now carries the current reading, and printing it
  * twice on a page that otherwise leads with a location name was the worse trade. The module still
  * exists in the registry and the menu for anyone who wants it in the grid too.
+ *
+ * `hourly-temperature` is also absent: the hero's own 8-hour strip already covers the near-term
+ * view, and restating the same hours one scroll down read as duplication rather than more detail.
+ * Anyone who wants the full 24-hour chart can switch it on from the menu.
+ *
+ * `daily-forecast` goes first so it claims columns 1-2 across both rows of the four-column desktop
+ * grid; the four smalls that follow then fill columns 3-4 top and bottom with no leftover cells.
  */
 export const DEFAULT_CARD_LAYOUT: CardLayoutEntry[] = [
+  { id: 'daily-forecast', size: 'large' },
   { id: 'precipitation-chance', size: 'small' },
   { id: 'wind-speed', size: 'small' },
-  { id: 'hourly-temperature', size: 'large' },
   { id: 'humidity', size: 'small' },
   { id: 'uv-index', size: 'small' },
-  { id: 'daily-forecast', size: 'large' },
 ];
 
 /**

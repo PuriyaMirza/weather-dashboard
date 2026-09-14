@@ -173,7 +173,8 @@ export function Hero({
               {formatTemperature(current.temperatureF, unitSystem)}
             </p>
             <p className="text-sm text-sky-ink">
-              {current.conditionLabel} · {isDay ? 'Daytime' : 'Night'}
+              {current.conditionLabel} · {isDay ? 'Daytime' : 'Night'} · High{' '}
+              {formatTemperature(current.highF, unitSystem)} · Low {formatTemperature(current.lowF, unitSystem)}
               {data?.sun?.sunset && isDay && <> · Sunset {formatTime(data.sun.sunset, timeZone)}</>}
               {data?.sun?.sunrise && !isDay && <> · Sunrise {formatTime(data.sun.sunrise, timeZone)}</>}
             </p>

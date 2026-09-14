@@ -133,44 +133,6 @@ export function Menu({
             </div>
 
             <div className="flex flex-col gap-7 px-5 py-6">
-              <section aria-labelledby={`${panelId}-modules`}>
-                <h3 id={`${panelId}-modules`} className={SECTION_LABEL}>
-                  Readings
-                </h3>
-                <p className="mt-1 text-xs text-muted">Switch on what you want to see.</p>
-                <ul className="mt-3">
-                  {readings.map((card) => (
-                    <ModuleToggle
-                      key={card.id}
-                      id={card.id}
-                      title={card.title}
-                      description={card.description}
-                      isActive={active.has(card.id)}
-                      onToggle={onToggleCard}
-                    />
-                  ))}
-                </ul>
-              </section>
-
-              <section aria-labelledby={`${panelId}-panels`}>
-                <h3 id={`${panelId}-panels`} className={SECTION_LABEL}>
-                  Panels
-                </h3>
-                <p className="mt-1 text-xs text-muted">Charts, tables, and grouped detail.</p>
-                <ul className="mt-3">
-                  {panels.map((card) => (
-                    <ModuleToggle
-                      key={card.id}
-                      id={card.id}
-                      title={card.title}
-                      description={card.description}
-                      isActive={active.has(card.id)}
-                      onToggle={onToggleCard}
-                    />
-                  ))}
-                </ul>
-              </section>
-
               <section aria-labelledby={`${panelId}-layout`}>
                 <h3 id={`${panelId}-layout`} className={SECTION_LABEL}>
                   Layout
@@ -266,6 +228,44 @@ export function Menu({
                     ))}
                   </div>
                 </fieldset>
+              </section>
+
+              <section aria-labelledby={`${panelId}-modules`}>
+                <h3 id={`${panelId}-modules`} className={SECTION_LABEL}>
+                  Readings
+                </h3>
+                <p className="mt-1 text-xs text-muted">Switch on what you want to see.</p>
+                <ul className="mt-3">
+                  {readings.map((card) => (
+                    <ModuleToggle
+                      key={card.id}
+                      id={card.id}
+                      title={card.title}
+                      description={card.description}
+                      isActive={active.has(card.id)}
+                      onToggle={onToggleCard}
+                    />
+                  ))}
+                </ul>
+              </section>
+
+              <section aria-labelledby={`${panelId}-panels`}>
+                <h3 id={`${panelId}-panels`} className={SECTION_LABEL}>
+                  Panels
+                </h3>
+                <p className="mt-1 text-xs text-muted">Charts, tables, and grouped detail.</p>
+                <ul className="mt-3">
+                  {panels.map((card) => (
+                    <ModuleToggle
+                      key={card.id}
+                      id={card.id}
+                      title={card.title}
+                      description={card.description}
+                      isActive={active.has(card.id)}
+                      onToggle={onToggleCard}
+                    />
+                  ))}
+                </ul>
               </section>
             </div>
           </div>

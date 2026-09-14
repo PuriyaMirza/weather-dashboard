@@ -90,7 +90,7 @@ describe('putting it down', () => {
 
     fireEvent.click(handleFor('Rain Chance'));
     // Humidity sits at index 3 in the default layout; Rain Chance should land there.
-    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 4 of 6/i }));
+    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 4 of 5/i }));
 
     const after = order();
     expect(after).not.toEqual(before);
@@ -104,7 +104,7 @@ describe('putting it down', () => {
     enterArrangeMode();
 
     fireEvent.click(handleFor('Rain Chance'));
-    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 4 of 6/i }));
+    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 4 of 5/i }));
 
     expect(screen.queryByText(/placing/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^done$/i })).toBeInTheDocument();
@@ -117,8 +117,8 @@ describe('putting it down', () => {
     fireEvent.click(handleFor('Rain Chance'));
     expect(screen.getByText(/moving rain chance\. choose where it goes/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 4 of 6/i }));
-    expect(screen.getByText(/rain chance moved to position 4 of 6/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 4 of 5/i }));
+    expect(screen.getByText(/rain chance moved to position 4 of 5/i)).toBeInTheDocument();
   });
 });
 
