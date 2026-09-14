@@ -81,11 +81,13 @@ test('modules can be reordered by dragging the handle', async ({ page }) => {
   const headings = page.getByLabel('Weather modules').getByRole('heading', { level: 2 });
   const before = await headings.allTextContents();
 
-  // The first two modules, which sit side by side in the top row at every width. Picking distant
-  // ones instead would put the second handle below the fold on a phone, where a pointer cannot
-  // reach it.
-  const from = await page.getByRole('button', { name: /^reorder rain chance/i }).boundingBox();
-  const to = await page.getByRole('button', { name: /^reorder wind/i }).boundingBox();
+  // Two adjacent small modules. On mobile the large Daily Forecast card above them can push
+  // these below the fold, so scroll the second handle into view before reading positions.
+  const fromHandle = page.getByRole('button', { name: /^reorder rain chance/i });
+  const toHandle = page.getByRole('button', { name: /^reorder wind/i });
+  await toHandle.scrollIntoViewIfNeeded();
+  const from = await fromHandle.boundingBox();
+  const to = await toHandle.boundingBox();
   if (!from || !to) throw new Error('Expected both module handles to be on screen.');
 
   const start = { x: from.x + from.width / 2, y: from.y + from.height / 2 };
@@ -128,7 +130,7 @@ test('modules can be reordered by tapping a handle and then a slot', async ({ pa
   await page.getByRole('button', { name: /^reorder rain chance/i }).click();
   await expect(page.getByText(/placing rain chance/i)).toBeVisible();
 
-  await page.getByRole('button', { name: /move rain chance to position 4 of 6/i }).click();
+  await page.getByRole('button', { name: /move rain chance to position 4 of 5/i }).click();
 
   await expect(page.getByText(/placing rain chance/i)).toHaveCount(0);
   await expect.poll(() => headings.allTextContents()).not.toEqual(before);
