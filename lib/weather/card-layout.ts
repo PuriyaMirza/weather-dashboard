@@ -177,9 +177,14 @@ export const ACTIVITY_MODULES: Record<ActivityId, WeatherCardId[]> = {
 
 /**
  * Present whatever the answers: the shape of the day ahead. Not `temperature` — the hero already
- * carries the current reading, same as the curated default above.
+ * carries the current reading, same as the curated default above. Not `hourly-temperature` either,
+ * for the same reason it was dropped from `DEFAULT_CARD_LAYOUT`: the hero's own hour strip already
+ * covers the near-term view, and an onboarding-derived layout duplicating it would reintroduce the
+ * exact overlap the curated default was changed to avoid. `daily-forecast` fills that role instead —
+ * it is the anchor panel the curated default leads with, and it does not restate anything the hero
+ * already shows.
  */
-const CORE_MODULES: WeatherCardId[] = ['hourly-temperature'];
+const CORE_MODULES: WeatherCardId[] = ['daily-forecast'];
 
 /**
  * Builds a starting layout from the activities someone chose.

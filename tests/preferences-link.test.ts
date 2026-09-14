@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ACTIVITIES, findActivityWindows } from '@/lib/weather/activity-windows';
+import { ACTIVITIES, findActivityWindows, type ActivityId } from '@/lib/weather/activity-windows';
 import { composeLayoutForActivities, DEFAULT_CARD_LAYOUT } from '@/lib/weather/card-layout';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
 import { mockWeatherData } from '@/lib/weather/mock-data';
@@ -181,6 +181,21 @@ describe('composeLayoutForActivities', () => {
   it('lists a module once even when several activities ask for it', () => {
     const ids = composeLayoutForActivities(['walk', 'cycle']).map((entry) => entry.id);
     expect(ids.filter((id) => id === 'precipitation-chance')).toHaveLength(1);
+  });
+
+  it('never proposes hourly-temperature, which would just restate the hero\'s own hour strip', () => {
+    // Regression guard for the same duplication DEFAULT_CARD_LAYOUT dropped hourly-temperature to
+    // avoid — an onboarding-derived layout must not reintroduce it as a "core" module.
+    const cases: ActivityId[][] = [[], ['walk'], ['cycle'], ['garden'], ['walk', 'run', 'cycle', 'garden']];
+    for (const activities of cases) {
+      const ids = composeLayoutForActivities(activities).map((entry) => entry.id);
+      expect(ids).not.toContain('hourly-temperature');
+    }
+  });
+
+  it('always includes a baseline panel even when no activity was chosen', () => {
+    const ids = composeLayoutForActivities([]).map((entry) => entry.id);
+    expect(ids).toContain('daily-forecast');
   });
 });
 
