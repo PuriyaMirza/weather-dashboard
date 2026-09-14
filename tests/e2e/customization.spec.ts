@@ -27,7 +27,7 @@ test('layout customization survives a reload', async ({ page }) => {
   const menu = await openMenu(page);
 
   // Readings is a closed accordion now, so its checkboxes aren't reachable until it's opened.
-  await menu.getByText('Readings', { exact: true }).click();
+  await menu.getByRole('button', { name: 'Readings', exact: true }).click();
 
   // Switch off a default module and switch on one that isn't shown by default.
   await menu.getByRole('checkbox', { name: 'Humidity', exact: true }).locator('xpath=ancestor::label[1]').click();

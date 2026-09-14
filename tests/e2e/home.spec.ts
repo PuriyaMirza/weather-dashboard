@@ -50,8 +50,8 @@ test('the menu offers every module, grouped into readings and panels', async ({ 
 
   // Readings and Panels are closed accordions by default, so their checkboxes aren't in the
   // accessibility tree — and not counted — until each is opened.
-  await menu.getByText('Readings', { exact: true }).click();
-  await menu.getByText('Panels', { exact: true }).click();
+  await menu.getByRole('button', { name: 'Readings', exact: true }).click();
+  await menu.getByRole('button', { name: 'Panels', exact: true }).click();
 
   // exact, because Playwright matches accessible names by substring: several titles are prefixes
   // of others ("Temperature" / "Hourly Temperature", "Wind" / "Wind Detail").
