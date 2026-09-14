@@ -89,7 +89,7 @@ test('edit mode has no serious accessibility violations', async ({ page }) => {
   await page.goto('/');
 
   await page.getByRole('button', { name: /open menu/i }).click();
-  await page.getByRole('button', { name: /arrange modules/i }).click();
+  await page.getByRole('switch', { name: /arrange mode/i }).click();
 
   // The sticky toolbar and the per-module move, size and remove controls only exist here, and
   // there are a lot of them.
@@ -105,7 +105,7 @@ test('placement mode has no serious accessibility violations', async ({ page }) 
   await page.goto('/');
 
   await page.getByRole('button', { name: /open menu/i }).click();
-  await page.getByRole('button', { name: /arrange modules/i }).click();
+  await page.getByRole('switch', { name: /arrange mode/i }).click();
   await page.getByRole('button', { name: /^reorder rain chance/i }).click();
 
   // Every other module is now a destination button laid over its reading — worth scanning, since

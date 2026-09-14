@@ -48,6 +48,11 @@ test('the menu offers every module, grouped into readings and panels', async ({ 
   const menu = page.getByRole('dialog', { name: /dashboard settings/i });
   await expect(menu).toBeVisible();
 
+  // Readings and Panels are closed accordions by default, so their checkboxes aren't in the
+  // accessibility tree — and not counted — until each is opened.
+  await menu.getByText('Readings', { exact: true }).click();
+  await menu.getByText('Panels', { exact: true }).click();
+
   // exact, because Playwright matches accessible names by substring: several titles are prefixes
   // of others ("Temperature" / "Hourly Temperature", "Wind" / "Wind Detail").
   // Single readings — the granularity that makes "just show me dew point" possible at all.

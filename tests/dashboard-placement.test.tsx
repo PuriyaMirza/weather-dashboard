@@ -36,7 +36,7 @@ beforeEach(() => {
 function enterArrangeMode() {
   fireEvent.click(screen.getByRole('button', { name: /open menu/i }));
   const menu = screen.getByRole('dialog', { name: /dashboard settings/i });
-  fireEvent.click(within(menu).getByRole('button', { name: /arrange modules/i }));
+  fireEvent.click(within(menu).getByRole('switch', { name: /arrange mode/i }));
 }
 
 /** The handle of a given module, which doubles as the pick-up control. */
