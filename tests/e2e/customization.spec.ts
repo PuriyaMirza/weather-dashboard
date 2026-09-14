@@ -13,7 +13,7 @@ async function openMenu(page: Page) {
 
 async function enterArrangeMode(page: Page) {
   const menu = await openMenu(page);
-  await menu.getByRole('button', { name: /arrange modules/i }).click();
+  await menu.getByRole('switch', { name: /arrange mode/i }).click();
   // The menu dismisses itself, and Escape would now exit arrange mode rather than close it.
   await expect(page.getByRole('group', { name: /arranging modules/i })).toBeVisible();
 }
@@ -25,6 +25,9 @@ test('layout customization survives a reload', async ({ page }) => {
   await expect(grid.getByRole('heading', { name: 'Humidity', exact: true })).toBeVisible();
 
   const menu = await openMenu(page);
+
+  // Readings is a closed accordion now, so its checkboxes aren't reachable until it's opened.
+  await menu.getByText('Readings', { exact: true }).click();
 
   // Switch off a default module and switch on one that isn't shown by default.
   await menu.getByRole('checkbox', { name: 'Humidity', exact: true }).locator('xpath=ancestor::label[1]').click();

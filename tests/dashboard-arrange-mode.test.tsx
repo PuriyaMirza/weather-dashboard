@@ -40,7 +40,7 @@ function openMenu() {
 
 function enterArrangeMode() {
   const menu = openMenu();
-  fireEvent.click(within(menu).getByRole('button', { name: /arrange modules/i }));
+  fireEvent.click(within(menu).getByRole('switch', { name: /arrange mode/i }));
 }
 
 const toolbar = () => screen.queryByRole('group', { name: /arranging modules/i });
@@ -104,13 +104,13 @@ describe('leaving arrange mode', () => {
     expect(screen.getByRole('button', { name: /open menu/i })).toHaveFocus();
   });
 
-  it('still exits from the menu toggle, which keeps reading as a pressed toggle', () => {
+  it('still exits from the menu switch, which keeps reading as checked', () => {
     render(<Dashboard />);
     enterArrangeMode();
 
     const menu = openMenu();
-    const toggle = within(menu).getByRole('button', { name: /done arranging/i });
-    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    const toggle = within(menu).getByRole('switch', { name: /arrange mode/i });
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
 
     fireEvent.click(toggle);
     expect(useDashboardStore.getState().isEditing).toBe(false);

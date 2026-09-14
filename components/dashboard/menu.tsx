@@ -138,8 +138,13 @@ export function Menu({
                   Layout
                 </h3>
                 <div className="mt-3 flex flex-col gap-2">
+                  {/* A switch, not a button that renames itself — this is a mode being turned on or
+                      off, and the pill shape keeps it from reading as another item in the toggle
+                      lists below, which use square checkboxes for module visibility instead. */}
                   <button
                     type="button"
+                    role="switch"
+                    aria-checked={isEditing}
                     onClick={() => {
                       onEditingChange(!isEditing);
                       // Entering gets out of the way: the controls this turns on are behind
@@ -147,14 +152,21 @@ export function Menu({
                       // toolbar takes focus on mount, and `close` would yank it back here.
                       if (!isEditing) onClose();
                     }}
-                    aria-pressed={isEditing}
-                    className={
-                      isEditing
-                        ? 'w-full border border-line-strong bg-accent px-3 py-2 text-left text-xs uppercase tracking-[0.14em] text-accent-ink outline-none focus-visible:ring-2 focus-visible:ring-accent'
-                        : ACTION
-                    }
+                    className="flex w-full items-center justify-between gap-3 outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   >
-                    {isEditing ? 'Done arranging' : 'Arrange modules'}
+                    <span className="text-sm text-ink">Arrange mode</span>
+                    <span
+                      aria-hidden="true"
+                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-line-strong transition-colors ${
+                        isEditing ? 'bg-accent' : 'bg-card'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full transition-transform ${
+                          isEditing ? 'translate-x-5 bg-accent-ink' : 'translate-x-1 bg-ink-strong'
+                        }`}
+                      />
+                    </span>
                   </button>
                   <p className="text-xs text-muted">
                     Arranging shows each module&apos;s move, size, and remove controls. Sizes are small,
@@ -230,10 +242,13 @@ export function Menu({
                 </fieldset>
               </section>
 
-              <section aria-labelledby={`${panelId}-modules`}>
-                <h3 id={`${panelId}-modules`} className={SECTION_LABEL}>
+              {/* Closed by default: 21 rows between them was the exact problem this collapses. The
+                  native element keeps the expand/collapse operable by keyboard and announced by a
+                  screen reader for free, matching the disclosure already used in the footer. */}
+              <details>
+                <summary className={`${SECTION_LABEL} cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-accent`}>
                   Readings
-                </h3>
+                </summary>
                 <p className="mt-1 text-xs text-muted">Switch on what you want to see.</p>
                 <ul className="mt-3">
                   {readings.map((card) => (
@@ -247,12 +262,12 @@ export function Menu({
                     />
                   ))}
                 </ul>
-              </section>
+              </details>
 
-              <section aria-labelledby={`${panelId}-panels`}>
-                <h3 id={`${panelId}-panels`} className={SECTION_LABEL}>
+              <details>
+                <summary className={`${SECTION_LABEL} cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-accent`}>
                   Panels
-                </h3>
+                </summary>
                 <p className="mt-1 text-xs text-muted">Charts, tables, and grouped detail.</p>
                 <ul className="mt-3">
                   {panels.map((card) => (
@@ -266,7 +281,7 @@ export function Menu({
                     />
                   ))}
                 </ul>
-              </section>
+              </details>
             </div>
           </div>
         </>

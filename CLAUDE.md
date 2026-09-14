@@ -6,7 +6,82 @@ See [ROADMAP.md](./ROADMAP.md) for the source of truth on what's done and what c
 
 See [PRD.md](./PRD.md) for the full product requirements: goals, non-goals, feature requirements with status, architecture, standing constraints, known limitations, and the definition of done.
 
-## Commands
+## Project structure
+
+```
+app/                      Next.js App Router. page.tsx (static shell) + layout.tsx (theme script) +
+                           api/weather, api/geocode route handlers. No other pages — this is a
+                           single-dashboard app.
+components/
+  dashboard/               Dashboard shell, menu, arrange-mode toolbar, hero, card grid/sorting.
+  weather/                 One file per card + card-registry.tsx (the extension point) +
+                           card-frame.tsx (shared loading/error/unavailable/ready states).
+  location/                Location search and the change-location dialog.
+  onboarding/               First-run flow.
+lib/
+  weather/                 Domain logic: schemas (Zod), providers (Open-Meteo fetch), normalizer,
+                           types (WeatherDashboardData — the only shape cards see), units, metrics,
+                           card-layout (registry/defaults/presets), activity-windows, share-link.
+  hooks/                   use-weather-data, use-has-hydrated, use-dialog-focus, use-escape-key, etc.
+  api/http.ts              jsonError() — the shared { error: string } response shape.
+  rate-limit.ts, theme.ts  Cross-cutting utilities.
+store/dashboard-store.ts   Single Zustand store: location, saved locations, units, theme, card
+                           layout, activities, hasOnboarded (persisted) + isEditing (transient).
+tests/                     Flat directory, mirrors lib/components by filename (not colocated).
+  e2e/                     Playwright specs + support.ts helpers.
+  fixtures/open-meteo/     Recorded upstream JSON used by provider/schema tests.
+.claude/agents/            Subagent definitions (feature-researcher, ui-critic) used for research
+                           and UI-review passes — read-only, write to findings/.
+findings/                  Dated research/critique reports produced by the above subagents.
+ROADMAP.md, PRD.md         Source of truth for status and requirements — check before planning work.
+```
+
+## Tech stack
+
+- **Next.js 16** (App Router, Turbopack) — see the "not the Next.js you know" note below before
+  touching routing, config, or any Next API.
+- **React 19**, **TypeScript** (`strict: true`, path alias `@/*` → repo root).
+- **Tailwind CSS 4** via `@tailwindcss/postcss`; semantic design tokens in `app/globals.css`.
+- **Zustand 5** (`persist` + `skipHydration`) for all client state — no other state management.
+- **Zod 4** for schema validation of upstream JSON and API route query params.
+- **@dnd-kit** (core/sortable/modifiers/accessibility/utilities) for drag reordering; tap-to-place
+  is a from-scratch keyboard/pointer-agnostic alternative alongside it, not built on dnd-kit.
+- **Recharts** for charts, always paired with a text/table equivalent (accessibility requirement).
+- **Vitest 4** + **@testing-library/react** + **jsdom** for unit/component tests.
+- **Playwright 1.6x** + **@axe-core/playwright** for e2e and accessibility scans.
+- **ESLint 9** (`eslint-config-next/core-web-vitals`), no other lint config.
+- Data source: **Open-Meteo** (forecast + air quality + geocoding), free/non-commercial tier — no
+  API key, no paid radar/alerts data. Node ≥ 22 required.
+
+## Conventions
+
+- **Named exports only** — no `export default` anywhere in `components/`, `lib/`, or `store/`.
+- **Filenames kebab-case**, matching the component/hook name (`daily-forecast-card.tsx` →
+  `DailyForecastCard`; `use-weather-data.ts` → `useWeatherData`).
+- **Comments explain *why*, not *what*** — a hidden constraint, a rejected alternative, a subtle
+  invariant. Well-named code and JSDoc-style block comments above functions/components carry the
+  "what"; inline comments are rare and load-bearing when present. Match this style rather than
+  adding routine comments.
+- **Cards never see third-party shapes** — every card reads only `WeatherDashboardData`
+  (`lib/weather/types.ts`). Adding a card means: add it to `weatherCardRegistry`
+  (`components/weather/card-registry.tsx`), add its id to `ALL_CARD_IDS`
+  (`lib/weather/card-layout.ts`), and bump the persist `version` in `store/dashboard-store.ts`.
+- **Never invent data** — a missing upstream field becomes `null` and the card renders its
+  "unavailable" state (via `CardBoundary`), never a fabricated value.
+- **Tests are flat, not colocated**: `tests/<name>.test.ts(x)` mirrors the source file's base name
+  regardless of its directory (`lib/weather/units.ts` → `tests/units.test.ts`). E2e specs live in
+  `tests/e2e/*.spec.ts`. A registry-walking test (`tests/weather-cards.test.tsx`) enforces that
+  every card in the registry has all four `CardBoundary` states, so a new card without them fails
+  automatically.
+- **Accessibility is enforced, not aspirational**: every interactive path has a non-drag/non-mouse
+  equivalent (keyboard move buttons alongside dnd-kit dragging, tap-to-place alongside both), no
+  information is conveyed by colour alone, and `tests/e2e/accessibility.spec.ts` runs an axe scan
+  (serious/critical only) over every major UI state — extend that file when adding a new state.
+- **No new dependencies without discussion.** Local-first: no auth, no database, no accounts —
+  preferences live in `localStorage`; the only "sync" mechanism is a self-contained shareable link
+  (`lib/weather/share-link.ts`).
+
+## Common commands
 
 ```bash
 npm run dev         # Next dev server on http://localhost:3000
@@ -14,10 +89,14 @@ npm run build       # production build
 npm run lint        # eslint (next/core-web-vitals)
 npm run typecheck   # tsc --noEmit (strict)
 npm run test        # vitest run — unit + component tests (jsdom)
-npm run test:e2e    # playwright (Chromium)
+npm run test:e2e    # playwright — chromium (full suite) + mobile-chrome/webkit (scoped, see below)
+npm run qa          # lint + typecheck + test + build + full playwright run — the whole local gate
 ```
 
-Node >= 22 is required. CI (`.github/workflows/ci.yml`) runs lint → typecheck → test → build → e2e on every PR and push to `main`; all five must pass.
+Node >= 22 is required. CI (`.github/workflows/ci.yml`) has two jobs on every PR and push to `main`:
+`build-and-test` (audit → lint → typecheck → test → build → e2e) and `qa` (build → `qa-smoke.spec.ts`
++ `accessibility.spec.ts` against the production build). `npm audit --audit-level=high` blocks on
+high/critical advisories only.
 
 Running a single test:
 
@@ -27,7 +106,29 @@ npx vitest run -t "converts hPa to inHg"    # by test name
 npx playwright test tests/e2e/home.spec.ts  # one e2e spec
 ```
 
-E2E specifics: Playwright's `baseURL` must be `http://localhost:3000`, **not** `127.0.0.1` — Next blocks cross-origin dev resources, so a mismatched host silently prevents the client bundle from loading and tests then only assert server HTML. In CI the e2e suite runs against `npm run start` (the production build); locally it uses `npm run dev`. `PLAYWRIGHT_CHROMIUM_PATH` overrides the browser binary.
+## Known gotchas / in-progress decisions
+
+- **E2E `baseURL` must be `http://localhost:3000`, not `127.0.0.1`** — Next blocks cross-origin dev
+  resources, so a mismatched host silently prevents the client bundle from loading and tests then
+  only assert server HTML.
+- **Playwright projects**: `chromium` runs the full `tests/e2e/**` suite; `mobile-chrome` (Pixel 7)
+  and `webkit` are scoped via `testMatch` to `accessibility.spec.ts` and `customization.spec.ts`
+  only — the two specs with width- or engine-dependent behaviour (arrange-mode/drag controls).
+  Don't assume a new e2e spec runs on all three projects; add it to the `testMatch` regex if it needs to.
+- `PLAYWRIGHT_CHROMIUM_PATH` overrides the Chromium binary for environments that ship their own and
+  forbid downloading one (applied per-project so it never hands WebKit a Chromium binary).
+- In CI the e2e suite runs against `npm run start` (the production build); locally it uses
+  `npm run dev`.
+- **Bump `store/dashboard-store.ts`'s persist `version`** whenever the persisted shape changes
+  (new card id, changed field shape, etc.) — `merge`/`reconcileLayout` handle migrating or falling
+  back, but only if `version` actually changed.
+- **Check `node_modules/next/dist/docs/` before touching routing/config/any Next API** — this
+  project pins a Next.js version with breaking changes from what most training data reflects. The
+  `<!-- BEGIN:nextjs-agent-rules -->…`  block at the end of this file is regenerated by `next dev`
+  on every run; commit it along with your other changes rather than reverting it.
+- **The internal weather model is always imperial** (`temperatureF`, `windMph`, …); unit choice
+  (`lib/weather/units.ts`) is purely presentational and never triggers a re-fetch.
+- Historical/past weather is an explicit **non-goal** (PRD §3) — don't build backward-looking views.
 
 ## Architecture
 
@@ -99,3 +200,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Maintenance
+After completing a task that changes project structure, introduces a new convention, or changes how something should be built or tested, update the relevant section above before finishing — terse, one line, not a paragraph.
+
+Do not update this file after every task. Skip it for one-off fixes, small bug patches, or anything that won't recur. Only update when something durable about the project changed.
