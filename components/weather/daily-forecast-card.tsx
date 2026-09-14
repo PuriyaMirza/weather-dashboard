@@ -5,8 +5,22 @@ import { formatPercent, formatTemperature, formatWeekday } from '@/lib/weather/u
 const TITLE = 'Daily Forecast';
 const DESCRIPTION = 'Highs, lows, and conditions for the week ahead.';
 
+/**
+ * Today's date as an ISO `YYYY-MM-DD`, in the forecast location's own timezone rather than the
+ * viewer's — matches how `day.date` is produced, so a visitor in one timezone still sees "Today"
+ * on the right row rather than tomorrow's or yesterday's.
+ */
+function todayIsoDate(timeZone?: string): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date());
+  } catch {
+    return new Intl.DateTimeFormat('en-CA').format(new Date());
+  }
+}
+
 export function DailyForecastCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
   const days = data?.daily ?? [];
+  const today = todayIsoDate(data?.location.timezone);
 
   return (
     <CardBoundary
@@ -43,7 +57,7 @@ export function DailyForecastCard({ data, isLoading, errorMessage, unitSystem }:
             {days.map((day) => (
               <tr key={day.date} className="border-t border-line">
                 <th scope="row" className="py-2.5 pr-3 text-left font-semibold text-ink">
-                  {formatWeekday(day.date)}
+                  {day.date === today ? 'Today' : formatWeekday(day.date)}
                 </th>
                 <td className="py-2.5 pr-3 text-ink">{day.conditionLabel}</td>
                 <td className="py-2.5 pr-3 text-right text-ink">

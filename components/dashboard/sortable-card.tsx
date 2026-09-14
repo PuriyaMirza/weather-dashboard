@@ -16,6 +16,16 @@ interface SortableCardProps {
   isLast: boolean;
   position: number;
   total: number;
+  /** This module is the one waiting to be placed. */
+  isLifted: boolean;
+  /** Some other module is waiting to be placed, so this one is a destination. */
+  isPlacementTarget: boolean;
+  /** Name of the module waiting to be placed, for this tile's button label. */
+  liftedTitle: string | null;
+  /** Drag is hovering this tile, so this is where the module would land. */
+  isDropDestination: boolean;
+  onToggleLift: () => void;
+  onPlaceHere: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onSetSize: (size: CardSize) => void;
@@ -31,6 +41,12 @@ export function SortableCard({
   isLast,
   position,
   total,
+  isLifted,
+  isPlacementTarget,
+  liftedTitle,
+  isDropDestination,
+  onToggleLift,
+  onPlaceHere,
   onMoveUp,
   onMoveDown,
   onSetSize,
@@ -53,13 +69,18 @@ export function SortableCard({
     opacity: isDragging ? 0.4 : undefined,
   };
 
+  // One treatment for "this is where it lands", whether the module is being dragged there or is
+  // waiting to be placed there. Both interactions should teach the same thing.
+  const solidAccent = 'outline-2 outline-accent outline-offset-[-2px]';
+  let outline = isEditing ? 'outline-1 outline-dashed outline-line-strong outline-offset-2' : '';
+  if (isPlacementTarget) outline = 'outline-2 outline-dashed outline-accent outline-offset-[-2px]';
+  if (isDropDestination || isLifted) outline = solidAccent;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex min-w-0 flex-col border-b border-r border-line ${CARD_SIZE_CLASS[entry.size]} ${
-        isEditing ? 'outline-1 outline-dashed outline-line-strong outline-offset-2' : ''
-      }`}
+      className={`relative flex min-w-0 flex-col border-b border-r border-line ${CARD_SIZE_CLASS[entry.size]} ${outline}`}
     >
       {isEditing && (
         <CardControls
@@ -69,6 +90,8 @@ export function SortableCard({
           isLast={isLast}
           position={position}
           total={total}
+          isLifted={isLifted}
+          onToggleLift={onToggleLift}
           onMoveUp={onMoveUp}
           onMoveDown={onMoveDown}
           onSetSize={onSetSize}
@@ -87,6 +110,31 @@ export function SortableCard({
           <Component {...cardProps} />
         </ModuleBoundary>
       </div>
+
+      {/*
+        The gesture-free way to reorder: with a module lifted, every other tile becomes a place to
+        put it. A real button, so this path costs a keyboard or screen-reader user nothing extra —
+        and, unlike a drag, it can actually be tested on every engine.
+
+        Covers the whole tile rather than sitting inside the layout, so the reading underneath
+        stays visible while you choose where the lifted module goes.
+
+        The badge sits at the top because tiles are tall — at the bottom it fell below the fold on
+        a phone, which made a live target look merely greyed out. The wash is kept light for the
+        same reason: heavy enough to read as "pending", not so heavy the tile looks disabled.
+      */}
+      {isPlacementTarget && liftedTitle && (
+        <button
+          type="button"
+          onClick={onPlaceHere}
+          aria-label={`Move ${liftedTitle} to position ${position} of ${total}, where ${definition.title} is now`}
+          className="absolute inset-0 z-10 flex items-start justify-start bg-canvas/25 p-2 outline-none hover:bg-canvas/45 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
+        >
+          <span className="eyebrow border border-line-strong bg-accent px-2 py-1 text-accent-ink">
+            Place here
+          </span>
+        </button>
+      )}
     </div>
   );
 }

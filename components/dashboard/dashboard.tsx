@@ -1,12 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { arrayMove } from '@dnd-kit/sortable';
 import { ArrangeToolbar } from '@/components/dashboard/arrange-toolbar';
 import { CardGrid } from '@/components/dashboard/card-grid';
 import { Hero } from '@/components/dashboard/hero';
 import { Menu } from '@/components/dashboard/menu';
 import { LocationPanel } from '@/components/location/location-panel';
 import { Onboarding } from '@/components/onboarding/onboarding';
+import { getCardDefinition, type WeatherCardId } from '@/components/weather/card-registry';
 import { useEscapeKey } from '@/lib/hooks/use-escape-key';
 import { useHasHydrated } from '@/lib/hooks/use-has-hydrated';
 import { useResolvedTheme } from '@/lib/hooks/use-resolved-theme';
@@ -23,6 +25,10 @@ export function Dashboard() {
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   // A ref, not state: a drag starting and stopping should not re-render the whole dashboard.
   const isDraggingCardRef = useRef(false);
+  // The module picked up by tapping its handle, waiting for a destination. Owned here rather than
+  // in the grid because the toolbar's Cancel and the Escape key both drive it.
+  const [liftedId, setLiftedId] = useState<WeatherCardId | null>(null);
+  const [moveAnnouncement, setMoveAnnouncement] = useState('');
 
   const location = useDashboardStore((state) => state.location);
   const setLocation = useDashboardStore((state) => state.setLocation);
@@ -119,19 +125,57 @@ export function Dashboard() {
 
   const exitArranging = useCallback(() => {
     setEditing(false);
+    setLiftedId(null);
+    setMoveAnnouncement('');
     // Arrange mode is entered from the menu, so that is where a keyboard user expects to be put
     // back down — same convention the dialogs already follow.
     menuTriggerRef.current?.focus();
   }, [setEditing]);
+
+  const liftedTitle = liftedId ? (getCardDefinition(liftedId)?.title ?? null) : null;
+
+  const cancelLift = useCallback(() => setLiftedId(null), []);
+
+  const toggleLift = useCallback(
+    (id: WeatherCardId) => {
+      const title = getCardDefinition(id)?.title ?? 'Module';
+      setLiftedId((current) => (current === id ? null : id));
+      setMoveAnnouncement(
+        liftedId === id ? `Stopped moving ${title}.` : `Moving ${title}. Choose where it goes.`,
+      );
+    },
+    [liftedId],
+  );
+
+  const placeLiftedAt = useCallback(
+    (targetId: WeatherCardId) => {
+      if (!liftedId) return;
+      const from = cards.findIndex((card) => card.id === liftedId);
+      const to = cards.findIndex((card) => card.id === targetId);
+      setLiftedId(null);
+      if (from < 0 || to < 0) return;
+
+      reorderCards(arrayMove(cards, from, to).map((card) => card.id));
+      setMoveAnnouncement(
+        `${getCardDefinition(liftedId)?.title ?? 'Module'} moved to position ${to + 1} of ${cards.length}.`,
+      );
+    },
+    [cards, liftedId, reorderCards],
+  );
 
   // Whichever dialog is open owns Escape, so this stands down entirely rather than trying to
   // out-order its handler.
   const isModalOpen = isMenuOpen || isLocationPanelOpen || (hasHydrated && !hasOnboarded);
 
   useEscapeKey(isEditing && !isModalOpen, () => {
-    // dnd-kit's sensors also cancel on Escape, and they do it without calling preventDefault. With
-    // a module lifted, Escape means "put it back" — leaving arrange mode too would throw away the
-    // drag and the mode in one keystroke.
+    // Escape unwinds one layer at a time. A module part-way through a move is the innermost layer,
+    // so the first press puts it back and only the next one leaves arrange mode.
+    if (liftedId) {
+      cancelLift();
+      return;
+    }
+    // A drag cancels itself — dnd-kit's sensors handle Escape, without calling preventDefault, so
+    // this cannot rely on the event being consumed and has to stand down explicitly.
     if (isDraggingCardRef.current) return;
     exitArranging();
   });
@@ -204,7 +248,14 @@ export function Dashboard() {
         onRemove={removeSavedLocation}
       />
 
-      {isEditing && <ArrangeToolbar onDone={exitArranging} />}
+      {isEditing && (
+        <ArrangeToolbar
+          onDone={exitArranging}
+          liftedTitle={liftedTitle}
+          onCancelLift={cancelLift}
+          announcement={moveAnnouncement}
+        />
+      )}
 
       {/* Rendering the saved layout before rehydration would flash the defaults, so the grid waits. */}
       <CardGrid
@@ -218,7 +269,12 @@ export function Dashboard() {
         onRemove={removeCard}
         onDragActiveChange={(isDragActive) => {
           isDraggingCardRef.current = isDragActive;
+          // Starting a drag abandons a pending tap-placement: one move at a time.
+          if (isDragActive) setLiftedId(null);
         }}
+        liftedId={liftedId}
+        onToggleLift={toggleLift}
+        onPlaceAt={placeLiftedAt}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { weatherCardRegistry } from '@/components/weather/card-registry';
 import { mockWeatherData } from '@/lib/weather/mock-data';
@@ -88,13 +88,51 @@ describe('chart text alternatives', () => {
 });
 
 describe('daily forecast card', () => {
+  // The "Today" row label is date-sensitive, so the clock is pinned rather than left to whatever
+  // day the suite happens to run on — otherwise this becomes a test that only fails once a year.
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders one row per forecast day as a real table', () => {
+    vi.useFakeTimers();
+    // Comfortably clear of the mock data's own dates (2026-07-18 onward), so the first row is an
+    // ordinary weekday rather than "Today".
+    vi.setSystemTime(new Date('2025-01-01T12:00:00-08:00'));
+
     const DailyForecast = cardComponent('daily-forecast');
     render(<DailyForecast data={mockWeatherData} unitSystem="imperial" />);
 
     const table = screen.getByRole('table');
     expect(within(table).getAllByRole('row')).toHaveLength(mockWeatherData.daily.length + 1);
     expect(within(table).getByRole('rowheader', { name: 'Sat' })).toBeInTheDocument();
+  });
+
+  it('labels the first row "Today" when its date matches the forecast location\'s own clock', () => {
+    vi.useFakeTimers();
+    // Mid-afternoon in Portland (America/Los_Angeles) on the mock data's first forecast day.
+    vi.setSystemTime(new Date('2026-07-18T12:00:00-07:00'));
+
+    const DailyForecast = cardComponent('daily-forecast');
+    render(<DailyForecast data={mockWeatherData} unitSystem="imperial" />);
+
+    const table = screen.getByRole('table');
+    expect(within(table).getByRole('rowheader', { name: 'Today' })).toBeInTheDocument();
+    expect(within(table).queryByRole('rowheader', { name: 'Sat' })).not.toBeInTheDocument();
+  });
+
+  it('goes by the forecast location\'s timezone, not the browser\'s, near midnight', () => {
+    vi.useFakeTimers();
+    // 11pm UTC on 2026-07-18 is already 2026-07-19 in UTC terms the browser might use, but it is
+    // still 4pm on 2026-07-18 in Portland (America/Los_Angeles, UTC-7) — the "Today" row must
+    // follow the forecast location, not whatever clock the visitor's device happens to show.
+    vi.setSystemTime(new Date('2026-07-18T23:00:00Z'));
+
+    const DailyForecast = cardComponent('daily-forecast');
+    render(<DailyForecast data={mockWeatherData} unitSystem="imperial" />);
+
+    const table = screen.getByRole('table');
+    expect(within(table).getByRole('rowheader', { name: 'Today' })).toBeInTheDocument();
   });
 });
 

@@ -56,11 +56,14 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      # Always run, even on a cache hit: --with-deps also installs Chromium's system libraries,
-      # which live outside the cached directory. Playwright skips re-downloading the binary itself
-      # when the cache restored it.
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+      # Always run, even on a cache hit: --with-deps also installs the browsers' system libraries,
+      # which live outside the cached directory. Playwright skips re-downloading the binaries
+      # themselves when the cache restored them.
+      #
+      # WebKit costs extra install and run time, and it earns it: the touch-drag bug behind the
+      # arrange-mode work was a WebKit behaviour Chromium cannot reproduce.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
 
       # Runs against the production build (see playwright.config.ts), not the dev server.
       - name: End-to-end tests
@@ -102,7 +105,7 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
 
       # Against the production build, on a freshly started server — never a reused one.
       - name: QA smoke and accessibility checks

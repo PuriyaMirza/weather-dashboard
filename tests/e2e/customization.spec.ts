@@ -81,11 +81,13 @@ test('modules can be reordered by dragging the handle', async ({ page }) => {
   const headings = page.getByLabel('Weather modules').getByRole('heading', { level: 2 });
   const before = await headings.allTextContents();
 
-  // The first two modules, which sit side by side in the top row at every width. Picking distant
-  // ones instead would put the second handle below the fold on a phone, where a pointer cannot
-  // reach it.
-  const from = await page.getByRole('button', { name: /^reorder rain chance/i }).boundingBox();
-  const to = await page.getByRole('button', { name: /^reorder wind/i }).boundingBox();
+  // Two adjacent small modules. On mobile the large Daily Forecast card above them can push
+  // these below the fold, so scroll the second handle into view before reading positions.
+  const fromHandle = page.getByRole('button', { name: /^reorder rain chance/i });
+  const toHandle = page.getByRole('button', { name: /^reorder wind/i });
+  await toHandle.scrollIntoViewIfNeeded();
+  const from = await fromHandle.boundingBox();
+  const to = await toHandle.boundingBox();
   if (!from || !to) throw new Error('Expected both module handles to be on screen.');
 
   const start = { x: from.x + from.width / 2, y: from.y + from.height / 2 };
@@ -108,6 +110,51 @@ test('modules can be reordered by dragging the handle', async ({ page }) => {
   await page.reload();
   await expect(headings.first()).toBeVisible();
   await expect.poll(() => headings.allTextContents()).not.toEqual(before);
+});
+
+/**
+ * Reordering without a gesture at all.
+ *
+ * This is the path that exists because a press-and-hold drag is demanding on a phone, and it is
+ * the one that can be asserted everywhere: it is ordinary clicks, so it runs identically on
+ * desktop Chromium, a touch-enabled mobile context, and WebKit — the engine behind the browser
+ * the drag was always hardest in.
+ */
+test('modules can be reordered by tapping a handle and then a slot', async ({ page }) => {
+  await page.goto('/');
+  await enterArrangeMode(page);
+
+  const headings = page.getByLabel('Weather modules').getByRole('heading', { level: 2 });
+  const before = await headings.allTextContents();
+
+  await page.getByRole('button', { name: /^reorder rain chance/i }).click();
+  await expect(page.getByText(/placing rain chance/i)).toBeVisible();
+
+  await page.getByRole('button', { name: /move rain chance to position 4 of 5/i }).click();
+
+  await expect(page.getByText(/placing rain chance/i)).toHaveCount(0);
+  await expect.poll(() => headings.allTextContents()).not.toEqual(before);
+
+  // The real assertion: it reached the store rather than only the DOM.
+  await page.reload();
+  await expect(headings.first()).toBeVisible();
+  await expect.poll(() => headings.allTextContents()).not.toEqual(before);
+});
+
+test('a pending placement can be abandoned without moving anything', async ({ page }) => {
+  await page.goto('/');
+  await enterArrangeMode(page);
+
+  const headings = page.getByLabel('Weather modules').getByRole('heading', { level: 2 });
+  const before = await headings.allTextContents();
+
+  await page.getByRole('button', { name: /^reorder rain chance/i }).click();
+  await page.keyboard.press('Escape');
+
+  await expect(page.getByText(/placing rain chance/i)).toHaveCount(0);
+  // Escape unwound the move, not the mode.
+  await expect(page.getByRole('group', { name: /arranging modules/i })).toBeVisible();
+  expect(await headings.allTextContents()).toEqual(before);
 });
 
 /**
