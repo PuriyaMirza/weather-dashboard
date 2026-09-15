@@ -18,28 +18,38 @@
 */
 
 :root {
-  --canvas: #f4f3f0;
-  --card: #faf9f7;
-  --card-raised: #ffffff;
-  --ink: #16150f;
-  --ink-strong: #000000;
-  --muted: #5c5a51;
-  --line: #c9c6bd;
-  --line-strong: #16150f;
-  --accent: #16150f;
-  --accent-ink: #faf9f7;
-  --accent-soft: #e6e4dd;
-  --accent-soft-ink: #16150f;
+  /* Postal Ledger palette. Named literally (not just mapped through the semantic tokens below) so
+     the four ledger-treated cards, the masthead and the footer can reach for them directly. */
+  --cream: #d6d2c4;
+  --cream-2: #c7c3b3;
+  --ink: #16161a;
+  --ink-soft: #3c3b3f;
+  --ink-muted: #7a7871;
+  --red: #e85e1f;
+  --blue: #1c86c4;
+  --hairline: rgba(22, 22, 26, 0.18);
+
+  --canvas: var(--cream);
+  --card: var(--cream);
+  --card-raised: var(--cream-2);
+  --ink-strong: var(--ink);
+  --muted: var(--ink-muted);
+  --line: var(--hairline);
+  --line-strong: var(--ink);
+  --accent: var(--ink);
+  --accent-ink: var(--cream);
+  --accent-soft: var(--cream-2);
+  --accent-soft-ink: var(--ink);
   --danger: #8a1c10;
   --danger-soft: #f3e7e4;
   --danger-line: #8a1c10;
 
   /* Charts read these directly — SVG accepts var() in stroke/fill. */
-  --chart-grid: #ddd9d0;
-  --chart-axis: #5c5a51;
-  --chart-line: #16150f;
-  --chart-fill: #dedad1;
-  --chart-bar: #16150f;
+  --chart-grid: #c9c4b4;
+  --chart-axis: var(--ink-muted);
+  --chart-line: var(--ink);
+  --chart-fill: var(--cream-2);
+  --chart-bar: var(--ink);
 
   /* Qualitative scale for severity bands (UV, air quality). Always paired with a word, so the
      hue is reinforcement rather than the signal. Muted to sit inside a monochrome page. */
@@ -60,6 +70,10 @@
   --sky-to: #e4e1d9;
   --sky-ink: #16150f;
   --sky-ink-muted: #4a4840;
+
+  /* Faint halftone dot texture on the page background — the Postal Ledger paper stock. Cleared to
+     `none` in dark mode below rather than redrawn, since no dark equivalent was specified. */
+  --texture: radial-gradient(circle, rgba(33, 28, 20, 0.05) 0.7px, transparent 0.7px);
 
   color-scheme: light;
 }
@@ -107,6 +121,8 @@
   --sky-ink: #f5f3ee;
   --sky-ink-muted: #a5a299;
 
+  --texture: none;
+
   color-scheme: dark;
 }
 
@@ -151,6 +167,8 @@
     --sky-ink: #f5f3ee;
     --sky-ink-muted: #a5a299;
 
+    --texture: none;
+
     color-scheme: dark;
   }
 }
@@ -176,6 +194,14 @@
   --color-danger-line: var(--danger-line);
   --color-sky-ink: var(--sky-ink);
   --color-sky-ink-muted: var(--sky-ink-muted);
+  /* Postal Ledger literals, for the four ledger-treated cards, the masthead and the footer. */
+  --color-cream: var(--cream);
+  --color-cream-2: var(--cream-2);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+  --color-red: var(--red);
+  --color-blue: var(--blue);
+  --color-hairline: var(--hairline);
   /* Sharp corners everywhere: the radius scale is flattened to zero rather than policed per
      component, so a stray `rounded-xl` can't reintroduce a soft edge. */
   --radius-sm: 0px;
@@ -190,6 +216,8 @@
 body {
   margin: 0;
   background: var(--canvas);
+  background-image: var(--texture);
+  background-size: 6px 6px;
   color: var(--ink);
 }
 
@@ -199,6 +227,22 @@ body {
   letter-spacing: 0.18em;
   font-size: 0.6875rem;
   font-weight: 500;
+}
+
+/* Postal Ledger section label: small-caps rather than all-caps, and set in the sans face at its
+   own weight — distinct from `.eyebrow` above, which the rest of the app still uses. */
+.ledger-label {
+  font-variant: small-caps;
+  letter-spacing: 0.14em;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+/* Oldstyle figures wherever the display face renders a number — every reading, hero temperature,
+   and activity time window in the app already uses `font-display` for exactly this reason. */
+.font-display {
+  font-feature-settings: 'onum' 1;
 }
 
 /* The atmospheric backdrop behind the hero. Its tones come from atmosphere.ts and change with the

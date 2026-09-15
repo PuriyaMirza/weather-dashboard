@@ -1,9 +1,6 @@
-'use client';
-
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { WeatherCardProps } from './card-registry';
 import { CardBoundary } from './card-frame';
-import { describeTemperature, formatHour, formatTemperature, toCelsius } from '@/lib/weather/units';
+import { describeTemperature, formatHour, formatTemperature } from '@/lib/weather/units';
 
 const TITLE = 'Hourly Temperature';
 const DESCRIPTION = 'Temperature trend for the next several hours.';
@@ -11,15 +8,6 @@ const DESCRIPTION = 'Temperature trend for the next several hours.';
 export function HourlyTemperatureCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
   const timeZone = data?.location.timezone;
   const hourly = data?.hourly ?? [];
-
-  const chartData = hourly.map((point) => ({
-    time: formatHour(point.time, timeZone),
-    temperature: unitSystem === 'metric' ? Math.round(toCelsius(point.temperatureF)) : Math.round(point.temperatureF),
-    feelsLike: unitSystem === 'metric' ? Math.round(toCelsius(point.feelsLikeF)) : Math.round(point.feelsLikeF),
-    rawTemperature: point.temperatureF,
-  }));
-
-  const unitSuffix = unitSystem === 'metric' ? '°C' : '°F';
 
   return (
     <CardBoundary
@@ -30,38 +18,26 @@ export function HourlyTemperatureCard({ data, isLoading, errorMessage, unitSyste
       isUnavailable={hourly.length === 0}
       loadingLabel="Loading hourly temperatures…"
       unavailableLabel="Hourly temperature data is unavailable."
+      variant="ledger"
     >
       {hourly.length > 0 && (
         <>
-          {/* aria-hidden: the chart is decorative for assistive tech, which reads the table below
-              instead. Without this the SVG's text nodes are announced as meaningless fragments. */}
-          <div className="min-h-52 w-full flex-1" aria-hidden="true" inert>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 12, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-                <XAxis dataKey="time" tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)', fontSize: 12 }} />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-                  unit="°"
-                  domain={['dataMin - 3', 'dataMax + 3']}
-                />
-                <Tooltip formatter={(value) => [`${value}${unitSuffix}`, 'Temperature']} labelClassName="text-ink" />
-                <Area
-                  type="monotone"
-                  dataKey="temperature"
-                  stroke="var(--chart-line)"
-                  fill="var(--chart-fill)"
-                  strokeWidth={3}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          {/* The ledger strip: a row of hour columns, scrolling horizontally past the width the
+              card affords rather than compressing below legibility. aria-hidden because the table
+              below carries the same series to assistive tech — announcing both would be double. */}
+          <div aria-hidden="true" className="-mx-1 flex flex-1 items-stretch divide-x divide-hairline overflow-x-auto px-1">
+            {hourly.map((point) => (
+              <div key={point.time} className="flex min-w-[3.5rem] flex-1 flex-col items-center gap-1.5 px-2 text-center">
+                <span className="ledger-label whitespace-nowrap">{formatHour(point.time, timeZone)}</span>
+                <span className="font-display text-lg leading-none text-ink">
+                  {formatTemperature(point.temperatureF, unitSystem)}
+                </span>
+                <span className="text-[9.5px] whitespace-nowrap text-ink-muted">{point.precipitationChance}% rain</span>
+              </div>
+            ))}
           </div>
 
-          {/* The chart's text equivalent. Not decorative: this is how the data is conveyed to
+          {/* The strip's text equivalent. Not decorative: this is how the data is conveyed to
               screen-reader users, so it carries the full series rather than a summary. */}
           <table className="sr-only">
             <caption>Hourly temperatures</caption>
@@ -83,7 +59,7 @@ export function HourlyTemperatureCard({ data, isLoading, errorMessage, unitSyste
             </tbody>
           </table>
 
-          <p className="mt-3 text-sm text-muted">
+          <p className="mt-3 text-xs text-ink-muted">
             Range {formatTemperature(Math.min(...hourly.map((p) => p.temperatureF)), unitSystem)} to{' '}
             {formatTemperature(Math.max(...hourly.map((p) => p.temperatureF)), unitSystem)} over the next{' '}
             {hourly.length} hours.
