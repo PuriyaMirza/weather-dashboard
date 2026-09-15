@@ -92,7 +92,7 @@ test('every module in the menu can be switched on and off', async ({ page }) => 
   const grid = page.getByLabel('Weather modules');
 
   // Readings is a closed accordion by default, so its checkboxes aren't reachable until opened.
-  await menu.getByText('Readings', { exact: true }).click();
+  await menu.getByRole('button', { name: 'Readings', exact: true }).click();
 
   // Dew Point is a single reading the default layout leaves off — exactly the case the toggle
   // list exists for, since it is otherwise buried inside the Comfort panel.

@@ -31,6 +31,10 @@ interface MenuProps {
 const SECTION_LABEL = 'eyebrow text-muted';
 const ACTION =
   'w-full border border-line-strong px-3 py-2 text-left text-xs uppercase tracking-[0.14em] text-ink outline-none hover:bg-accent hover:text-accent-ink focus-visible:ring-2 focus-visible:ring-accent';
+/** Bordered like the other action rows, so a closed accordion still reads as a control rather than
+    a plain label — the eyebrow-only header this replaced was too easy to miss entirely. */
+const ACCORDION_SUMMARY =
+  'flex w-full cursor-pointer list-none items-center gap-2 border border-line-strong bg-card px-3 py-2.5 text-left text-xs uppercase tracking-[0.14em] text-ink outline-none [&::-webkit-details-marker]:hidden [&::marker]:hidden hover:bg-accent hover:text-accent-ink focus-visible:ring-2 focus-visible:ring-accent';
 
 const THEME_OPTIONS: { value: ThemePreference; label: string; description: string }[] = [
   { value: 'light', label: 'Light', description: 'Always use the light theme' },
@@ -174,6 +178,69 @@ export function Menu({
                   </p>
                 </div>
 
+                {/* Closed by default: 21 rows between them was the exact problem this collapses. The
+                    native element keeps the expand/collapse operable by keyboard and announced by a
+                    screen reader for free. Moved to sit right under the switch that starts a layout
+                    change, since picking what's on the dashboard is the next thing arranging needs. */}
+                <div className="mt-5 flex flex-col gap-2">
+                  <details className="group">
+                    {/* role="button" + aria-label gives every browser/AT a consistent accessible
+                        name — native <summary> role support is inconsistent, and without the
+                        override the name would otherwise include the decorative marker's glyph. */}
+                    <summary role="button" aria-label="Readings" className={ACCORDION_SUMMARY}>
+                      <span
+                        aria-hidden="true"
+                        className="inline-block shrink-0 text-[0.55rem] transition-transform duration-150 group-open:rotate-90"
+                      >
+                        ▶
+                      </span>
+                      Readings
+                    </summary>
+                    <div className="border border-t-0 border-line-strong px-3 py-3">
+                      <p className="text-xs text-muted">Switch on what you want to see.</p>
+                      <ul className="mt-3">
+                        {readings.map((card) => (
+                          <ModuleToggle
+                            key={card.id}
+                            id={card.id}
+                            title={card.title}
+                            description={card.description}
+                            isActive={active.has(card.id)}
+                            onToggle={onToggleCard}
+                          />
+                        ))}
+                      </ul>
+                    </div>
+                  </details>
+
+                  <details className="group">
+                    <summary role="button" aria-label="Panels" className={ACCORDION_SUMMARY}>
+                      <span
+                        aria-hidden="true"
+                        className="inline-block shrink-0 text-[0.55rem] transition-transform duration-150 group-open:rotate-90"
+                      >
+                        ▶
+                      </span>
+                      Panels
+                    </summary>
+                    <div className="border border-t-0 border-line-strong px-3 py-3">
+                      <p className="text-xs text-muted">Charts, tables, and grouped detail.</p>
+                      <ul className="mt-3">
+                        {panels.map((card) => (
+                          <ModuleToggle
+                            key={card.id}
+                            id={card.id}
+                            title={card.title}
+                            description={card.description}
+                            isActive={active.has(card.id)}
+                            onToggle={onToggleCard}
+                          />
+                        ))}
+                      </ul>
+                    </div>
+                  </details>
+                </div>
+
                 <h4 className={`${SECTION_LABEL} mt-5`}>Presets</h4>
                 <div className="mt-2 flex flex-col gap-2">
                   {LAYOUT_PRESETS.map((preset) => (
@@ -241,47 +308,6 @@ export function Menu({
                   </div>
                 </fieldset>
               </section>
-
-              {/* Closed by default: 21 rows between them was the exact problem this collapses. The
-                  native element keeps the expand/collapse operable by keyboard and announced by a
-                  screen reader for free, matching the disclosure already used in the footer. */}
-              <details>
-                <summary className={`${SECTION_LABEL} cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-accent`}>
-                  Readings
-                </summary>
-                <p className="mt-1 text-xs text-muted">Switch on what you want to see.</p>
-                <ul className="mt-3">
-                  {readings.map((card) => (
-                    <ModuleToggle
-                      key={card.id}
-                      id={card.id}
-                      title={card.title}
-                      description={card.description}
-                      isActive={active.has(card.id)}
-                      onToggle={onToggleCard}
-                    />
-                  ))}
-                </ul>
-              </details>
-
-              <details>
-                <summary className={`${SECTION_LABEL} cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-accent`}>
-                  Panels
-                </summary>
-                <p className="mt-1 text-xs text-muted">Charts, tables, and grouped detail.</p>
-                <ul className="mt-3">
-                  {panels.map((card) => (
-                    <ModuleToggle
-                      key={card.id}
-                      id={card.id}
-                      title={card.title}
-                      description={card.description}
-                      isActive={active.has(card.id)}
-                      onToggle={onToggleCard}
-                    />
-                  ))}
-                </ul>
-              </details>
             </div>
           </div>
         </>
