@@ -140,9 +140,7 @@ const readingModules: WeatherCardDefinition[] = METRIC_MODULES.map((metric) => (
   title: metric.title,
   description: metric.description,
   kind: 'reading' as const,
-  // Only 'feels-like' is in scope for the Postal Ledger treatment; every other reading built from
-  // this shared factory keeps its default look.
-  Component: createStatModule(metric, metric.id === 'feels-like' ? 'ledger' : 'default'),
+  Component: createStatModule(metric),
 }));
 
 export const weatherCardRegistry: WeatherCardDefinition[] = [...readingModules, ...compositeCards];

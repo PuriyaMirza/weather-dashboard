@@ -38,7 +38,7 @@ export function ActivityWindowsCard({ data, isLoading, errorMessage, activities 
               <div className="flex items-baseline justify-between gap-4">
                 <dt className="ledger-label">{definition.label}</dt>
                 {window && (
-                  <dd className="font-display min-w-0 text-xl leading-none text-ink">
+                  <dd className="font-display min-w-0 text-xl leading-none text-ledger-ink">
                     {formatHour(window.start, timeZone)} – {formatHour(window.end, timeZone)}
                   </dd>
                 )}

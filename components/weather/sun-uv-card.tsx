@@ -1,5 +1,5 @@
 import type { WeatherCardProps } from './card-registry';
-import { CardBoundary, Metric } from './card-frame';
+import { CardBoundary, LedgerMetric } from './card-frame';
 import { formatDuration, formatIndex, formatTime } from '@/lib/weather/units';
 
 const TITLE = 'Sun and UV';
@@ -32,30 +32,28 @@ export function SunUvCard({ data, isLoading, errorMessage }: WeatherCardProps) {
       isUnavailable={!sun}
       loadingLabel="Loading sun and UV details…"
       unavailableLabel="Sun and UV data is unavailable."
+      variant="ledger"
     >
       {sun && (
         <>
           {uv && uvNow != null ? (
-            <div
-              className="rounded-2xl px-4 py-3"
-              style={{ background: `var(--${uv.scale}-bg)`, color: `var(--${uv.scale})` }}
-            >
+            <div className="px-4 py-3" style={{ background: `var(--${uv.scale}-bg)`, color: `var(--${uv.scale})` }}>
               <p className="text-sm font-semibold">
                 UV {formatIndex(uvNow)} — {uv.label}
               </p>
               <p className="mt-1 text-sm">{uv.advice}</p>
             </div>
           ) : (
-            <p className="rounded-2xl bg-canvas px-4 py-3 text-sm text-muted">
+            <p className="bg-cream-2 px-4 py-3 text-sm text-ink-muted">
               Current UV index is unavailable.
             </p>
           )}
 
-          <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-            <Metric label="Sunrise" value={formatTime(sun.sunrise, timeZone)} />
-            <Metric label="Sunset" value={formatTime(sun.sunset, timeZone)} />
-            <Metric label="Daylight" value={formatDuration(sun.daylightSeconds)} />
-            <Metric label="Peak UV today" value={formatIndex(sun.uvIndexMax)} />
+          <dl className="mt-5 grid grid-cols-2 gap-4 text-sm">
+            <LedgerMetric label="Sunrise" value={formatTime(sun.sunrise, timeZone)} />
+            <LedgerMetric label="Sunset" value={formatTime(sun.sunset, timeZone)} />
+            <LedgerMetric label="Daylight" value={formatDuration(sun.daylightSeconds)} />
+            <LedgerMetric label="Peak UV today" value={formatIndex(sun.uvIndexMax)} />
           </dl>
         </>
       )}

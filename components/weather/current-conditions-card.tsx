@@ -1,19 +1,10 @@
 import type { WeatherCardProps } from './card-registry';
-import { CardBoundary } from './card-frame';
+import { CardBoundary, LedgerMetric } from './card-frame';
 import { LedgerDivider } from './ledger-divider';
 import { describeTemperature, formatPercent, formatSpeed, formatTemperature, formatTime } from '@/lib/weather/units';
 
 const TITLE = 'Current Conditions';
 const DESCRIPTION = 'Snapshot of temperature, conditions, wind, and precipitation chance.';
-
-function LedgerMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="ledger-label">{label}</dt>
-      <dd className="font-display mt-1 text-lg leading-none text-ink">{value}</dd>
-    </div>
-  );
-}
 
 export function CurrentConditionsCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
   const current = data?.current;
@@ -38,7 +29,7 @@ export function CurrentConditionsCard({ data, isLoading, errorMessage, unitSyste
             >
               {formatTemperature(current.temperatureF, unitSystem)}
             </p>
-            <p className="pb-1.5 text-sm font-medium text-ink">{current.conditionLabel}</p>
+            <p className="pb-1.5 text-sm font-medium text-ledger-ink">{current.conditionLabel}</p>
           </div>
           <p className="mt-1 text-xs text-ink-soft">Feels {formatTemperature(current.feelsLikeF, unitSystem)}</p>
 

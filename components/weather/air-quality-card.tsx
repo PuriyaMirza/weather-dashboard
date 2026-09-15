@@ -1,6 +1,6 @@
 import type { AirQualityCategory } from '@/lib/weather/types';
 import type { WeatherCardProps } from './card-registry';
-import { CardBoundary, Metric } from './card-frame';
+import { CardBoundary, LedgerMetric } from './card-frame';
 import { formatIndex } from '@/lib/weather/units';
 
 const TITLE = 'Air Quality Detail';
@@ -38,37 +38,38 @@ export function AirQualityCard({ data, isLoading, errorMessage }: WeatherCardPro
       isUnavailable={!airQuality}
       loadingLabel="Loading air quality…"
       unavailableLabel="Air quality data is unavailable for this location."
+      variant="ledger"
     >
       {airQuality && (
         <>
           {category && airQuality.usAqi != null ? (
             <div
-              className="rounded-2xl px-4 py-3"
+              className="px-4 py-3"
               style={{
                 background: `var(--${category.scale}-bg)`,
                 color: `var(--${category.scale})`,
               }}
             >
-              <p className="text-3xl font-bold tracking-tight">
+              <p className="font-display text-3xl leading-none">
                 {formatIndex(airQuality.usAqi)}
                 <span className="ml-2 text-base font-semibold">{category.label}</span>
               </p>
               <p className="mt-1 text-sm">{category.advice}</p>
             </div>
           ) : (
-            <p className="rounded-2xl bg-canvas px-4 py-3 text-sm text-muted">
+            <p className="bg-cream-2 px-4 py-3 text-sm text-ink-muted">
               An overall index is unavailable; individual pollutants are shown below.
             </p>
           )}
 
-          <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-            <Metric label="PM2.5" value={formatConcentration(airQuality.pm2_5)} />
-            <Metric label="PM10" value={formatConcentration(airQuality.pm10)} />
-            <Metric label="Ozone" value={formatConcentration(airQuality.ozone)} />
-            <Metric label="Nitrogen dioxide" value={formatConcentration(airQuality.nitrogenDioxide)} />
+          <dl className="mt-5 grid grid-cols-2 gap-4 text-sm">
+            <LedgerMetric label="PM2.5" value={formatConcentration(airQuality.pm2_5)} />
+            <LedgerMetric label="PM10" value={formatConcentration(airQuality.pm10)} />
+            <LedgerMetric label="Ozone" value={formatConcentration(airQuality.ozone)} />
+            <LedgerMetric label="Nitrogen dioxide" value={formatConcentration(airQuality.nitrogenDioxide)} />
           </dl>
 
-          <p className="mt-3 text-xs text-muted">US AQI scale. Concentrations in micrograms per cubic metre.</p>
+          <p className="mt-3 text-xs text-ink-muted">US AQI scale. Concentrations in micrograms per cubic metre.</p>
         </>
       )}
     </CardBoundary>
