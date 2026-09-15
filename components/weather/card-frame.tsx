@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 
-/** 'ledger' is a visual skin only — see the four callers that opt into it — never a behavioural
- *  branch: loading/error/unavailable/ready states, props, and data are identical either way. */
+/** 'ledger' is a visual skin only, never a behavioural branch: loading/error/unavailable/ready
+ *  states, props, and data are identical either way. Every card in the registry now opts into it;
+ *  'default' remains as the shell's other supported look rather than being deleted outright. */
 export type CardFrameVariant = 'default' | 'ledger';
 
 /**
@@ -13,8 +14,8 @@ export type CardFrameVariant = 'default' | 'ledger';
  * raised surface.
  *
  * The 'ledger' variant paints its own double border (a solid outer rule and an inset accent rule)
- * inside the module's grid cell instead, for the small set of cards restyled to the Postal Ledger
- * direction — the grid's own hairlines are untouched, so drag/resize/remove sizing is unaffected.
+ * inside the module's grid cell instead, for the cards restyled to the Postal Ledger direction —
+ * the grid's own hairlines are untouched, so drag/resize/remove sizing is unaffected.
  */
 export function CardFrame({
   title,
@@ -31,7 +32,7 @@ export function CardFrame({
 
   if (variant === 'ledger') {
     return (
-      <article className="relative flex h-full flex-col border-2 border-ink bg-cream p-5" aria-labelledby={titleId}>
+      <article className="relative flex h-full flex-col border-2 border-ledger-ink bg-cream p-5" aria-labelledby={titleId}>
         {/* The inset accent rule, 5px in from the module's own edge — decorative, so it sits
             outside the tab order and out of the accessibility tree. */}
         <span aria-hidden="true" className="pointer-events-none absolute inset-[5px] border border-red" />
@@ -57,12 +58,30 @@ export function CardFrame({
   );
 }
 
-export function CardState({ label, tone = 'neutral' }: { label: string; tone?: 'neutral' | 'error' }) {
+export function CardState({
+  label,
+  tone = 'neutral',
+  variant = 'default',
+}: {
+  label: string;
+  tone?: 'neutral' | 'error';
+  variant?: CardFrameVariant;
+}) {
+  // The ledger card's paper stays cream regardless of theme, so its placeholder needs the same
+  // fixed, non-theme-varying colours as the rest of the ledger content (see --ledger-ink above) —
+  // the default variant's tokens flip for dark mode and go illegible on that fixed paper.
+  const classes =
+    variant === 'ledger'
+      ? tone === 'error'
+        ? 'border-ledger-danger text-ledger-danger'
+        : 'border-hairline text-ink-muted'
+      : tone === 'error'
+        ? 'border-danger-line text-danger'
+        : 'border-line text-muted';
+
   return (
     <div
-      className={`flex flex-1 items-center justify-center border border-dashed p-4 text-center text-xs ${
-        tone === 'error' ? 'border-danger-line text-danger' : 'border-line text-muted'
-      }`}
+      className={`flex flex-1 items-center justify-center border border-dashed p-4 text-center text-xs ${classes}`}
       role={tone === 'error' ? 'alert' : 'status'}
     >
       {label}
@@ -102,9 +121,9 @@ export function CardBoundary({
 }: CardBoundaryProps) {
   let content: ReactNode = children;
 
-  if (isLoading) content = <CardState label={loadingLabel} />;
-  else if (errorMessage) content = <CardState label={errorMessage} tone="error" />;
-  else if (isUnavailable) content = <CardState label={unavailableLabel} />;
+  if (isLoading) content = <CardState label={loadingLabel} variant={variant} />;
+  else if (errorMessage) content = <CardState label={errorMessage} tone="error" variant={variant} />;
+  else if (isUnavailable) content = <CardState label={unavailableLabel} variant={variant} />;
 
   return (
     <CardFrame title={title} description={description} variant={variant}>
@@ -113,12 +132,12 @@ export function CardBoundary({
   );
 }
 
-/** Label/value pair used by the composite panels' metric grids. */
-export function Metric({ label, value }: { label: string; value: string }) {
+/** Label/value pair used by the ledger panels' metric grids. */
+export function LedgerMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-t border-line pt-2">
-      <dt className="eyebrow text-muted">{label}</dt>
-      <dd className="mt-1 font-display text-2xl leading-none text-ink-strong tabular-nums">{value}</dd>
+    <div>
+      <dt className="ledger-label">{label}</dt>
+      <dd className="font-display mt-1 text-lg leading-none text-ledger-ink">{value}</dd>
     </div>
   );
 }

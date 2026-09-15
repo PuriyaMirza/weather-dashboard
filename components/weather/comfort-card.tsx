@@ -1,5 +1,5 @@
 import type { WeatherCardProps } from './card-registry';
-import { CardBoundary, Metric } from './card-frame';
+import { CardBoundary, LedgerMetric } from './card-frame';
 import {
   formatDistance,
   formatIndex,
@@ -23,15 +23,16 @@ export function ComfortCard({ data, isLoading, errorMessage, unitSystem }: Weath
       isUnavailable={!comfort}
       loadingLabel="Loading comfort metrics…"
       unavailableLabel="Comfort metrics are unavailable."
+      variant="ledger"
     >
       {comfort && (
-        <dl className="grid grid-cols-2 gap-3 text-sm">
-          <Metric label="Humidity" value={formatPercent(comfort.humidityPercent)} />
-          <Metric label="Dew point" value={formatTemperatureWithUnit(comfort.dewPointF, unitSystem)} />
-          <Metric label="UV index" value={formatIndex(comfort.uvIndex)} />
-          <Metric label="Visibility" value={formatDistance(comfort.visibilityMiles, unitSystem)} />
-          <Metric label="Pressure" value={formatPressure(comfort.pressureInHg, unitSystem)} />
-          <Metric label="Air quality" value={formatIndex(comfort.airQualityIndex)} />
+        <dl className="grid grid-cols-2 gap-4 text-sm">
+          <LedgerMetric label="Humidity" value={formatPercent(comfort.humidityPercent)} />
+          <LedgerMetric label="Dew point" value={formatTemperatureWithUnit(comfort.dewPointF, unitSystem)} />
+          <LedgerMetric label="UV index" value={formatIndex(comfort.uvIndex)} />
+          <LedgerMetric label="Visibility" value={formatDistance(comfort.visibilityMiles, unitSystem)} />
+          <LedgerMetric label="Pressure" value={formatPressure(comfort.pressureInHg, unitSystem)} />
+          <LedgerMetric label="Air quality" value={formatIndex(comfort.airQualityIndex)} />
         </dl>
       )}
     </CardBoundary>

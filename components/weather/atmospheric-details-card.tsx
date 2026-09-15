@@ -1,6 +1,7 @@
 import type { PressureTrend } from '@/lib/weather/types';
 import type { WeatherCardProps } from './card-registry';
-import { CardBoundary, Metric } from './card-frame';
+import { CardBoundary, LedgerMetric } from './card-frame';
+import { LedgerDivider } from './ledger-divider';
 import {
   formatDistance,
   formatPercent,
@@ -38,23 +39,26 @@ export function AtmosphericDetailsCard({ data, isLoading, errorMessage, unitSyst
       isUnavailable={!atmospheric}
       loadingLabel="Loading atmospheric details…"
       unavailableLabel="Atmospheric data is unavailable."
+      variant="ledger"
     >
       {atmospheric && (
         <>
           <div className="flex items-baseline justify-between gap-3">
-            <p className="text-4xl font-bold tracking-tight text-ink-strong">
+            <p className="font-display text-4xl leading-none text-ledger-ink">
               {formatPressure(atmospheric.pressureInHg, unitSystem)}
             </p>
             {atmospheric.pressureTrend && (
-              <span className="bg-canvas px-3 py-1 text-sm font-semibold text-ink">
+              <span className="bg-cream-2 px-3 py-1 text-sm font-semibold text-ledger-ink">
                 {PRESSURE_TREND_LABEL[atmospheric.pressureTrend]}
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-muted">Sea-level pressure</p>
+          <p className="mt-1 text-sm text-ink-soft">Sea-level pressure</p>
 
-          <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-            <Metric
+          <LedgerDivider />
+
+          <dl className="grid grid-cols-2 gap-4 text-sm">
+            <LedgerMetric
               label="Cloud cover"
               value={
                 atmospheric.cloudCoverPercent == null
@@ -62,9 +66,9 @@ export function AtmosphericDetailsCard({ data, isLoading, errorMessage, unitSyst
                   : `${formatPercent(atmospheric.cloudCoverPercent)} — ${describeCloudCover(atmospheric.cloudCoverPercent)}`
               }
             />
-            <Metric label="Visibility" value={formatDistance(atmospheric.visibilityMiles, unitSystem)} />
-            <Metric label="Humidity" value={formatPercent(atmospheric.humidityPercent)} />
-            <Metric label="Dew point" value={formatTemperatureWithUnit(atmospheric.dewPointF, unitSystem)} />
+            <LedgerMetric label="Visibility" value={formatDistance(atmospheric.visibilityMiles, unitSystem)} />
+            <LedgerMetric label="Humidity" value={formatPercent(atmospheric.humidityPercent)} />
+            <LedgerMetric label="Dew point" value={formatTemperatureWithUnit(atmospheric.dewPointF, unitSystem)} />
           </dl>
         </>
       )}

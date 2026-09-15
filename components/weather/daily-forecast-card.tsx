@@ -31,6 +31,7 @@ export function DailyForecastCard({ data, isLoading, errorMessage, unitSystem }:
       isUnavailable={days.length === 0}
       loadingLabel="Loading the daily forecast…"
       unavailableLabel="Daily forecast data is unavailable."
+      variant="ledger"
     >
       {days.length > 0 && (
         // A real table rather than styled divs: this is tabular data, and the semantics give
@@ -38,7 +39,7 @@ export function DailyForecastCard({ data, isLoading, errorMessage, unitSystem }:
         <table className="w-full text-sm">
           <caption className="sr-only">Daily forecast for the week ahead</caption>
           <thead>
-            <tr className="text-left text-muted">
+            <tr className="ledger-label text-left">
               <th scope="col" className="pb-2 font-medium">
                 Day
               </th>
@@ -55,17 +56,17 @@ export function DailyForecastCard({ data, isLoading, errorMessage, unitSystem }:
           </thead>
           <tbody>
             {days.map((day) => (
-              <tr key={day.date} className="border-t border-line">
-                <th scope="row" className="py-2.5 pr-3 text-left font-semibold text-ink">
+              <tr key={day.date} className="border-t border-hairline">
+                <th scope="row" className="py-2.5 pr-3 text-left font-semibold text-ledger-ink">
                   {day.date === today ? 'Today' : formatWeekday(day.date)}
                 </th>
-                <td className="py-2.5 pr-3 text-ink">{day.conditionLabel}</td>
-                <td className="py-2.5 pr-3 text-right text-ink">
+                <td className="py-2.5 pr-3 text-ledger-ink">{day.conditionLabel}</td>
+                <td className="py-2.5 pr-3 text-right text-ledger-ink">
                   {day.precipitationChance == null ? '—' : formatPercent(day.precipitationChance)}
                 </td>
-                <td className="py-2.5 text-right font-medium text-ink">
+                <td className="py-2.5 text-right font-medium text-ledger-ink">
                   {formatTemperature(day.highF, unitSystem)}
-                  <span className="text-muted"> / {formatTemperature(day.lowF, unitSystem)}</span>
+                  <span className="text-ink-muted"> / {formatTemperature(day.lowF, unitSystem)}</span>
                 </td>
               </tr>
             ))}

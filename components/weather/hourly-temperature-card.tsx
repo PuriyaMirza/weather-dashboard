@@ -29,7 +29,7 @@ export function HourlyTemperatureCard({ data, isLoading, errorMessage, unitSyste
             {hourly.map((point) => (
               <div key={point.time} className="flex min-w-[3.5rem] flex-1 flex-col items-center gap-1.5 px-2 text-center">
                 <span className="ledger-label whitespace-nowrap">{formatHour(point.time, timeZone)}</span>
-                <span className="font-display text-lg leading-none text-ink">
+                <span className="font-display text-lg leading-none text-ledger-ink">
                   {formatTemperature(point.temperatureF, unitSystem)}
                 </span>
                 <span className="text-[9.5px] whitespace-nowrap text-ink-muted">{point.precipitationChance}% rain</span>

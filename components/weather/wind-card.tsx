@@ -39,7 +39,7 @@ export function WindCard({ data, isLoading, errorMessage, unitSystem }: WeatherC
             Wind
           </p>
           <div className="mt-1.5 flex items-baseline gap-3">
-            <p className="font-display text-[34px] leading-none text-ink">{formatSpeed(wind.speedMph, unitSystem)}</p>
+            <p className="font-display text-[34px] leading-none text-ledger-ink">{formatSpeed(wind.speedMph, unitSystem)}</p>
             <p className="text-sm font-medium text-ink-soft">{describeWindStrength(wind.speedMph)}</p>
           </div>
 
@@ -55,11 +55,11 @@ export function WindCard({ data, isLoading, errorMessage, unitSystem }: WeatherC
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="ledger-label">Gusts</dt>
-              <dd className="font-display mt-1 text-lg leading-none text-ink">{formatSpeed(wind.gustMph, unitSystem)}</dd>
+              <dd className="font-display mt-1 text-lg leading-none text-ledger-ink">{formatSpeed(wind.gustMph, unitSystem)}</dd>
             </div>
             <div>
               <dt className="ledger-label">Direction</dt>
-              <dd className="font-display mt-1 text-lg leading-none text-ink">{wind.direction ?? 'Unavailable'}</dd>
+              <dd className="font-display mt-1 text-lg leading-none text-ledger-ink">{wind.direction ?? 'Unavailable'}</dd>
             </div>
           </dl>
         </>
