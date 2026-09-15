@@ -133,6 +133,10 @@ npx playwright test tests/e2e/home.spec.ts  # one e2e spec
 - **The internal weather model is always imperial** (`temperatureF`, `windMph`, …); unit choice
   (`lib/weather/units.ts`) is purely presentational and never triggers a re-fetch.
 - Historical/past weather is an explicit **non-goal** (PRD §3) — don't build backward-looking views.
+- **In Playwright, use `getByRole` not `getByText` on anything with a decorative icon inside** —
+  `aria-hidden` excludes the icon from the accessible name but not from raw DOM text, so
+  `getByText('Readings', { exact: true })` stops matching the moment an icon glyph sits next to the
+  label. Give such an element an explicit `aria-label` and query by role instead.
 
 ## Architecture
 
