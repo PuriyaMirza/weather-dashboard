@@ -24,7 +24,10 @@
   --cream-2: #c7c3b3;
   --ink: #16161a;
   --ink-soft: #3c3b3f;
-  --ink-muted: #7a7871;
+  /* Darkened from the requested #7a7871: that value is only 2.91:1 against --cream, failing WCAG
+     AA (4.5:1) for the normal-weight small text it's used on (card labels, captions) — this is the
+     lightest warm gray that still clears 4.5:1 on #d6d2c4. */
+  --ink-muted: #5b5850;
   --red: #e85e1f;
   --blue: #1c86c4;
   --hairline: rgba(22, 22, 26, 0.18);

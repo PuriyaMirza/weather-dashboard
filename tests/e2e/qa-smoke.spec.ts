@@ -51,7 +51,7 @@ test('the page is actually styled, not served without its stylesheet', async ({ 
   const heading = page.getByRole('heading', { name: 'Weather', exact: true });
   await expect(heading).toBeVisible();
   const font = await heading.evaluate((node) => getComputedStyle(node).fontFamily);
-  expect(font.toLowerCase()).toContain('instrument');
+  expect(font.toLowerCase()).toContain('fraunces');
 });
 
 test('the client bundle hydrates, so the page is interactive and not just server HTML', async ({ page }) => {
