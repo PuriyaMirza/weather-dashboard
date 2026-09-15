@@ -65,10 +65,15 @@ anything viewport-dependent, including what is above the fold.
 
 ## HARD CONSTRAINTS — these are settled decisions, not open questions
 
-- Monochrome. Warm paper on near-black; true black on warm white.
+- Light palette is "Postal Ledger": warm cream paper, near-black ink, a single red
+  accent (hero temperature, one inset rule) and a single blue accent (small ring
+  markers only) — not strictly monochrome. Dark palette is unchanged: true black on
+  warm white, still monochrome.
 - Radius is zero at the token level. Do not propose rounded corners.
 - No shadows. Hairline rules only.
-- Instrument Serif for readings; all-caps letter-spaced labels.
+- Fraunces (serif, oldstyle numerals via 'onum') for readings and the wordmark;
+  Space Grotesk (sans) for everything else. Section labels are small-caps, not
+  all-caps.
 - Every customization action must work by keyboard alone. No drag-only
   affordances.
 - Every chart needs a text or table equivalent.

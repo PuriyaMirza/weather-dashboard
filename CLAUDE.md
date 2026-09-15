@@ -187,6 +187,8 @@ Because of `skipHydration`, the store rehydrates explicitly after mount via `use
 
 Dark mode follows the system with a Light / Auto / Dark override. An inline script in `app/layout.tsx` sets `data-theme` before first paint (no flash); `Dashboard` keeps the attribute in sync when the user changes it afterward. `prefers-reduced-motion` is handled globally in `globals.css` so it also covers Recharts and dnd-kit.
 
+Light mode is the "Postal Ledger" direction: Fraunces (serif, oldstyle numerals) + Space Grotesk (sans), a cream/ink palette with a single red and single blue accent, defined as literal tokens (`--cream`, `--red`, `--blue`, `--ink-soft`, `--ink-muted`, `--hairline`) in `app/globals.css` alongside the semantic ones. Dark mode is unchanged. `CardFrame`/`CardBoundary` (`components/weather/card-frame.tsx`) take an opt-in `variant="ledger"` that swaps in the double-border ledger shell without touching a card's states, data, or props — currently used by `current-conditions`, `hourly-temperature`, `wind`, `activity-windows`, and the `feels-like` reading; every other card keeps the default shell.
+
 ### API routes
 
 `app/api/weather/route.ts` (forecast by coordinates) and `app/api/geocode/route.ts` (place-name search). Both: Zod query validation, coordinate bounds (±90 / ±180), a consistent `{ error: string }` shape via `jsonError` (`lib/api/http.ts`), and `Cache-Control` aimed at the CDN (`s-maxage`) — weather 600s, geocode 86400s, every error `no-store`. Routes accept coordinates and names, never a URL, so they cannot proxy arbitrary hosts.

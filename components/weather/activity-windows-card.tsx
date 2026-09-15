@@ -29,37 +29,35 @@ export function ActivityWindowsCard({ data, isLoading, errorMessage, activities 
       isUnavailable={isUnavailable}
       loadingLabel="Working out the best times to go out…"
       unavailableLabel="Hourly data is unavailable, so no windows can be worked out."
+      variant="ledger"
     >
       {!isUnavailable && (
-        <dl className="flex flex-col">
+        <dl className="flex flex-col divide-y divide-hairline">
           {outlooks.map(({ definition, window }) => (
-            <div
-              key={definition.id}
-              className="flex flex-col gap-1 border-t border-line py-3 first:border-t-0 first:pt-0 sm:flex-row sm:items-baseline sm:gap-4"
-            >
-              <dt className="eyebrow shrink-0 text-muted sm:w-24">{definition.label}</dt>
-              <dd className="min-w-0">
-                {window ? (
-                  <>
-                    <p className="font-display text-2xl leading-none text-ink-strong">
-                      {formatHour(window.start, timeZone)} – {formatHour(window.end, timeZone)}
-                    </p>
-                    <p className="mt-1 text-xs text-muted">
-                      {window.reasons.join(' · ')}
-                      {/* Stated rather than implied: a window can be perfectly good and still dark. */}
-                      {window.darkFrom && ' · After sunset'}
-                      {/* The daylight portion alone was enough to report on its own, but the
-                          suitable stretch keeps going after dark — said, not dropped. */}
-                      {window.extendsUntil && ` · Also fine until ${formatHour(window.extendsUntil, timeZone)} after dark`}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm text-ink">No good window in the next day.</p>
-                    <p className="mt-1 text-xs text-muted">{definition.description}</p>
-                  </>
+            <div key={definition.id} className="flex flex-col gap-1 py-3.5 first:pt-0 last:pb-0">
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="ledger-label">{definition.label}</dt>
+                {window && (
+                  <dd className="font-display min-w-0 text-xl leading-none text-ink">
+                    {formatHour(window.start, timeZone)} – {formatHour(window.end, timeZone)}
+                  </dd>
                 )}
-              </dd>
+              </div>
+              {window ? (
+                <p className="text-[11.5px] leading-relaxed text-ink-soft">
+                  {window.reasons.join(' · ')}
+                  {/* Stated rather than implied: a window can be perfectly good and still dark. */}
+                  {window.darkFrom && ' · After sunset'}
+                  {/* The daylight portion alone was enough to report on its own, but the
+                      suitable stretch keeps going after dark — said, not dropped. */}
+                  {window.extendsUntil && ` · Also fine until ${formatHour(window.extendsUntil, timeZone)} after dark`}
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-ink-muted">No good window in the next day.</p>
+                  <p className="mt-1 text-[11.5px] leading-relaxed text-ink-soft">{definition.description}</p>
+                </>
+              )}
             </div>
           ))}
         </dl>

@@ -5,6 +5,7 @@ import { arrayMove } from '@dnd-kit/sortable';
 import { ArrangeToolbar } from '@/components/dashboard/arrange-toolbar';
 import { CardGrid } from '@/components/dashboard/card-grid';
 import { Hero } from '@/components/dashboard/hero';
+import { LedgerFooter } from '@/components/dashboard/ledger-footer';
 import { Menu } from '@/components/dashboard/menu';
 import { LocationPanel } from '@/components/location/location-panel';
 import { Onboarding } from '@/components/onboarding/onboarding';
@@ -200,24 +201,38 @@ export function Dashboard() {
           <p className="eyebrow mt-2 text-muted">Open-Meteo · arranged however you like</p>
         </div>
 
-        <Menu
-          isOpen={isMenuOpen}
-          onOpen={() => setIsMenuOpen(true)}
-          onClose={() => setIsMenuOpen(false)}
-          activeCardIds={cards.map((card) => card.id)}
-          onToggleCard={toggleCard}
-          unitSystem={unitSystem}
-          onUnitChange={setUnitSystem}
-          theme={theme}
-          onThemeChange={setTheme}
-          isEditing={isEditing}
-          onEditingChange={setEditing}
-          onApplyPreset={applyPreset}
-          onRestoreDefaults={restoreDefaults}
-          getShareUrl={getShareUrl}
-          onRestartOnboarding={restartOnboarding}
-          triggerRef={menuTriggerRef}
-        />
+        <div className="flex items-start gap-3">
+          {/* Purely decorative masthead stamp — no information beyond what the wordmark already
+              states, so it stays out of the accessibility tree rather than duplicating it. */}
+          <div
+            aria-hidden="true"
+            className="relative flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-ink-strong"
+          >
+            <span className="pointer-events-none absolute inset-1 rounded-full border border-dashed border-muted" />
+            <span className="font-display relative text-center text-[9px] leading-[1.15] tracking-[0.06em] text-ink-strong">
+              WX
+            </span>
+          </div>
+
+          <Menu
+            isOpen={isMenuOpen}
+            onOpen={() => setIsMenuOpen(true)}
+            onClose={() => setIsMenuOpen(false)}
+            activeCardIds={cards.map((card) => card.id)}
+            onToggleCard={toggleCard}
+            unitSystem={unitSystem}
+            onUnitChange={setUnitSystem}
+            theme={theme}
+            onThemeChange={setTheme}
+            isEditing={isEditing}
+            onEditingChange={setEditing}
+            onApplyPreset={applyPreset}
+            onRestoreDefaults={restoreDefaults}
+            getShareUrl={getShareUrl}
+            onRestartOnboarding={restartOnboarding}
+            triggerRef={menuTriggerRef}
+          />
+        </div>
       </header>
 
       <Hero
@@ -276,6 +291,8 @@ export function Dashboard() {
         onToggleLift={toggleLift}
         onPlaceAt={placeLiftedAt}
       />
+
+      <LedgerFooter />
     </div>
   );
 }

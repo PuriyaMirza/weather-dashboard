@@ -1,9 +1,19 @@
 import type { WeatherCardProps } from './card-registry';
-import { CardBoundary, Metric } from './card-frame';
+import { CardBoundary } from './card-frame';
+import { LedgerDivider } from './ledger-divider';
 import { describeTemperature, formatPercent, formatSpeed, formatTemperature, formatTime } from '@/lib/weather/units';
 
 const TITLE = 'Current Conditions';
 const DESCRIPTION = 'Snapshot of temperature, conditions, wind, and precipitation chance.';
+
+function LedgerMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="ledger-label">{label}</dt>
+      <dd className="font-display mt-1 text-lg leading-none text-ink">{value}</dd>
+    </div>
+  );
+}
 
 export function CurrentConditionsCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
   const current = data?.current;
@@ -17,31 +27,31 @@ export function CurrentConditionsCard({ data, isLoading, errorMessage, unitSyste
       isUnavailable={!current}
       loadingLabel="Loading current conditions…"
       unavailableLabel="Current conditions are unavailable."
+      variant="ledger"
     >
       {current && (
         <>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p
-                className="text-6xl font-bold tracking-tight text-ink-strong"
-                aria-label={describeTemperature(current.temperatureF, unitSystem)}
-              >
-                {formatTemperature(current.temperatureF, unitSystem)}
-              </p>
-              <p className="mt-2 text-base font-medium text-ink">{current.conditionLabel}</p>
-            </div>
-            <span className="bg-accent-soft px-3 py-1 text-sm font-semibold text-accent-soft-ink">
-              Feels {formatTemperature(current.feelsLikeF, unitSystem)}
-            </span>
+          <div className="flex items-end gap-3">
+            <p
+              className="font-display text-[68px] leading-[0.9] text-red"
+              aria-label={describeTemperature(current.temperatureF, unitSystem)}
+            >
+              {formatTemperature(current.temperatureF, unitSystem)}
+            </p>
+            <p className="pb-1.5 text-sm font-medium text-ink">{current.conditionLabel}</p>
           </div>
-          <dl className="mt-6 grid grid-cols-2 gap-3 text-sm">
-            <Metric
+          <p className="mt-1 text-xs text-ink-soft">Feels {formatTemperature(current.feelsLikeF, unitSystem)}</p>
+
+          <LedgerDivider />
+
+          <dl className="grid grid-cols-2 gap-4 text-sm">
+            <LedgerMetric
               label="High / Low"
               value={`${formatTemperature(current.highF, unitSystem)} / ${formatTemperature(current.lowF, unitSystem)}`}
             />
-            <Metric label="Wind" value={`${current.windDirection} ${formatSpeed(current.windMph, unitSystem)}`} />
-            <Metric label="Rain chance" value={formatPercent(current.precipitationChance)} />
-            <Metric label="Observed" value={formatTime(current.observedAt, data?.location.timezone)} />
+            <LedgerMetric label="Wind" value={`${current.windDirection} ${formatSpeed(current.windMph, unitSystem)}`} />
+            <LedgerMetric label="Rain chance" value={formatPercent(current.precipitationChance)} />
+            <LedgerMetric label="Observed" value={formatTime(current.observedAt, data?.location.timezone)} />
           </dl>
         </>
       )}
