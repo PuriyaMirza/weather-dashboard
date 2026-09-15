@@ -137,6 +137,16 @@ npx playwright test tests/e2e/home.spec.ts  # one e2e spec
   `aria-hidden` excludes the icon from the accessible name but not from raw DOM text, so
   `getByText('Readings', { exact: true })` stops matching the moment an icon glyph sits next to the
   label. Give such an element an explicit `aria-label` and query by role instead.
+- **Open bug, not yet root-caused: onboarding location doesn't stick.** Completing onboarding after
+  searching for a new place (e.g. New York) still shows the previous/default location (Portland) on
+  the dashboard afterward. `LocationSearch`'s `onSelect` wiring (`components/location/location-search.tsx`)
+  and the store's `completeOnboarding` (`store/dashboard-store.ts:278`, which does correctly `set({
+  location, ... })`) both read correctly in isolation on inspection — the mismatch hasn't been
+  reproduced/traced yet. Next step: instrument or step through `components/onboarding/onboarding.tsx`'s
+  location step (its own local `location` state, seeded from `initialLocation`) to confirm the
+  selected value actually reaches `onComplete` at the "finish" click, and check `app/api/geocode`
+  results for the searched query aren't empty (which would leave the local state unchanged, and the
+  finish action would silently submit the seeded default instead).
 
 ## Architecture
 
