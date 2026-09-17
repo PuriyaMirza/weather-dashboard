@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useId, useRef, useState, type RefObject } from 'react';
+import { useCallback, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { weatherCardRegistry, type WeatherCardId } from '@/components/weather/card-registry';
 import { useDialogFocus } from '@/lib/hooks/use-dialog-focus';
 import { LAYOUT_PRESETS } from '@/lib/weather/card-layout';
@@ -28,13 +28,11 @@ interface MenuProps {
   triggerRef?: RefObject<HTMLButtonElement | null>;
 }
 
-const SECTION_LABEL = 'eyebrow text-muted';
-const ACTION =
-  'w-full border border-line-strong px-3 py-2 text-left text-xs uppercase tracking-[0.14em] text-ink outline-none hover:bg-accent hover:text-accent-ink focus-visible:ring-2 focus-visible:ring-accent';
-/** Bordered like the other action rows, so a closed accordion still reads as a control rather than
-    a plain label — the eyebrow-only header this replaced was too easy to miss entirely. */
-const ACCORDION_SUMMARY =
-  'flex w-full cursor-pointer list-none items-center gap-2 border border-line-strong bg-card px-3 py-2.5 text-left text-xs uppercase tracking-[0.14em] text-ink outline-none [&::-webkit-details-marker]:hidden [&::marker]:hidden hover:bg-accent hover:text-accent-ink focus-visible:ring-2 focus-visible:ring-accent';
+/** Underlined text action, for the panel's least-frequent moves (restore, redo setup) — a full
+    ticket or stamp treatment would give them the same weight as the things people actually reach
+    for here. */
+const TEXT_ACTION =
+  'text-[11px] text-ink-muted underline decoration-ink-muted/50 underline-offset-[3px] outline-none hover:text-ledger-ink focus-visible:ring-2 focus-visible:ring-accent';
 
 const THEME_OPTIONS: { value: ThemePreference; label: string; description: string }[] = [
   { value: 'light', label: 'Light', description: 'Always use the light theme' },
@@ -52,6 +50,9 @@ const UNIT_OPTIONS: { value: UnitSystem; label: string; description: string }[] 
  *
  * Previously these controls were spread across a header toolbar, a separate add-card drawer, and
  * an inline preset row, which made the dashboard look busy before you had read a single number.
+ * Styled as a Postal Ledger panel — the same fixed cream-and-ink surface as the restyled cards —
+ * rather than the app's theme-aware chrome, so it reads as one more piece of paper on the desk
+ * regardless of light/dark mode.
  *
  * Keyboard behaviour is the whole job here, not a garnish: Escape closes, Tab is trapped inside
  * the open panel, and focus returns to the hamburger on close, so a keyboard user is never dumped
@@ -83,6 +84,8 @@ export function Menu({
   const active = new Set(activeCardIds);
   const readings = weatherCardRegistry.filter((card) => card.kind === 'reading');
   const panels = weatherCardRegistry.filter((card) => card.kind === 'panel');
+  const readingsOn = readings.filter((card) => active.has(card.id)).length;
+  const panelsOn = panels.filter((card) => active.has(card.id)).length;
 
   // Left for the compiler to memoize: hand-written deps cannot express "reads triggerRef.current"
   // now that the ref may come from the dashboard rather than from here.
@@ -122,15 +125,15 @@ export function Menu({
             role="dialog"
             aria-modal="true"
             aria-label="Dashboard settings"
-            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col overflow-y-auto border-l border-line-strong bg-card"
+            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col overflow-y-auto border-l border-hairline bg-cream"
           >
-            <div className="flex items-baseline justify-between border-b border-line-strong px-5 py-4">
-              <h2 className="font-display text-2xl leading-none text-ink-strong">Dashboard</h2>
+            <div className="flex items-baseline justify-between border-b border-hairline px-5 py-4">
+              <h2 className="font-display text-2xl leading-none text-ledger-ink">Dashboard</h2>
               <button
                 type="button"
                 onClick={close}
                 aria-label="Close menu"
-                className="eyebrow text-muted outline-none hover:text-ink-strong focus-visible:ring-2 focus-visible:ring-accent"
+                className="ledger-label outline-none hover:text-ledger-ink focus-visible:ring-2 focus-visible:ring-accent"
               >
                 Close
               </button>
@@ -138,13 +141,14 @@ export function Menu({
 
             <div className="flex flex-col gap-7 px-5 py-6">
               <section aria-labelledby={`${panelId}-layout`}>
-                <h3 id={`${panelId}-layout`} className={SECTION_LABEL}>
+                <h3 id={`${panelId}-layout`} className="ledger-label">
                   Layout
                 </h3>
-                <div className="mt-3 flex flex-col gap-2">
+
+                <div className="mt-3 flex flex-col">
                   {/* A switch, not a button that renames itself — this is a mode being turned on or
                       off, and the pill shape keeps it from reading as another item in the toggle
-                      lists below, which use square checkboxes for module visibility instead. */}
+                      grids below, which use square checkboxes for module visibility instead. */}
                   <button
                     type="button"
                     role="switch"
@@ -156,23 +160,23 @@ export function Menu({
                       // toolbar takes focus on mount, and `close` would yank it back here.
                       if (!isEditing) onClose();
                     }}
-                    className="flex w-full items-center justify-between gap-3 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    className="flex w-full items-center justify-between gap-3 border-b border-hairline py-3 outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   >
-                    <span className="text-sm text-ink">Arrange mode</span>
+                    <span className="text-sm text-ledger-ink">Arrange mode</span>
                     <span
                       aria-hidden="true"
-                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-line-strong transition-colors ${
-                        isEditing ? 'bg-accent' : 'bg-card'
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border border-ledger-ink transition-colors ${
+                        isEditing ? 'bg-ledger-ink' : 'bg-cream'
                       }`}
                     >
                       <span
-                        className={`inline-block h-4 w-4 transform rounded-full transition-transform ${
-                          isEditing ? 'translate-x-5 bg-accent-ink' : 'translate-x-1 bg-ink-strong'
+                        className={`inline-block h-3.5 w-3.5 transform rounded-full transition-transform ${
+                          isEditing ? 'translate-x-4 bg-cream' : 'translate-x-0.5 bg-ledger-ink'
                         }`}
                       />
                     </span>
                   </button>
-                  <p className="text-xs text-muted">
+                  <p className="mt-2 text-xs text-ink-muted">
                     Arranging shows each module&apos;s move, size, and remove controls. Sizes are small,
                     medium, and large.
                   </p>
@@ -180,104 +184,114 @@ export function Menu({
 
                 {/* Closed by default: 21 rows between them was the exact problem this collapses. The
                     native element keeps the expand/collapse operable by keyboard and announced by a
-                    screen reader for free. Moved to sit right under the switch that starts a layout
-                    change, since picking what's on the dashboard is the next thing arranging needs. */}
-                <div className="mt-5 flex flex-col gap-2">
-                  <details className="group">
+                    screen reader for free. Sits right under the switch that starts a layout change,
+                    since picking what's on the dashboard is the next thing arranging needs. */}
+                <div className="mt-1 flex flex-col">
+                  <details className="group border-b border-hairline">
                     {/* role="button" + aria-label gives every browser/AT a consistent accessible
                         name — native <summary> role support is inconsistent, and without the
-                        override the name would otherwise include the decorative marker's glyph. */}
-                    <summary role="button" aria-label="Readings" className={ACCORDION_SUMMARY}>
-                      <span
-                        aria-hidden="true"
-                        className="inline-block shrink-0 text-[0.55rem] transition-transform duration-150 group-open:rotate-90"
-                      >
-                        ▶
-                      </span>
-                      Readings
-                    </summary>
-                    <div className="border border-t-0 border-line-strong px-3 py-3">
-                      <p className="text-xs text-muted">Switch on what you want to see.</p>
-                      <ul className="mt-3">
-                        {readings.map((card) => (
-                          <ModuleToggle
-                            key={card.id}
-                            id={card.id}
-                            title={card.title}
-                            description={card.description}
-                            isActive={active.has(card.id)}
-                            onToggle={onToggleCard}
-                          />
-                        ))}
-                      </ul>
-                    </div>
-                  </details>
-
-                  <details className="group">
-                    <summary role="button" aria-label="Panels" className={ACCORDION_SUMMARY}>
-                      <span
-                        aria-hidden="true"
-                        className="inline-block shrink-0 text-[0.55rem] transition-transform duration-150 group-open:rotate-90"
-                      >
-                        ▶
-                      </span>
-                      Panels
-                    </summary>
-                    <div className="border border-t-0 border-line-strong px-3 py-3">
-                      <p className="text-xs text-muted">Charts, tables, and grouped detail.</p>
-                      <ul className="mt-3">
-                        {panels.map((card) => (
-                          <ModuleToggle
-                            key={card.id}
-                            id={card.id}
-                            title={card.title}
-                            description={card.description}
-                            isActive={active.has(card.id)}
-                            onToggle={onToggleCard}
-                          />
-                        ))}
-                      </ul>
-                    </div>
-                  </details>
-                </div>
-
-                <h4 className={`${SECTION_LABEL} mt-5`}>Presets</h4>
-                <div className="mt-2 flex flex-col gap-2">
-                  {LAYOUT_PRESETS.map((preset) => (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      onClick={() => onApplyPreset(preset.id)}
-                      className={ACTION}
-                      aria-label={`Apply the ${preset.label} preset. ${preset.description}`}
+                        override the name would otherwise include the count and the chevron. */}
+                    <summary
+                      role="button"
+                      aria-label="Readings"
+                      className="flex w-full cursor-pointer list-none items-center gap-2 py-3 text-sm text-ledger-ink outline-none [&::-webkit-details-marker]:hidden [&::marker]:hidden focus-visible:ring-2 focus-visible:ring-accent"
                     >
-                      {preset.label}
-                      <span className="ml-2 normal-case tracking-normal text-muted">{preset.description}</span>
-                    </button>
-                  ))}
-                  <button type="button" onClick={onRestoreDefaults} className={ACTION}>
-                    Restore defaults
-                  </button>
+                      <span>Readings</span>
+                      <span className="ml-auto text-[11.5px] text-ink-muted">
+                        {readingsOn} on
+                      </span>
+                      <ChevronIcon className="h-3.5 w-3.5 shrink-0 text-ink-muted transition-transform duration-150 group-open:rotate-180" />
+                    </summary>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pb-4">
+                      {readings.map((card) => (
+                        <ModuleToggle
+                          key={card.id}
+                          id={card.id}
+                          title={card.title}
+                          description={card.description}
+                          isActive={active.has(card.id)}
+                          onToggle={onToggleCard}
+                        />
+                      ))}
+                    </div>
+                  </details>
+
+                  <details className="group border-b border-hairline">
+                    <summary
+                      role="button"
+                      aria-label="Panels"
+                      className="flex w-full cursor-pointer list-none items-center gap-2 py-3 text-sm text-ledger-ink outline-none [&::-webkit-details-marker]:hidden [&::marker]:hidden focus-visible:ring-2 focus-visible:ring-accent"
+                    >
+                      <span>Panels</span>
+                      <span className="ml-auto text-[11.5px] text-ink-muted">{panelsOn} on</span>
+                      <ChevronIcon className="h-3.5 w-3.5 shrink-0 text-ink-muted transition-transform duration-150 group-open:rotate-180" />
+                    </summary>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pb-4">
+                      {panels.map((card) => (
+                        <ModuleToggle
+                          key={card.id}
+                          id={card.id}
+                          title={card.title}
+                          description={card.description}
+                          isActive={active.has(card.id)}
+                          onToggle={onToggleCard}
+                        />
+                      ))}
+                    </div>
+                  </details>
                 </div>
+
+                <h4 className="ledger-label mt-6">Presets</h4>
+                {/* Bleeds to the panel's own edges so the scroll affordance reaches the border,
+                    then repeats the panel's padding inside so the first/last ticket still align
+                    with everything else. */}
+                <div className="-mx-5 mt-3 flex gap-2.5 overflow-x-auto px-5 pb-1">
+                  {LAYOUT_PRESETS.map((preset) => {
+                    const PresetIcon = PRESET_ICONS[preset.id];
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => onApplyPreset(preset.id)}
+                        aria-label={`Apply the ${preset.label} preset. ${preset.description}`}
+                        className="flex w-[132px] shrink-0 flex-col items-start gap-2 border border-ledger-ink bg-cream-2 px-3 py-3 text-left outline-none hover:bg-cream focus-visible:ring-2 focus-visible:ring-accent"
+                      >
+                        {PresetIcon && <PresetIcon className="h-[18px] w-[18px] text-ledger-ink" />}
+                        <span>
+                          <span className="block text-[12.5px] font-semibold text-ledger-ink">{preset.label}</span>
+                          {/* text-ink-soft, not the lighter text-ink-muted: ink-muted was tuned for
+                              4.5:1 against --cream specifically, and falls short on this ticket's
+                              slightly darker --cream-2 background. */}
+                          <span className="mt-1 block text-[10.5px] leading-snug text-ink-soft">
+                            {preset.description}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button type="button" onClick={onRestoreDefaults} className={`${TEXT_ACTION} mx-auto mt-3 block`}>
+                  Restore defaults
+                </button>
               </section>
 
               <section aria-labelledby={`${panelId}-setup`}>
-                <h3 id={`${panelId}-setup`} className={SECTION_LABEL}>
+                <h3 id={`${panelId}-setup`} className="ledger-label">
                   Setup
                 </h3>
                 <ShareSetup getShareUrl={getShareUrl} />
-                <button type="button" onClick={onRestartOnboarding} className={`${ACTION} mt-2`}>
+                <button type="button" onClick={onRestartOnboarding} className={`${TEXT_ACTION} mt-2`}>
                   Redo setup
                 </button>
               </section>
 
               <section aria-labelledby={`${panelId}-display`}>
-                <h3 id={`${panelId}-display`} className={SECTION_LABEL}>
+                <h3 id={`${panelId}-display`} className="ledger-label">
                   Display
                 </h3>
 
                 <fieldset className="mt-3 border-0 p-0">
-                  <legend className="eyebrow text-muted">Units</legend>
+                  <legend className="ledger-label">Units</legend>
                   <div className="mt-2 flex">
                     {UNIT_OPTIONS.map((option) => (
                       <SegmentedOption
@@ -293,7 +307,7 @@ export function Menu({
                 </fieldset>
 
                 <fieldset className="mt-4 border-0 p-0">
-                  <legend className="eyebrow text-muted">Appearance</legend>
+                  <legend className="ledger-label">Appearance</legend>
                   <div className="mt-2 flex">
                     {THEME_OPTIONS.map((option) => (
                       <SegmentedOption
@@ -348,29 +362,40 @@ function ShareSetup({ getShareUrl }: { getShareUrl: () => string }) {
 
   return (
     <div className="mt-3 flex flex-col gap-2">
-      <button type="button" onClick={copy} className={ACTION}>
-        Copy setup link
-      </button>
-      <p className="text-xs text-muted">
-        Opens this dashboard on another device — no account needed. The link contains your saved
-        places, so treat it like your address before sending it to anyone.
-      </p>
+      {/* The description sits outside the button rather than inside it, so the button's own
+          accessible name stays "Copy setup link" instead of the whole paragraph. */}
+      <div className="flex items-start gap-2.5 border border-dashed border-ink-muted px-3.5 py-3">
+        <StampIcon className="mt-0.5 h-5 w-5 shrink-0 text-ledger-ink" />
+        <div className="min-w-0">
+          <button
+            type="button"
+            onClick={copy}
+            className="text-[12.5px] font-semibold text-ledger-ink underline decoration-ledger-ink/40 underline-offset-2 outline-none hover:decoration-ledger-ink focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            Copy setup link
+          </button>
+          <p className="mt-1 text-[10.5px] leading-snug text-ink-muted">
+            Opens this dashboard on another device — no account needed. The link contains your saved
+            places, so treat it like your address before sending it to anyone.
+          </p>
+        </div>
+      </div>
 
       {copied && (
-        <p role="status" className="eyebrow text-ink">
+        <p role="status" className="ledger-label text-ledger-ink">
           Link copied
         </p>
       )}
 
       {fallbackUrl && (
         <label className="flex flex-col gap-1">
-          <span className="eyebrow text-muted">Copy this link</span>
+          <span className="ledger-label">Copy this link</span>
           <input
             type="text"
             readOnly
             value={fallbackUrl}
             onFocus={(event) => event.currentTarget.select()}
-            className="w-full border border-line bg-canvas px-2 py-1 text-xs text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="w-full border border-hairline bg-cream-2 px-2 py-1 text-xs text-ledger-ink outline-none focus-visible:ring-2 focus-visible:ring-accent"
           />
         </label>
       )}
@@ -379,8 +404,10 @@ function ShareSetup({ getShareUrl }: { getShareUrl: () => string }) {
 }
 
 /**
- * One row of the toggle list. A real checkbox rather than a styled button, so its state is
+ * One row of the toggle grid. A real checkbox rather than a styled button, so its state is
  * announced as checked/unchecked and it works with assistive tech that navigates by form control.
+ * The description is available to assistive tech via `aria-describedby` but not printed on screen —
+ * a two-column grid of full sentences was the wall of text this replaced.
  */
 function ModuleToggle({
   id,
@@ -396,39 +423,30 @@ function ModuleToggle({
   onToggle: (id: WeatherCardId) => void;
 }) {
   return (
-    <li className="border-t border-line last:border-b">
-      <label className="flex cursor-pointer items-center justify-between gap-3 py-2.5">
-        <span className="min-w-0">
-          <span id={`${id}-label`} className="block text-sm text-ink">
-            {title}
-          </span>
-          <span id={`${id}-description`} className="block text-xs text-muted">
-            {description}
-          </span>
-        </span>
-        {/*
-          Named by the title alone and described by the sentence beneath it. Letting the wrapping
-          label supply the name would fold the description in too, so "Comfort — humidity, dew
-          point, UV…" would answer to a search for the Humidity module.
-        */}
-        <input
-          type="checkbox"
-          checked={isActive}
-          onChange={() => onToggle(id)}
-          className="peer sr-only"
-          aria-labelledby={`${id}-label`}
-          aria-describedby={`${id}-description`}
-        />
-        {/* A square that fills when checked. The check mark, not just the fill, carries the state
-            for anyone who cannot distinguish the two tones. */}
-        <span
-          aria-hidden="true"
-          className="flex h-5 w-5 shrink-0 items-center justify-center border border-line-strong text-[0.6rem] leading-none text-accent-ink peer-checked:bg-accent peer-focus-visible:ring-2 peer-focus-visible:ring-accent"
-        >
-          {isActive ? '✓' : ''}
-        </span>
-      </label>
-    </li>
+    <label className="flex cursor-pointer items-center gap-2 py-1">
+      <input
+        type="checkbox"
+        checked={isActive}
+        onChange={() => onToggle(id)}
+        className="peer sr-only"
+        aria-labelledby={`${id}-label`}
+        aria-describedby={`${id}-description`}
+      />
+      {/* A square that fills when checked. The check mark, not just the fill, carries the state
+          for anyone who cannot distinguish the two tones. */}
+      <span
+        aria-hidden="true"
+        className="flex h-3.5 w-3.5 shrink-0 items-center justify-center border border-ink-muted peer-checked:border-ledger-ink peer-checked:bg-ledger-ink peer-focus-visible:ring-2 peer-focus-visible:ring-accent"
+      >
+        {isActive && <CheckIcon className="h-2 w-2 text-cream" />}
+      </span>
+      <span id={`${id}-label`} className="min-w-0 truncate text-[12.5px] text-ink-soft">
+        {title}
+      </span>
+      <span id={`${id}-description`} className="sr-only">
+        {description}
+      </span>
+    </label>
   );
 }
 
@@ -448,19 +466,73 @@ function SegmentedOption({
 }) {
   return (
     <label
-      className={`flex cursor-pointer items-center justify-center border px-4 py-2 text-xs uppercase tracking-[0.14em] ${
-        checked ? 'border-line-strong bg-accent text-accent-ink' : 'border-line text-muted hover:text-ink'
-      } -ml-px first:ml-0`}
+      className={`-ml-px flex cursor-pointer items-center justify-center border px-4 py-2 text-xs uppercase tracking-[0.14em] first:ml-0 ${
+        checked ? 'border-ledger-ink bg-ledger-ink text-cream' : 'border-ink-muted/50 text-ink-muted hover:text-ledger-ink'
+      }`}
     >
-      <input
-        type="radio"
-        name={name}
-        checked={checked}
-        onChange={onChange}
-        className="sr-only"
-        aria-label={description}
-      />
+      <input type="radio" name={name} checked={checked} onChange={onChange} className="sr-only" aria-label={description} />
       {label}
     </label>
   );
 }
+
+type IconProps = { className?: string };
+
+function ChevronIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M5 7.5L10 12.5L15 7.5" />
+    </svg>
+  );
+}
+
+function CheckIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M4 10.2l3.6 3.6L16 5.4" />
+    </svg>
+  );
+}
+
+function StampIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <rect x="3" y="3" width="14" height="14" rx="1" />
+      <path d="M3 7.5h14M7.5 3v4.5" />
+    </svg>
+  );
+}
+
+/** Keyed by `LayoutPreset.id` (`lib/weather/card-layout.ts`) rather than added to that data model —
+    these are a menu-only visual touch, so a future preset without an entry here just renders
+    without an icon instead of failing. */
+const PRESET_ICONS: Record<string, (props: IconProps) => ReactNode> = {
+  commuter: ({ className }) => (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M2.5 9.5a7.5 7.5 0 0 1 15 0z" />
+      <path d="M10 9.5V15" />
+      <path d="M10 15a1.4 1.4 0 0 0 2.4 1" />
+    </svg>
+  ),
+  cyclist: ({ className }) => (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <circle cx="5.3" cy="14" r="3" />
+      <circle cx="14.7" cy="14" r="3" />
+      <path d="M5.3 14l4-7h3.2l2.2 7M9.3 7h3M9.3 7l-2 4h5.4" />
+    </svg>
+  ),
+  gardener: ({ className }) => (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M4 16C4 8 9 3.5 16.5 3.5 16.5 11.5 12 16.5 4 16.5z" />
+      <path d="M4.5 16 13 7.5" />
+    </svg>
+  ),
+  everything: ({ className }) => (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className={className} aria-hidden="true">
+      <rect x="3" y="3" width="6" height="6" rx="1" />
+      <rect x="11" y="3" width="6" height="6" rx="1" />
+      <rect x="3" y="11" width="6" height="6" rx="1" />
+      <rect x="11" y="11" width="6" height="6" rx="1" />
+    </svg>
+  ),
+};
