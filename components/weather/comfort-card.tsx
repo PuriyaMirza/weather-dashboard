@@ -1,5 +1,5 @@
 import type { WeatherCardProps } from './card-registry';
-import { CardBoundary, LedgerMetric } from './card-frame';
+import { CardBoundary, Metric } from './card-frame';
 import {
   formatDistance,
   formatIndex,
@@ -18,21 +18,21 @@ export function ComfortCard({ data, isLoading, errorMessage, unitSystem }: Weath
     <CardBoundary
       title={TITLE}
       description={DESCRIPTION}
+      icon="feels-like"
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={!comfort}
       loadingLabel="Loading comfort metrics…"
       unavailableLabel="Comfort metrics are unavailable."
-      variant="ledger"
     >
       {comfort && (
-        <dl className="grid grid-cols-2 gap-4 text-sm">
-          <LedgerMetric label="Humidity" value={formatPercent(comfort.humidityPercent)} />
-          <LedgerMetric label="Dew point" value={formatTemperatureWithUnit(comfort.dewPointF, unitSystem)} />
-          <LedgerMetric label="UV index" value={formatIndex(comfort.uvIndex)} />
-          <LedgerMetric label="Visibility" value={formatDistance(comfort.visibilityMiles, unitSystem)} />
-          <LedgerMetric label="Pressure" value={formatPressure(comfort.pressureInHg, unitSystem)} />
-          <LedgerMetric label="Air quality" value={formatIndex(comfort.airQualityIndex)} />
+        <dl className="grid grid-cols-1 gap-2 @[12rem]:grid-cols-2 @[32rem]:grid-cols-3">
+          <Metric icon="humidity" label="Humidity" value={formatPercent(comfort.humidityPercent)} />
+          <Metric icon="dew-point" label="Dew point" value={formatTemperatureWithUnit(comfort.dewPointF, unitSystem)} />
+          <Metric icon="uv" label="UV index" value={formatIndex(comfort.uvIndex)} />
+          <Metric icon="visibility" label="Visibility" value={formatDistance(comfort.visibilityMiles, unitSystem)} />
+          <Metric icon="pressure" label="Pressure" value={formatPressure(comfort.pressureInHg, unitSystem)} />
+          <Metric icon="leaf" label="Air quality" value={formatIndex(comfort.airQualityIndex)} />
         </dl>
       )}
     </CardBoundary>

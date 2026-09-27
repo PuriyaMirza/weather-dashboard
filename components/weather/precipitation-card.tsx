@@ -2,7 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { WeatherCardProps } from './card-registry';
-import { CardBoundary, LedgerMetric } from './card-frame';
+import { CardBoundary, Metric } from './card-frame';
 import { formatHour, formatPercent, formatPrecipitation, toMillimetres } from '@/lib/weather/units';
 
 const TITLE = 'Precipitation';
@@ -36,42 +36,48 @@ export function PrecipitationCard({ data, isLoading, errorMessage, unitSystem }:
     <CardBoundary
       title={TITLE}
       description={DESCRIPTION}
+      icon="umbrella"
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={hourly.length === 0}
       loadingLabel="Loading precipitation outlook…"
       unavailableLabel="Precipitation data is unavailable."
-      variant="ledger"
     >
       {hourly.length > 0 && (
         <>
-          <dl className="grid grid-cols-2 gap-4 text-sm">
-            <LedgerMetric label="Peak chance" value={peak ? `${formatPercent(peak.chance)} at ${formatHour(peak.time, timeZone)}` : '—'} />
-            <LedgerMetric
+          <dl className="grid grid-cols-1 gap-2 @[12rem]:grid-cols-2">
+            <Metric label="Peak chance" value={peak ? `${formatPercent(peak.chance)} at ${formatHour(peak.time, timeZone)}` : '—'} />
+            <Metric
               label={`Total, next ${hourly.length}h`}
               value={anyAmountReported ? formatPrecipitation(totalInches, unitSystem) : 'Unavailable'}
             />
           </dl>
 
-          <div className="mt-4 min-h-44 w-full flex-1" aria-hidden="true" inert>
+          <div className="mt-3 min-h-40 w-full flex-1" aria-hidden="true" inert>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--ledger-chart-grid)" />
-                <XAxis dataKey="time" tickLine={false} axisLine={false} tick={{ fill: 'var(--ledger-chart-axis)', fontSize: 12 }} />
+              <BarChart data={chartData} margin={{ top: 8, right: 4, left: -12, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
+                <XAxis dataKey="time" tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)', fontSize: 12 }} />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: 'var(--ledger-chart-axis)', fontSize: 12 }}
+                  tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
                   unit="%"
                   domain={[0, 100]}
                 />
                 <Tooltip
                   formatter={(value) => [`${value}%`, 'Chance']}
-                  contentStyle={{ background: 'var(--cream)', border: '1px solid var(--hairline)' }}
-                  labelStyle={{ color: 'var(--ledger-ink)' }}
-                  itemStyle={{ color: 'var(--ledger-ink)' }}
+                  cursor={{ fill: 'var(--surface-container-highest)', opacity: 0.5 }}
+                  contentStyle={{
+                    background: 'var(--surface-container-highest)',
+                    border: 'none',
+                    borderRadius: 12,
+                    boxShadow: '0 8px 24px rgb(var(--shadow-color) / 0.5)',
+                  }}
+                  labelStyle={{ color: 'var(--primary)', fontWeight: 600 }}
+                  itemStyle={{ color: 'var(--on-surface)' }}
                 />
-                <Bar dataKey="chance" fill="var(--ledger-chart-bar)" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="chance" fill="var(--chart-bar)" radius={[4, 4, 0, 0]} maxBarSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </div>

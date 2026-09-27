@@ -1,7 +1,6 @@
 import type { PressureTrend } from '@/lib/weather/types';
 import type { WeatherCardProps } from './card-registry';
-import { CardBoundary, LedgerMetric } from './card-frame';
-import { LedgerDivider } from './ledger-divider';
+import { CardBoundary, Metric } from './card-frame';
 import {
   formatDistance,
   formatPercent,
@@ -34,31 +33,32 @@ export function AtmosphericDetailsCard({ data, isLoading, errorMessage, unitSyst
     <CardBoundary
       title={TITLE}
       description={DESCRIPTION}
+      icon="pressure"
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={!atmospheric}
       loadingLabel="Loading atmospheric details…"
       unavailableLabel="Atmospheric data is unavailable."
-      variant="ledger"
     >
       {atmospheric && (
-        <>
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="font-display text-4xl leading-none text-ledger-ink">
-              {formatPressure(atmospheric.pressureInHg, unitSystem)}
-            </p>
-            {atmospheric.pressureTrend && (
-              <span className="bg-cream-2 px-3 py-1 text-sm font-semibold text-ledger-ink">
-                {PRESSURE_TREND_LABEL[atmospheric.pressureTrend]}
-              </span>
-            )}
+        <div className="flex flex-1 flex-col justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="type-headline-md text-primary @[20rem]:text-[2.25rem] @[20rem]:leading-[2.75rem]">
+                {formatPressure(atmospheric.pressureInHg, unitSystem)}
+              </p>
+              {atmospheric.pressureTrend && (
+                <span className="rounded-full bg-surface-container-highest px-3 py-1 type-label-md text-secondary-fixed">
+                  {PRESSURE_TREND_LABEL[atmospheric.pressureTrend]}
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 type-body-sm text-secondary-fixed">Sea-level pressure</p>
           </div>
-          <p className="mt-1 text-sm text-ink-soft">Sea-level pressure</p>
 
-          <LedgerDivider />
-
-          <dl className="grid grid-cols-2 gap-4 text-sm">
-            <LedgerMetric
+          <dl className="grid grid-cols-1 gap-2 @[12rem]:grid-cols-2 @[32rem]:grid-cols-4">
+            <Metric
+              icon="cloud-cover"
               label="Cloud cover"
               value={
                 atmospheric.cloudCoverPercent == null
@@ -66,11 +66,15 @@ export function AtmosphericDetailsCard({ data, isLoading, errorMessage, unitSyst
                   : `${formatPercent(atmospheric.cloudCoverPercent)} — ${describeCloudCover(atmospheric.cloudCoverPercent)}`
               }
             />
-            <LedgerMetric label="Visibility" value={formatDistance(atmospheric.visibilityMiles, unitSystem)} />
-            <LedgerMetric label="Humidity" value={formatPercent(atmospheric.humidityPercent)} />
-            <LedgerMetric label="Dew point" value={formatTemperatureWithUnit(atmospheric.dewPointF, unitSystem)} />
+            <Metric icon="visibility" label="Visibility" value={formatDistance(atmospheric.visibilityMiles, unitSystem)} />
+            <Metric icon="humidity" label="Humidity" value={formatPercent(atmospheric.humidityPercent)} />
+            <Metric
+              icon="dew-point"
+              label="Dew point"
+              value={formatTemperatureWithUnit(atmospheric.dewPointF, unitSystem)}
+            />
           </dl>
-        </>
+        </div>
       )}
     </CardBoundary>
   );
