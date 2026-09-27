@@ -209,6 +209,8 @@ Icons are `components/ui/icon.tsx` — Material Symbols Rounded paths inlined as
 
 `app/api/weather/route.ts` (forecast by coordinates) and `app/api/geocode/route.ts` (place-name search). Both: Zod query validation, coordinate bounds (±90 / ±180), a consistent `{ error: string }` shape via `jsonError` (`lib/api/http.ts`), and `Cache-Control` aimed at the CDN (`s-maxage`) — weather 600s, geocode 86400s, every error `no-store`. Routes accept coordinates and names, never a URL, so they cannot proxy arbitrary hosts.
 
+Security headers (frame-ancestors CSP, `X-Frame-Options`, `nosniff`, referrer and permissions policies) are set for every path in `next.config.ts`; there is deliberately no script CSP (see the comment there).
+
 Rate limiting: a fixed-window per-IP limiter (`lib/rate-limit.ts`), 30 requests/minute per route, returning 429 + `Retry-After`. It lives in process memory, so on serverless each instance keeps its own counters — a guardrail against one client hammering one instance, not a global quota.
 
 The weather route settles the forecast and air-quality upstreams independently with `Promise.allSettled`: air quality is supplementary and its failure must not take down a good forecast. Only the forecast is allowed to fail the request.
