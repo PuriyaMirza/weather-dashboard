@@ -27,6 +27,11 @@ export function useDialogFocus(
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
+        // A widget inside the panel that spends Escape on itself (the location search closing its
+        // suggestions) marks the event handled. React's root listener is attached at hydration,
+        // before this effect's, so that mark is always set by the time this runs — unlike the
+        // ordering trap described in use-escape-key.ts, where both listeners are effects.
+        if (event.defaultPrevented) return;
         event.preventDefault();
         onDismiss();
         return;

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { Dashboard } from '@/components/dashboard/dashboard';
 import { Onboarding } from '@/components/onboarding/onboarding';
 import { DEFAULT_CARD_LAYOUT } from '@/lib/weather/card-layout';
@@ -104,6 +104,64 @@ describe('the onboarding flow', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onSkip).toHaveBeenCalledTimes(2);
     expect(onComplete).not.toHaveBeenCalled();
+  });
+});
+
+describe('choosing a place during the flow', () => {
+  const NEW_YORK = {
+    results: [{ id: 5128581, name: 'New York', latitude: 40.71427, longitude: -74.00597, admin1: 'New York', country: 'United States' }],
+  };
+
+  /** Geocode answers with New York; the weather request stays a permanent error, as above. */
+  function stubGeocode() {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        String(url).includes('/api/geocode')
+          ? new Response(JSON.stringify(NEW_YORK), { status: 200 })
+          : new Response(JSON.stringify({ error: 'stubbed' }), { status: 502 }),
+      ),
+    );
+  }
+
+  async function search(query: string) {
+    const input = screen.getByRole('combobox', { name: /search for a city or postal code/i });
+    fireEvent.change(input, { target: { value: query } });
+    await screen.findByRole('option', { name: /new york/i });
+    return input;
+  }
+
+  function finish() {
+    next();
+    next();
+    fireEvent.click(screen.getByRole('button', { name: /use this dashboard/i }));
+  }
+
+  it('closes only the suggestion list on Escape, never the whole flow', async () => {
+    // The reported bug: Escape to dismiss the suggestions also reached the dialog's own Escape
+    // handler, which skipped setup — leaving the default place and never asking again.
+    stubGeocode();
+    render(<Dashboard />);
+
+    const input = await search('New York');
+    fireEvent.keyDown(input, { key: 'Escape' });
+
+    expect(screen.getByRole('dialog', { name: /where are you/i })).toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+    expect(useDashboardStore.getState().hasOnboarded).toBe(false);
+  });
+
+  it('keeps a place picked with Enter through to the finished dashboard', async () => {
+    stubGeocode();
+    render(<Dashboard />);
+
+    const input = await search('New York');
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await waitFor(() => expect(screen.getByText(/using/i)).toHaveTextContent(/new york/i));
+    finish();
+
+    expect(useDashboardStore.getState().location).toMatchObject({ name: 'New York', region: 'New York' });
+    expect(useDashboardStore.getState().hasOnboarded).toBe(true);
   });
 });
 

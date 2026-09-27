@@ -274,6 +274,50 @@ test('the setup flow can be skipped, and stays skipped', async ({ page }) => {
   await expect(page.getByRole('dialog', { name: /where are you/i })).toHaveCount(0);
 });
 
+test('a place searched for during setup is the one the dashboard opens on', async ({ page }) => {
+  // Regression: Escape to close the suggestions also skipped setup, so the dashboard kept the
+  // default place and the flow never came back to ask again.
+  await markFirstVisit(page);
+  await stubWeather(page);
+  await page.route('**/api/geocode*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        results: [
+          { id: 5128581, name: 'New York', latitude: 40.71427, longitude: -74.00597, admin1: 'New York', country: 'United States' },
+        ],
+      }),
+    }),
+  );
+  const forecastRequest = page.waitForRequest((request) => /\/api\/weather\?.*latitude=40\.71/.test(request.url()));
+  await page.goto('/');
+
+  const dialog = page.getByRole('dialog', { name: /where are you/i });
+  const search = dialog.getByRole('combobox', { name: /search for a city or postal code/i });
+  await search.fill('New York');
+  await expect(dialog.getByRole('option', { name: /new york/i })).toBeVisible();
+  await search.press('Escape');
+  await expect(dialog).toBeVisible();
+
+  // A different query reopens the list; the dismissed one deliberately stays closed.
+  await search.fill('New York City');
+  await expect(dialog.getByRole('option', { name: /new york/i })).toBeVisible();
+  await search.press('Enter');
+  await expect(dialog.getByText(/using/i)).toContainText('New York');
+
+  // The dialog is named by its step title, so after this point it is found by role alone.
+  await page.getByRole('button', { name: /continue/i }).click();
+  await page.getByRole('button', { name: /continue/i }).click();
+  await page.getByRole('button', { name: /use this dashboard/i }).click();
+
+  await expect(page.getByRole('button', { name: /change location.*new york/i })).toBeVisible();
+  await forecastRequest;
+
+  await page.reload();
+  await expect(page.getByRole('button', { name: /change location.*new york/i })).toBeVisible();
+});
+
 test('a shared setup link applies the dashboard and clears itself from the address', async ({ page }) => {
   await markFirstVisit(page);
   await stubWeather(page);
