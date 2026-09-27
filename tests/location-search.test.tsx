@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { LocationSearch } from '@/components/location/location-search';
 
 const GEOCODE_RESULTS = {
@@ -143,12 +143,33 @@ describe('LocationSearch — keyboard', () => {
     );
   });
 
-  it('does not select anything on Enter when no option is active', async () => {
+  it('selects the first result on Enter when no option is active', async () => {
+    // Type-then-Enter is what people do. Ignoring it left the previous place selected with nothing
+    // to say so, which is how onboarding came to "forget" a searched location.
     const { input, onSelect } = await renderWithResults();
 
     fireEvent.keyDown(input, { key: 'Enter' });
 
-    expect(onSelect).not.toHaveBeenCalled();
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: '5746545', region: 'Oregon' }));
+  });
+
+  it('keeps Escape to itself while the list is open, and lets it through once closed', async () => {
+    // An enclosing dialog listens for Escape on the document; it must not also act on the key that
+    // only closed this list.
+    const { input } = await renderWithResults();
+
+    const open = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    act(() => {
+      input.dispatchEvent(open);
+    });
+    expect(open.defaultPrevented).toBe(true);
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+
+    const closed = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    act(() => {
+      input.dispatchEvent(closed);
+    });
+    expect(closed.defaultPrevented).toBe(false);
   });
 
   it('dismisses the list with Escape', async () => {

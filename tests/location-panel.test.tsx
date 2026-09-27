@@ -53,6 +53,36 @@ describe('the location panel', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('closes only the suggestion list on Escape while suggestions are showing', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        String(url).includes('/api/geocode')
+          ? new Response(
+              JSON.stringify({
+                results: [{ id: 1, name: 'Boston', latitude: 42.36, longitude: -71.06, admin1: 'Massachusetts', country: 'United States' }],
+              }),
+              { status: 200 },
+            )
+          : new Response(JSON.stringify({ error: 'stubbed' }), { status: 502 }),
+      ),
+    );
+    render(<Dashboard />);
+    openLocationPanel();
+
+    const input = screen.getByRole('combobox', { name: /search for a city or postal code/i });
+    fireEvent.change(input, { target: { value: 'Boston' } });
+    await screen.findByRole('option', { name: /boston/i });
+    fireEvent.keyDown(input, { key: 'Escape' });
+
+    expect(screen.getByRole('dialog', { name: /change location/i })).toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+
+    // With the list gone, the next Escape is the dialog's.
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('returns focus to the location button when it closes, rather than dropping it at the top of the page', () => {
     render(<Dashboard />);
     openLocationPanel();

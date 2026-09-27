@@ -129,14 +129,20 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
     }
 
     if (event.key === 'Enter') {
-      if (isOpen && activeIndex >= 0 && results[activeIndex]) {
+      // With nothing highlighted, Enter takes the top result: type-then-Enter is what people do,
+      // and ignoring it silently kept the previous place selected.
+      const target = isOpen ? results[Math.max(activeIndex, 0)] : undefined;
+      if (target) {
         event.preventDefault();
-        choose(results[activeIndex]);
+        choose(target);
       }
       return;
     }
 
     if (event.key === 'Escape') {
+      // Only claimed while there is a list to close. Marking it handled stops the enclosing
+      // dialog from also acting on it — that double handling is what skipped onboarding.
+      if (isOpen) event.preventDefault();
       setDismissedQuery(debouncedQuery);
       setActive(null);
     }
