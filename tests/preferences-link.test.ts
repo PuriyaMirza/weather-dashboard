@@ -19,7 +19,7 @@ const PREFERENCES: PersistedPreferences = {
   location: PORTLAND,
   savedLocations: [PORTLAND],
   unitSystem: 'metric',
-  theme: 'dark',
+  theme: 'forest',
   cards: [
     { id: 'temperature', size: 'medium' },
     { id: 'wind-speed', size: 'small' },
@@ -72,12 +72,12 @@ describe('validatePreferences', () => {
     expect(validatePreferences({ hasOnboarded: true }).hasOnboarded).toBe(true);
   });
 
-  it('falls back to a locale guess on an unknown unit system, and to system on an unknown theme', () => {
+  it('falls back to a locale guess on an unknown unit system, and to the default theme on an unknown one', () => {
     // jsdom's default navigator.language is en-US, so the unstubbed fallback lands on imperial —
     // the same value it always fell back to before locale guessing existed.
     const result = validatePreferences({ unitSystem: 'furlongs', theme: 'neon' });
     expect(result.unitSystem).toBe('imperial');
-    expect(result.theme).toBe('system');
+    expect(result.theme).toBe('forest');
   });
 
   it('guesses units from the browser locale when none was ever saved, but a saved choice always wins', () => {
@@ -137,7 +137,7 @@ describe('the shareable setup link', () => {
     const decoded = decodePreferences(encoded);
     expect(decoded).not.toBeNull();
     expect(decoded?.location).toEqual(DEFAULT_LOCATION);
-    expect(decoded?.theme).toBe('system');
+    expect(decoded?.theme).toBe('forest');
     expect(decoded?.unitSystem).toBe('imperial');
     expect(decoded?.activities).toEqual(['walk']);
     // The unknown id is dropped; the real one survives with a valid size.

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DASHBOARD_STORAGE_KEY, MAX_SAVED_LOCATIONS, useDashboardStore } from '@/store/dashboard-store';
+import { DEFAULT_THEME } from '@/lib/theme';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
 import { ALL_CARD_IDS, DEFAULT_CARD_LAYOUT, LAYOUT_PRESETS, defaultSizeFor } from '@/lib/weather/card-layout';
 
@@ -40,7 +41,7 @@ describe('dashboard store', () => {
     expect(persisted.state.location).toEqual(SEATTLE);
     // partialize should keep actions out of storage.
     expect(persisted.state.setLocation).toBeUndefined();
-    expect(persisted.version).toBe(8);
+    expect(persisted.version).toBe(9);
   });
 
   it('does not read persisted state until rehydrate is called (skipHydration)', async () => {
@@ -307,15 +308,24 @@ describe('dashboard store — saved locations', () => {
 });
 
 describe('dashboard store — theme', () => {
-  it('defaults to following the system', () => {
-    useDashboardStore.setState({ theme: 'system' });
-    expect(useDashboardStore.getState().theme).toBe('system');
+  it('defaults to the forest theme', () => {
+    expect(DEFAULT_THEME).toBe('forest');
   });
 
-  it('sets and persists an explicit theme', () => {
-    useDashboardStore.getState().setTheme('dark');
+  it('sets and persists the theme', () => {
+    useDashboardStore.getState().setTheme('forest');
     const persisted = JSON.parse(window.localStorage.getItem(DASHBOARD_STORAGE_KEY) as string);
-    expect(persisted.state.theme).toBe('dark');
+    expect(persisted.state.theme).toBe('forest');
+  });
+
+  it('migrates a retired light/dark/system preference onto the default theme', async () => {
+    window.localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      JSON.stringify({ state: { location: DEFAULT_LOCATION, theme: 'dark' }, version: 8 }),
+    );
+
+    await useDashboardStore.persist.rehydrate();
+    expect(useDashboardStore.getState().theme).toBe('forest');
   });
 
   it('falls back to the default when persisted state holds a nonsense theme', async () => {
@@ -326,7 +336,7 @@ describe('dashboard store — theme', () => {
 
     await useDashboardStore.persist.rehydrate();
     // The pre-paint script reads this value, so it must never be handed something invalid.
-    expect(useDashboardStore.getState().theme).toBe('system');
+    expect(useDashboardStore.getState().theme).toBe('forest');
   });
 });
 

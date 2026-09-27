@@ -1,44 +1,68 @@
-export type ThemePreference = 'light' | 'dark' | 'system';
-export type ResolvedTheme = 'light' | 'dark';
+/**
+ * Named visual themes. Each theme is a token block in app/globals.css (`[data-theme="<id>"]`) plus
+ * an entry here; components only ever reference the semantic tokens, so adding a theme never
+ * touches a component.
+ */
+export const THEME_IDS = ['forest'] as const;
+
+export type ThemeId = (typeof THEME_IDS)[number];
+
+export const DEFAULT_THEME: ThemeId = 'forest';
 
 export const THEME_ATTRIBUTE = 'data-theme';
 
+export interface ThemeDefinition {
+  id: ThemeId;
+  label: string;
+  /** Doubles as the picker option's accessible description. */
+  description: string;
+  /** Browser-chrome colour; matches the theme's `--surface` so the address bar doesn't sit on a seam. */
+  themeColor: string;
+  /** Heading over the module grid. Themes voice it; it never carries data. */
+  gridTitle: string;
+}
+
+export const THEMES: Record<ThemeId, ThemeDefinition> = {
+  forest: {
+    id: 'forest',
+    label: 'Forest',
+    description: 'Deep evergreen canopy with misty greens',
+    themeColor: '#001711',
+    gridTitle: 'Forest Floor Readings',
+  },
+};
+
+export function isThemeId(value: unknown): value is ThemeId {
+  return typeof value === 'string' && (THEME_IDS as readonly string[]).includes(value);
+}
+
 /**
- * Resolves what the page should actually display. `system` deliberately resolves to no attribute
- * at all rather than a concrete value — the CSS media query handles it, so the page keeps
- * following the OS if the user changes it while the tab is open.
+ * Coerces anything saved or shared into a theme this version can render. Older versions stored
+ * 'light' | 'dark' | 'system'; those looks were retired, so they (and anything unrecognised) land
+ * on the default rather than being rejected — an old share link must keep opening.
  */
-export function resolveTheme(preference: ThemePreference, systemPrefersDark: boolean): ResolvedTheme {
-  if (preference === 'system') return systemPrefersDark ? 'dark' : 'light';
-  return preference;
+export function toThemeId(value: unknown): ThemeId {
+  return isThemeId(value) ? value : DEFAULT_THEME;
 }
 
-/** Applies a preference to the document. `system` clears the attribute so CSS decides. */
-export function applyThemePreference(preference: ThemePreference, root: HTMLElement): void {
-  if (preference === 'system') {
-    root.removeAttribute(THEME_ATTRIBUTE);
-    return;
-  }
-  root.setAttribute(THEME_ATTRIBUTE, preference);
-}
-
-export function isThemePreference(value: unknown): value is ThemePreference {
-  return value === 'light' || value === 'dark' || value === 'system';
+export function applyTheme(theme: ThemeId, root: HTMLElement): void {
+  root.setAttribute(THEME_ATTRIBUTE, theme);
 }
 
 /**
  * Runs before first paint, inlined into <head>.
  *
  * The Zustand store uses `skipHydration`, so persisted preferences aren't read until after mount —
- * far too late for theming, which would show every dark-mode visitor a white flash. This reads the
- * same storage key directly and synchronously. It is deliberately dependency-free and defensive:
- * a throw here would block the page, so any failure silently falls through to the CSS default.
+ * far too late for theming, which would flash the default theme at anyone who chose another. This
+ * reads the same storage key directly and synchronously. It is deliberately dependency-free and
+ * defensive: a throw here would block the page, so any failure leaves the server-rendered default.
  */
 export function themeInitScript(storageKey: string): string {
   return `(function(){try{
+var ids=${JSON.stringify(THEME_IDS)};
 var raw=localStorage.getItem(${JSON.stringify(storageKey)});
 if(!raw)return;
-var pref=JSON.parse(raw).state.theme;
-if(pref==='light'||pref==='dark'){document.documentElement.setAttribute(${JSON.stringify(THEME_ATTRIBUTE)},pref);}
+var t=JSON.parse(raw).state.theme;
+if(ids.indexOf(t)!==-1){document.documentElement.setAttribute(${JSON.stringify(THEME_ATTRIBUTE)},t);}
 }catch(e){}})();`;
 }

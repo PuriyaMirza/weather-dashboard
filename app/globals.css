@@ -1,179 +1,144 @@
 @import "tailwindcss";
 
 /*
-  Semantic design tokens.
+  Design tokens, one block per theme.
 
-  Components reference these (bg-card, text-ink, border-line) rather than palette classes like
-  bg-white or text-slate-900. That means the dark palette is defined once here instead of as a
-  `dark:` variant on every element — which is what previously made dark mode impractical, with 43
-  distinct palette classes spread across 115 places.
+  Components reference semantic tokens only (bg-surface-container-high, text-on-surface,
+  text-secondary-fixed…), never raw colours, so a theme is nothing more than a token block here plus
+  an entry in lib/theme.ts. The server renders data-theme="forest"; the pre-paint script swaps it
+  for a saved theme before first paint.
 
-  The palette is deliberately monochrome: paper and ink, with hairline rules and no shadows,
-  gradients or fills doing structural work. Hierarchy comes from type size, weight and space
-  instead of from colour. The one place colour survives is the severity scales, and even there the
-  band is always spelled out in words, so nothing depends on seeing the hue.
+  Token names follow the Figma "Theme" variable collection, so design and code stay 1:1.
 
-  Light is the default; dark applies either when the user picks it explicitly ([data-theme="dark"])
-  or when the system asks for it and the user hasn't overridden it.
+  Colour is never the only signal: severity bands, the rain ring and the range bars all carry a
+  word or a number next to them.
 */
 
-:root {
-  /* Postal Ledger palette. Named literally (not just mapped through the semantic tokens below) so
-     every ledger-treated card, the masthead and the footer can reach for them directly. */
-  --cream: #d6d2c4;
-  --cream-2: #c7c3b3;
-  --ink: #16161a;
-  --ink-soft: #3c3b3f;
-  /* Darkened from the requested #7a7871: that value is only 2.91:1 against --cream, failing WCAG
-     AA (4.5:1) for the normal-weight small text it's used on (card labels, captions) — this is the
-     lightest warm gray that still clears 4.5:1 on #d6d2c4. */
-  --ink-muted: #5b5850;
-  --red: #e85e1f;
-  --blue: #1c86c4;
-  --hairline: rgba(22, 22, 26, 0.18);
-  /* The primary ink colour actually painted on the ledger card's cream paper. Deliberately its own
-     token rather than a reuse of --ink: --ink is redefined below for dark mode (it doubles as the
-     app-wide body-text colour on the canvas, which needs to go light-on-black there), and a ledger
-     card's paper stays the same cream regardless of theme, so text drawn on it must stay dark
-     regardless of theme too — reusing --ink here previously left ledger card values rendering as
-     near-white on cream in dark mode. */
-  --ledger-ink: #16161a;
-  /* Chart colours for the ledger-treated charts, fixed for the same reason as --ledger-ink above:
-     the chart still sits on fixed cream paper even when the rest of the app is in dark mode. */
-  --ledger-chart-grid: #c9c4b4;
-  --ledger-chart-axis: var(--ink-muted);
-  --ledger-chart-bar: var(--ledger-ink);
-  /* Fixed error colour for the ledger card's own error/unavailable state, for the same reason —
-     --danger flips to a pale red meant for a dark canvas in dark mode, which is illegible on the
-     cream paper. */
-  --ledger-danger: #8a1c10;
+:root,
+[data-theme="forest"] {
+  /* ---- Forest palette -------------------------------------------------------------------- */
+  --surface: #001711;
+  --surface-container-lowest: #00110d;
+  --surface-container-low: #042019;
+  --surface-container: #08241d;
+  --surface-container-high: #142f28;
+  --surface-container-highest: #1f3a32;
+  --surface-bright: #243e37;
+  --primary: #ffffff;
+  --primary-fixed: #d1e8df;
+  --secondary: #a8cfbf;
+  --secondary-fixed: #c4ebda;
+  --secondary-container: #2d5043;
+  --on-surface: #cbe9de;
+  --on-surface-variant: #c2c8c4;
+  --on-secondary-container: #9bc1b1;
+  --on-secondary: #12362b;
+  --outline-variant: #424845;
+  --error: #ffb4ab;
+  --error-container: #4a1d19;
+  --on-error-container: #ffdad6;
 
-  --canvas: var(--cream);
-  --card: var(--cream);
-  --card-raised: var(--cream-2);
-  --ink-strong: var(--ink);
-  --muted: var(--ink-muted);
-  --line: var(--hairline);
-  --line-strong: var(--ink);
-  --accent: var(--ink);
-  --accent-ink: var(--cream);
-  --accent-soft: var(--cream-2);
-  --accent-soft-ink: var(--ink);
-  --danger: #8a1c10;
-  --danger-soft: #f3e7e4;
-  --danger-line: #8a1c10;
+  /* Shadows are tinted with the surface hue rather than pure black, which reads muddy on green. */
+  --shadow-color: 0 17 13;
 
   /* Charts read these directly — SVG accepts var() in stroke/fill. */
-  --chart-grid: #c9c4b4;
-  --chart-axis: var(--ink-muted);
-  --chart-line: var(--ink);
-  --chart-fill: var(--cream-2);
-  --chart-bar: var(--ink);
+  --chart-grid: #1f3a32;
+  --chart-axis: #9bc1b1;
+  --chart-line: #c4ebda;
+  --chart-fill: #2d5043;
+  --chart-bar: #a8cfbf;
 
-  /* Qualitative scale for severity bands (UV, air quality). Always paired with a word, so the
-     hue is reinforcement rather than the signal. Muted to sit inside a monochrome page. */
-  --scale-1: #2f5d3f;
-  --scale-1-bg: #e4ebe4;
-  --scale-2: #6b551b;
-  --scale-2-bg: #efe9d8;
-  --scale-3: #8a4a1c;
-  --scale-3-bg: #f2e6dc;
-  --scale-4: #8a1c10;
-  --scale-4-bg: #f3e2df;
-  --scale-5: #4a2063;
-  --scale-5-bg: #e8e2ee;
+  /* Severity bands (UV, air quality), tuned for dark surfaces: each text/bg pair clears WCAG AA,
+     and every band is also spelled out in words. */
+  --scale-1: #9fe3b5;
+  --scale-1-bg: #173a27;
+  --scale-2: #f3d98b;
+  --scale-2-bg: #3a3316;
+  --scale-3: #f7b98a;
+  --scale-3-bg: #43291a;
+  --scale-4: #ffb4ab;
+  --scale-4-bg: #4a1d19;
+  --scale-5: #e2b8ff;
+  --scale-5-bg: #34204a;
 
-  /* Overridden per weather condition by lib/weather/atmosphere.ts. Defaults are a calm daytime sky. */
-  --sky-from: #eceae4;
-  --sky-via: #f4f3f0;
-  --sky-to: #e4e1d9;
-  --sky-ink: #16150f;
-  --sky-ink-muted: #4a4840;
+  /* Overridden per weather condition by lib/weather/atmosphere.ts. */
+  --sky-from: #142f28;
+  --sky-via: #08241d;
+  --sky-to: #00110d;
+  --sky-ink: #ffffff;
+  --sky-ink-muted: #c2c8c4;
 
-  /* Faint halftone dot texture on the page background — the Postal Ledger paper stock. Cleared to
-     `none` in dark mode below rather than redrawn, since no dark equivalent was specified. */
-  --texture: radial-gradient(circle, rgba(33, 28, 20, 0.05) 0.7px, transparent 0.7px);
+  /* Layout contract: the sticky header's height, so anything else that sticks (the arrange
+     toolbar) sits beneath it instead of underneath it. */
+  --header-height: 5rem;
 
-  color-scheme: light;
-}
-
-/* The dark values are written twice — once for the explicit override, once for the system
-   preference — because CSS has no way to share a declaration block between two selectors that
-   must stay independently addressable. */
-:root[data-theme="dark"] {
-  --canvas: #000000;
-  --card: #000000;
-  --card-raised: #0d0d0c;
-  --ink: #e8e6e0;
-  --ink-strong: #ffffff;
-  --muted: #96938a;
-  --line: #33322e;
-  --line-strong: #e8e6e0;
-  --accent: #f5f3ee;
-  --accent-ink: #000000;
-  --accent-soft: #1a1a18;
-  --accent-soft-ink: #f5f3ee;
-  --danger: #f0a8a0;
-  --danger-soft: #1c0f0d;
-  --danger-line: #f0a8a0;
-
-  --chart-grid: #2a2926;
-  --chart-axis: #96938a;
-  --chart-line: #f5f3ee;
-  --chart-fill: #232320;
-  --chart-bar: #e8e6e0;
-
-  --sky-from: #14140f;
-  --sky-via: #0a0a08;
-  --sky-to: #000000;
-  --sky-ink: #f5f3ee;
-  --sky-ink-muted: #a5a299;
-
-  --texture: none;
+  /* ---- Legacy tokens (TEMPORARY) ------------------------------------------------------------
+     Pre-Forest names, mapped onto Forest values so not-yet-converted components still render
+     legibly during the migration. Removed once nothing references them. */
+  --canvas: var(--surface);
+  --card: var(--surface-container-low);
+  --card-raised: var(--surface-container-high);
+  --ink: var(--on-surface);
+  --ink-strong: var(--primary);
+  --muted: var(--on-surface-variant);
+  --line: var(--outline-variant);
+  --line-strong: var(--secondary);
+  --accent: var(--secondary-fixed);
+  --accent-ink: var(--on-secondary);
+  --accent-soft: var(--secondary-container);
+  --accent-soft-ink: var(--secondary-fixed);
+  --danger: var(--error);
+  --danger-soft: var(--error-container);
+  --danger-line: var(--error);
+  --cream: var(--surface-container-low);
+  --cream-2: var(--surface-container-high);
+  --ink-soft: var(--on-secondary-container);
+  --ink-muted: var(--on-surface-variant);
+  --red: var(--secondary-fixed);
+  --blue: var(--secondary);
+  --hairline: var(--outline-variant);
+  --ledger-ink: var(--on-surface);
+  --ledger-chart-grid: var(--chart-grid);
+  --ledger-chart-axis: var(--chart-axis);
+  --ledger-chart-bar: var(--chart-bar);
+  --ledger-danger: var(--error);
 
   color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --canvas: #000000;
-    --card: #000000;
-    --card-raised: #0d0d0c;
-    --ink: #e8e6e0;
-    --ink-strong: #ffffff;
-    --muted: #96938a;
-    --line: #33322e;
-    --line-strong: #e8e6e0;
-    --accent: #f5f3ee;
-    --accent-ink: #000000;
-    --accent-soft: #1a1a18;
-    --accent-soft-ink: #f5f3ee;
-    --danger: #f0a8a0;
-    --danger-soft: #1c0f0d;
-    --danger-line: #f0a8a0;
-
-    --chart-grid: #2a2926;
-    --chart-axis: #96938a;
-    --chart-line: #f5f3ee;
-    --chart-fill: #232320;
-    --chart-bar: #e8e6e0;
-
-    --sky-from: #14140f;
-    --sky-via: #0a0a08;
-    --sky-to: #000000;
-    --sky-ink: #f5f3ee;
-    --sky-ink-muted: #a5a299;
-
-    --texture: none;
-
-    color-scheme: dark;
-  }
-}
-
-/* Expose the tokens to Tailwind so `bg-card`, `text-ink`, `border-line` etc. exist as utilities. */
+/* Expose the tokens to Tailwind so `bg-surface-container-high`, `text-on-surface` etc. exist. */
 @theme inline {
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-display), ui-serif, Georgia, serif;
+
+  --color-surface: var(--surface);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-surface-bright: var(--surface-bright);
+  --color-primary: var(--primary);
+  --color-primary-fixed: var(--primary-fixed);
+  --color-secondary: var(--secondary);
+  --color-secondary-fixed: var(--secondary-fixed);
+  --color-secondary-container: var(--secondary-container);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-on-secondary-container: var(--on-secondary-container);
+  --color-on-secondary: var(--on-secondary);
+  --color-outline-variant: var(--outline-variant);
+  --color-error: var(--error);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+  --color-sky-ink: var(--sky-ink);
+  --color-sky-ink-muted: var(--sky-ink-muted);
+
+  --shadow-card: 0 1px 3px rgb(var(--shadow-color) / 0.35);
+  --shadow-raised: 0 8px 24px rgb(var(--shadow-color) / 0.5);
+  --shadow-header: 0 4px 24px rgb(var(--shadow-color) / 0.6);
+
+  /* Legacy (TEMPORARY) — see the note in the token block. */
   --color-canvas: var(--canvas);
   --color-card: var(--card);
   --color-card-raised: var(--card-raised);
@@ -189,9 +154,6 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-danger-line: var(--danger-line);
-  --color-sky-ink: var(--sky-ink);
-  --color-sky-ink-muted: var(--sky-ink-muted);
-  /* Postal Ledger literals, for the four ledger-treated cards, the masthead and the footer. */
   --color-cream: var(--cream);
   --color-cream-2: var(--cream-2);
   --color-ink-soft: var(--ink-soft);
@@ -201,26 +163,80 @@
   --color-red: var(--red);
   --color-blue: var(--blue);
   --color-hairline: var(--hairline);
-  /* Sharp corners everywhere: the radius scale is flattened to zero rather than policed per
-     component, so a stray `rounded-xl` can't reintroduce a soft edge. */
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
-  --radius-2xl: 0px;
-  --radius-3xl: 0px;
-  --radius-4xl: 0px;
 }
 
 body {
   margin: 0;
-  background: var(--canvas);
-  background-image: var(--texture);
-  background-size: 6px 6px;
-  color: var(--ink);
+  background: var(--surface);
+  color: var(--on-surface);
 }
 
-/* The small all-caps label used for every field name, module title and control. */
+/*
+  Type scale, mirroring the Figma text styles 1:1. Size, line height, tracking and weight travel
+  together so a component can't drift from the scale by setting one of them alone.
+*/
+@utility type-display-lg {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-size: 2.375rem;
+  line-height: 2.875rem;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+}
+
+@utility type-headline-md {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+}
+
+@utility type-headline-sm {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+}
+
+@utility type-label-lg {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+
+@utility type-label-md {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+@utility type-label-sm {
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+@utility type-body-sm {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  font-weight: 400;
+}
+
+@utility type-body-md {
+  font-size: 0.9375rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+}
+
+/* Horizontal scrollers (hour pills, presets) scroll by touch and keyboard; the bar is noise. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Legacy (TEMPORARY): pre-Forest label classes, kept until every component is converted. */
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.18em;
@@ -228,25 +244,16 @@ body {
   font-weight: 500;
 }
 
-/* Postal Ledger section label: small-caps rather than all-caps, and set in the sans face at its
-   own weight — distinct from `.eyebrow` above, which the rest of the app still uses. */
 .ledger-label {
-  font-variant: small-caps;
-  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   font-size: 0.6875rem;
   font-weight: 600;
-  color: var(--ink-soft);
+  color: var(--on-secondary-container);
 }
 
-/* Oldstyle figures wherever the display face renders a number — every reading, hero temperature,
-   and activity time window in the app already uses `font-display` for exactly this reason. */
-.font-display {
-  font-feature-settings: 'onum' 1;
-}
-
-/* The atmospheric backdrop behind the hero. Its tones come from atmosphere.ts and change with the
-   weather; it is decorative only, and never the sole carrier of information. Kept as a low-contrast
-   tonal wash rather than colour, so it reads as paper stock rather than as a picture of the sky. */
+/* The atmospheric wash behind the hero. Its tones come from atmosphere.ts and change with the
+   weather; it is decorative only, and never the sole carrier of information. */
 .atmosphere {
   background-image:
     radial-gradient(130% 100% at 12% 0%, var(--sky-from) 0%, transparent 62%),

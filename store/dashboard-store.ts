@@ -13,13 +13,13 @@ import {
 } from '@/lib/weather/card-layout';
 import { isActivityId, type ActivityId } from '@/lib/weather/activity-windows';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
-import { isThemePreference, type ThemePreference } from '@/lib/theme';
+import { DEFAULT_THEME, toThemeId, type ThemeId } from '@/lib/theme';
 import { defaultUnitSystem, type UnitSystem } from '@/lib/weather/units';
 
 /** Keeps the saved list from growing without bound and the chip row from wrapping endlessly. */
 export const MAX_SAVED_LOCATIONS = 8;
 
-export const DEFAULT_THEME: ThemePreference = 'system';
+export { DEFAULT_THEME };
 
 /**
  * The preference fields that outlive the session — everything `partialize` writes, and everything a
@@ -29,7 +29,7 @@ export interface PersistedPreferences {
   location: SelectedLocation;
   savedLocations: SelectedLocation[];
   unitSystem: UnitSystem;
-  theme: ThemePreference;
+  theme: ThemeId;
   cards: CardLayoutEntry[];
   activities: ActivityId[];
   hasOnboarded: boolean;
@@ -52,7 +52,7 @@ export interface DashboardState extends PersistedPreferences {
   removeSavedLocation: (id: string) => void;
 
   setUnitSystem: (unitSystem: UnitSystem) => void;
-  setTheme: (theme: ThemePreference) => void;
+  setTheme: (theme: ThemeId) => void;
 
   setEditing: (isEditing: boolean) => void;
   addCard: (id: WeatherCardId) => void;
@@ -115,9 +115,9 @@ export function validatePreferences(raw: unknown): PersistedPreferences {
 
   return {
     cards: reconcileLayout(saved.cards),
-    // Falls back to the constant rather than the live store value, which at rehydrate time is not
-    // necessarily the default.
-    theme: isThemePreference(saved.theme) ? saved.theme : DEFAULT_THEME,
+    // Retired values ('light' | 'dark' | 'system', saved before themes existed) and anything unknown
+    // land on the default theme rather than being rejected.
+    theme: toThemeId(saved.theme),
     location: isSelectedLocation(saved.location) ? saved.location : DEFAULT_LOCATION,
     // Capped as well as filtered: the store's own action enforces the ceiling, but a hand-crafted
     // link would otherwise be free to stuff the chip row with hundreds of entries.
@@ -300,7 +300,7 @@ export const useDashboardStore = create<DashboardState>()(
       },
       // Bump when the persisted shape changes so old saved state is never deserialized into a
       // shape the code no longer understands.
-      version: 8,
+      version: 9,
       // Without a migrate, zustand *discards* state saved under an older version — which would
       // throw away every existing dashboard on upgrade and make reconcileLayout's span-to-size
       // translation dead code. Older state is handed through instead, because `merge` below

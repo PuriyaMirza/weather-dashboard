@@ -51,7 +51,7 @@ test('the page is actually styled, not served without its stylesheet', async ({ 
   const heading = page.getByRole('heading', { name: 'Weather', exact: true });
   await expect(heading).toBeVisible();
   const font = await heading.evaluate((node) => getComputedStyle(node).fontFamily);
-  expect(font.toLowerCase()).toContain('fraunces');
+  expect(font.toLowerCase()).toMatch(/newsreader|manrope/);
 });
 
 test('the client bundle hydrates, so the page is interactive and not just server HTML', async ({ page }) => {
@@ -283,7 +283,7 @@ test('a shared setup link applies the dashboard and clears itself from the addre
     l: { id: '2643743', name: 'London', region: 'England', country: 'United Kingdom', latitude: 51.5, longitude: -0.12 },
     s: [],
     u: 'metric',
-    t: 'system',
+    t: 'forest',
     c: [['dew-point', 'small'], ['wind', 'medium']],
     a: ['cycle'],
   });

@@ -1,24 +1,22 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { Fraunces, Space_Grotesk } from 'next/font/google';
-import { themeInitScript } from '@/lib/theme';
+import { Manrope, Newsreader } from 'next/font/google';
+import { DEFAULT_THEME, THEMES, themeInitScript } from '@/lib/theme';
 import { DASHBOARD_STORAGE_KEY } from '@/store/dashboard-store';
 import './globals.css';
 
-// next/font, so faces are self-hosted and there is no render-blocking request to Google.
-const spaceGrotesk = Space_Grotesk({
+// next/font, so faces are self-hosted and there is no render-blocking request to Google. Both are
+// variable fonts, so every weight the type scale uses ships in one file each.
+const manrope = Manrope({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
   display: 'swap',
   variable: '--font-sans',
 });
 
-// The editorial display face. Used for readings and headings only — the numbers are the point of
-// a weather dashboard, so they get the voice. Oldstyle figures ('onum', see globals.css) are what
-// make its numerals read as ledger type rather than as a UI font.
-const fraunces = Fraunces({
+// The display face: large readings and the hero temperature.
+const newsreader = Newsreader({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
   display: 'swap',
   variable: '--font-display',
 });
@@ -41,21 +39,23 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // Matches the canvas token in each palette, so the browser chrome doesn't sit on a seam.
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#D6D2C4' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
-  ],
+  // Matches the default theme's --surface, so the browser chrome doesn't sit on a seam.
+  themeColor: THEMES[DEFAULT_THEME].themeColor,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    // suppressHydrationWarning: the inline script below sets data-theme before React hydrates, so
-    // the server-rendered <html> and the client's deliberately differ on this one attribute.
-    <html lang="en" className={`${spaceGrotesk.variable} ${fraunces.variable}`} suppressHydrationWarning>
+    // suppressHydrationWarning: the inline script below may swap data-theme before React hydrates,
+    // so the server-rendered <html> and the client's can deliberately differ on this one attribute.
+    <html
+      lang="en"
+      data-theme={DEFAULT_THEME}
+      className={`${manrope.variable} ${newsreader.variable}`}
+      suppressHydrationWarning
+    >
       <head>
-        {/* Runs before first paint. Without it, dark-mode users get a white flash on every load,
-            because the preference store is deliberately rehydrated after mount. */}
+        {/* Runs before first paint. Without it, anyone on a non-default theme would see the default
+            flash on every load, because the preference store is rehydrated after mount. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript(DASHBOARD_STORAGE_KEY) }} />
       </head>
       <body className="font-sans antialiased">{children}</body>
