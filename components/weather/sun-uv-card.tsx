@@ -1,12 +1,13 @@
+import { ProgressBar } from '@/components/ui/progress-bar';
 import type { WeatherCardProps } from './card-registry';
-import { CardBoundary, LedgerMetric } from './card-frame';
+import { CardBoundary, Metric } from './card-frame';
 import { formatDuration, formatIndex, formatTime } from '@/lib/weather/units';
 
 const TITLE = 'Sun and UV';
 const DESCRIPTION = 'Sunrise, sunset, daylight, and UV exposure.';
 
 /**
- * WHO UV index exposure categories. Returned as words as well as a colour class so risk is never
+ * WHO UV index exposure categories. Returned as words as well as a colour band so risk is never
  * communicated by colour alone.
  */
 function describeUvIndex(uvIndex: number): { label: string; advice: string; scale: string } {
@@ -27,35 +28,41 @@ export function SunUvCard({ data, isLoading, errorMessage }: WeatherCardProps) {
     <CardBoundary
       title={TITLE}
       description={DESCRIPTION}
+      icon="uv"
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={!sun}
       loadingLabel="Loading sun and UV details…"
       unavailableLabel="Sun and UV data is unavailable."
-      variant="ledger"
     >
       {sun && (
-        <>
+        <div className="flex flex-1 flex-col justify-between gap-3">
           {uv && uvNow != null ? (
-            <div className="px-4 py-3" style={{ background: `var(--${uv.scale}-bg)`, color: `var(--${uv.scale})` }}>
-              <p className="text-sm font-semibold">
-                UV {formatIndex(uvNow)} — {uv.label}
-              </p>
-              <p className="mt-1 text-sm">{uv.advice}</p>
+            <div>
+              <div
+                className="rounded-xl px-3 py-2.5"
+                style={{ background: `var(--${uv.scale}-bg)`, color: `var(--${uv.scale})` }}
+              >
+                <p className="type-label-lg">
+                  UV {formatIndex(uvNow)} — {uv.label}
+                </p>
+                <p className="mt-0.5 type-body-sm">{uv.advice}</p>
+              </div>
+              <ProgressBar value={uvNow / 11} className="mt-2" />
             </div>
           ) : (
-            <p className="bg-cream-2 px-4 py-3 text-sm text-ink-muted">
+            <p className="rounded-xl bg-surface-container-highest/60 px-3 py-2.5 type-body-sm text-on-surface-variant">
               Current UV index is unavailable.
             </p>
           )}
 
-          <dl className="mt-5 grid grid-cols-2 gap-4 text-sm">
-            <LedgerMetric label="Sunrise" value={formatTime(sun.sunrise, timeZone)} />
-            <LedgerMetric label="Sunset" value={formatTime(sun.sunset, timeZone)} />
-            <LedgerMetric label="Daylight" value={formatDuration(sun.daylightSeconds)} />
-            <LedgerMetric label="Peak UV today" value={formatIndex(sun.uvIndexMax)} />
+          <dl className="grid grid-cols-1 gap-2 @[12rem]:grid-cols-2 @[32rem]:grid-cols-4">
+            <Metric icon="twilight" label="Sunrise" value={formatTime(sun.sunrise, timeZone)} />
+            <Metric icon="twilight" label="Sunset" value={formatTime(sun.sunset, timeZone)} />
+            <Metric icon="schedule" label="Daylight" value={formatDuration(sun.daylightSeconds)} />
+            <Metric icon="uv" label="Peak UV today" value={formatIndex(sun.uvIndexMax)} />
           </dl>
-        </>
+        </div>
       )}
     </CardBoundary>
   );
