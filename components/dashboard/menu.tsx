@@ -4,7 +4,7 @@ import { useCallback, useId, useRef, useState, type ReactNode, type RefObject } 
 import { weatherCardRegistry, type WeatherCardId } from '@/components/weather/card-registry';
 import { useDialogFocus } from '@/lib/hooks/use-dialog-focus';
 import { LAYOUT_PRESETS } from '@/lib/weather/card-layout';
-import type { ThemePreference } from '@/lib/theme';
+import { THEME_IDS, THEMES, type ThemeId } from '@/lib/theme';
 import type { UnitSystem } from '@/lib/weather/units';
 
 interface MenuProps {
@@ -15,8 +15,8 @@ interface MenuProps {
   onToggleCard: (id: WeatherCardId) => void;
   unitSystem: UnitSystem;
   onUnitChange: (unitSystem: UnitSystem) => void;
-  theme: ThemePreference;
-  onThemeChange: (theme: ThemePreference) => void;
+  theme: ThemeId;
+  onThemeChange: (theme: ThemeId) => void;
   isEditing: boolean;
   onEditingChange: (isEditing: boolean) => void;
   onApplyPreset: (presetId: string) => void;
@@ -34,11 +34,11 @@ interface MenuProps {
 const TEXT_ACTION =
   'text-[11px] text-ink-muted underline decoration-ink-muted/50 underline-offset-[3px] outline-none hover:text-ledger-ink focus-visible:ring-2 focus-visible:ring-accent';
 
-const THEME_OPTIONS: { value: ThemePreference; label: string; description: string }[] = [
-  { value: 'light', label: 'Light', description: 'Always use the light theme' },
-  { value: 'system', label: 'Auto', description: 'Match my system appearance setting' },
-  { value: 'dark', label: 'Dark', description: 'Always use the dark theme' },
-];
+const THEME_OPTIONS: { value: ThemeId; label: string; description: string }[] = THEME_IDS.map((id) => ({
+  value: id,
+  label: THEMES[id].label,
+  description: THEMES[id].description,
+}));
 
 const UNIT_OPTIONS: { value: UnitSystem; label: string; description: string }[] = [
   { value: 'imperial', label: '°F', description: 'Fahrenheit, miles per hour, inches' },
@@ -307,7 +307,7 @@ export function Menu({
                 </fieldset>
 
                 <fieldset className="mt-4 border-0 p-0">
-                  <legend className="ledger-label">Appearance</legend>
+                  <legend className="ledger-label">Theme</legend>
                   <div className="mt-2 flex">
                     {THEME_OPTIONS.map((option) => (
                       <SegmentedOption

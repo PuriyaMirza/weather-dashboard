@@ -12,9 +12,8 @@ import { Onboarding } from '@/components/onboarding/onboarding';
 import { getCardDefinition, type WeatherCardId } from '@/components/weather/card-registry';
 import { useEscapeKey } from '@/lib/hooks/use-escape-key';
 import { useHasHydrated } from '@/lib/hooks/use-has-hydrated';
-import { useResolvedTheme } from '@/lib/hooks/use-resolved-theme';
 import { useWeatherData } from '@/lib/hooks/use-weather-data';
-import { applyThemePreference } from '@/lib/theme';
+import { applyTheme } from '@/lib/theme';
 import { buildShareUrl, decodePreferences, SHARE_PARAM } from '@/lib/weather/share-link';
 import { useDashboardStore } from '@/store/dashboard-store';
 
@@ -40,7 +39,6 @@ export function Dashboard() {
   const setUnitSystem = useDashboardStore((state) => state.setUnitSystem);
   const theme = useDashboardStore((state) => state.theme);
   const setTheme = useDashboardStore((state) => state.setTheme);
-  const resolvedTheme = useResolvedTheme(theme);
   const cards = useDashboardStore((state) => state.cards);
   const isEditing = useDashboardStore((state) => state.isEditing);
   const setEditing = useDashboardStore((state) => state.setEditing);
@@ -102,7 +100,7 @@ export function Dashboard() {
   // The inline script in layout.tsx sets the theme before paint; this keeps the attribute in step
   // when the user changes it afterwards.
   useEffect(() => {
-    if (hasHydrated) applyThemePreference(theme, document.documentElement);
+    if (hasHydrated) applyTheme(theme, document.documentElement);
   }, [theme, hasHydrated]);
 
   // Until saved preferences have loaded we don't know which location to request, so no fetch is
@@ -242,7 +240,6 @@ export function Dashboard() {
         errorMessage={isStale ? undefined : failed}
         unitSystem={unitSystem}
         hasHydrated={hasHydrated}
-        resolvedTheme={resolvedTheme}
         onRefresh={refresh}
         isRefreshing={isRefreshing}
         isStale={isStale}

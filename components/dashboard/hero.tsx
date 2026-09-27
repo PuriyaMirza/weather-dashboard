@@ -8,8 +8,6 @@ import { describeTemperature, formatHour, formatTemperature, formatTime } from '
 import type { UnitSystem } from '@/lib/weather/units';
 
 interface HeroProps {
-  /** What the page is actually showing, so a light sky never lands on a dark page. */
-  resolvedTheme: 'light' | 'dark';
   location: SelectedLocation;
   data?: WeatherDashboardData;
   isLoading: boolean;
@@ -50,7 +48,6 @@ export function Hero({
   errorMessage,
   unitSystem,
   hasHydrated,
-  resolvedTheme,
   onRefresh,
   isRefreshing,
   isStale,
@@ -66,14 +63,7 @@ export function Hero({
     ? (current.isDay ?? inferIsDay(current.observedAt, data?.sun?.sunrise ?? null, data?.sun?.sunset ?? null))
     : true;
 
-  // In dark mode the sky always uses the night palette — a bright hero above dark modules reads as
-  // a rendering bug. The weather still drives the tone, so it remains reactive either way.
-  const useNightSky = resolvedTheme === 'dark' || !isDay;
-  const atmosphere = current
-    ? getAtmosphere(current.condition, !useNightSky)
-    : resolvedTheme === 'dark'
-      ? getAtmosphere('cloudy', false)
-      : NEUTRAL_ATMOSPHERE;
+  const atmosphere = current ? getAtmosphere(current.condition, isDay) : NEUTRAL_ATMOSPHERE;
 
   const hours = (data?.hourly ?? []).slice(0, STRIP_HOURS);
 
