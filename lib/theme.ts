@@ -26,7 +26,7 @@ export const THEMES: Record<ThemeId, ThemeDefinition> = {
   forest: {
     id: 'forest',
     label: 'Forest',
-    description: 'Deep evergreen canopy with misty greens',
+    description: 'Forest: deep evergreen canopy with misty greens',
     themeColor: '#001711',
     gridTitle: 'Forest Floor Readings',
   },
