@@ -9,7 +9,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    exclude: ['**/node_modules/**', '**/tests/e2e/**'],
+    // .claude/worktrees holds agent worktrees: full repo copies whose tests aren't this checkout's.
+    exclude: ['**/node_modules/**', '**/tests/e2e/**', '.claude/**'],
     globals: true,
     setupFiles: ['./tests/setup.ts'],
   },
