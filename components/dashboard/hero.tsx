@@ -1,11 +1,21 @@
 'use client';
 
-import { useId, type RefObject } from 'react';
-import { atmosphereStyle, getAtmosphere, inferIsDay, NEUTRAL_ATMOSPHERE } from '@/lib/weather/atmosphere';
-import { formatLocationLabel, type SelectedLocation } from '@/lib/weather/location';
-import type { WeatherDashboardData } from '@/lib/weather/types';
-import { describeTemperature, formatHour, formatTemperature, formatTime } from '@/lib/weather/units';
-import type { UnitSystem } from '@/lib/weather/units';
+import { Chip } from '@/components/ui/chip';
+import { Icon } from '@/components/ui/icon';
+import { Surface } from '@/components/ui/surface';
+import { CurrentConditionsSummary, MISSING } from '@/components/dashboard/current-conditions-summary';
+import { HeroIllustration } from '@/components/dashboard/hero-illustration';
+import { HourlyStrip } from '@/components/dashboard/hourly-strip';
+import {
+  atmosphereStyle,
+  getAtmosphere,
+  inferIsDay,
+  NEUTRAL_ATMOSPHERE,
+  skyHeadline,
+} from '@/lib/weather/atmosphere';
+import { formatRegionLabel, type SelectedLocation } from '@/lib/weather/location';
+import type { AirQualityCategory, AirQualityMetrics, WeatherDashboardData } from '@/lib/weather/types';
+import { formatTemperature, formatTime, type UnitSystem } from '@/lib/weather/units';
 
 interface HeroProps {
   location: SelectedLocation;
@@ -13,33 +23,68 @@ interface HeroProps {
   isLoading: boolean;
   errorMessage?: string;
   unitSystem: UnitSystem;
-  hasHydrated: boolean;
   onRefresh: () => void;
   isRefreshing: boolean;
   /** True when the reading on screen is the last good one and the newest attempt failed. */
   isStale: boolean;
   /** Why the newest attempt failed, shown whether or not there is stale data behind it. */
   failureMessage?: string;
-  /** Opens the location dialog — location changing moved here from a permanent row on the page. */
-  onOpenLocationPanel: () => void;
-  /** Attached to the location button, so closing the dialog can return focus to it. */
-  locationButtonRef: RefObject<HTMLButtonElement | null>;
 }
 
-/** Hours shown in the strip. Enough to plan an afternoon without becoming a chart. */
-const STRIP_HOURS = 8;
+const AIR_QUALITY_LABEL: Record<AirQualityCategory, string> = {
+  good: 'Good',
+  moderate: 'Moderate',
+  sensitive: 'Unhealthy for sensitive groups',
+  unhealthy: 'Unhealthy',
+  'very-unhealthy': 'Very unhealthy',
+  hazardous: 'Hazardous',
+};
 
 /**
- * The masthead: where you are, what it's doing right now, and the near-term shape of the day.
+ * The sentence under the hero heading: today's range and the next sun event. The sunset is only
+ * mentioned by day and the sunrise only by night — whichever is coming next.
+ */
+function daySummary(data: WeatherDashboardData, isDay: boolean, unitSystem: UnitSystem): string | null {
+  const current = data.current;
+  if (!current) return null;
+  const timeZone = data.location.timezone;
+  const range = `High of ${formatTemperature(current.highF, unitSystem)}, low of ${formatTemperature(current.lowF, unitSystem)}.`;
+  const sunEvent = isDay ? data.sun?.sunset : data.sun?.sunrise;
+  if (!sunEvent) return range;
+  return `${range} ${isDay ? 'Sunset' : 'Sunrise'} at ${formatTime(sunEvent, timeZone)}.`;
+}
+
+function AirQualityStrip({ airQuality }: { airQuality: AirQualityMetrics }) {
+  const { category, usAqi, pm2_5: pm25 } = airQuality;
+  // Nothing worth a row: better no strip than one reading "— • —".
+  if (category == null && usAqi == null && pm25 == null) return null;
+
+  return (
+    <div className="flex items-center gap-2.5 bg-surface-container-lowest/85 px-5 py-3 backdrop-blur-md">
+      <Icon name="air" size={20} className="shrink-0 text-secondary" />
+      <div className="flex min-w-0 flex-col">
+        <p className="type-label-md text-on-surface">
+          Air Quality: {category ? AIR_QUALITY_LABEL[category] : MISSING}
+        </p>
+        <p className="type-label-sm text-on-secondary-container">
+          US AQI {usAqi == null ? MISSING : Math.round(usAqi)} • PM2.5{' '}
+          {pm25 == null ? MISSING : `${Math.round(pm25)} µg/m³`}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The top of the page: an illustrated card naming the sky and the day ahead, the current reading,
+ * and the next hours.
  *
- * The temperature now lives here rather than only in the Temperature module — the module is still
- * the one showing high/low and staying on screen when this reading is stale, but repeating "72°" on
- * a page that otherwise has nothing above the fold but a location name and a search box was a worse
- * trade than the duplication. `Temperature` is dropped from the default layout for the same reason;
- * anyone who wants the module back can switch it on from the menu.
+ * Everything the dashboard knows about the request's health is said here, once — a stale banner
+ * over an old reading, or an alert with a retry when there is no reading at all — rather than
+ * repeated from every module.
  *
- * The tonal wash is decorative. The condition and whether it is day or night are also stated in
- * words, so nothing is conveyed by tone alone.
+ * The tree-line art and its weather-tinted sky are decorative. The condition and time of day are
+ * always in the heading as words, so nothing is conveyed by tone alone.
  */
 export function Hero({
   location,
@@ -47,16 +92,12 @@ export function Hero({
   isLoading,
   errorMessage,
   unitSystem,
-  hasHydrated,
   onRefresh,
   isRefreshing,
   isStale,
   failureMessage,
-  onOpenLocationPanel,
-  locationButtonRef,
 }: HeroProps) {
-  const hoursLabelId = useId();
-  const current = data?.current;
+  const current = data?.current ?? null;
   const timeZone = data?.location.timezone;
 
   const isDay = current
@@ -64,64 +105,17 @@ export function Hero({
     : true;
 
   const atmosphere = current ? getAtmosphere(current.condition, isDay) : NEUTRAL_ATMOSPHERE;
+  // The region of the reading on screen, not of the store's location: right after a location
+  // change the old forecast is still showing, and its chip must not claim the new place.
+  const region = formatRegionLabel(data?.location ?? location);
 
-  const hours = (data?.hourly ?? []).slice(0, STRIP_HOURS);
-
+  // Explicit minmax(0, 1fr) tracks (grid-cols-1): an implicit auto track grows to the hour strip's
+  // full scroll width, pushing the whole page wider than a phone.
   return (
-    <section
-      aria-labelledby="hero-heading"
-      className="atmosphere mt-6 border border-line px-5 py-6 sm:px-8 sm:py-8"
-      style={atmosphereStyle(atmosphere)}
-    >
+    <section aria-labelledby="hero-heading" className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <h2 id="hero-heading" className="sr-only">
         Current conditions
       </h2>
-
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        {hasHydrated ? (
-          <button
-            ref={locationButtonRef}
-            type="button"
-            onClick={onOpenLocationPanel}
-            aria-label={`Change location. Currently ${formatLocationLabel(location)}.`}
-            className="group flex items-baseline gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-sky-ink"
-          >
-            <span className="font-display text-3xl leading-none text-sky-ink sm:text-5xl">
-              {formatLocationLabel(location)}
-            </span>
-            {/* Signals the name is a control, not a label, without borrowing an icon library. */}
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 16 16"
-              className="h-3 w-3 shrink-0 stroke-sky-ink-muted group-hover:stroke-sky-ink sm:h-4 sm:w-4"
-              fill="none"
-              strokeWidth="1.5"
-              strokeLinecap="square"
-              strokeLinejoin="round"
-            >
-              <path d="M4 6l4 4 4-4" />
-            </svg>
-          </button>
-        ) : (
-          <p className="font-display text-3xl leading-none text-sky-ink sm:text-5xl">Loading…</p>
-        )}
-
-        <div className="flex items-center gap-4">
-          {data?.updatedAt && (
-            <p className="eyebrow text-sky-ink-muted">Updated {formatTime(data.updatedAt, timeZone)}</p>
-          )}
-          {hasHydrated && (
-            <button
-              type="button"
-              onClick={onRefresh}
-              disabled={isRefreshing}
-              className="eyebrow border border-sky-ink-muted px-3 py-1.5 text-sky-ink outline-none hover:bg-sky-ink hover:text-canvas focus-visible:ring-2 focus-visible:ring-sky-ink disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isRefreshing ? 'Refreshing…' : 'Refresh'}
-            </button>
-          )}
-        </div>
-      </div>
 
       {/*
         The reading is real but out of date. Saying so once here — rather than replacing every
@@ -129,83 +123,75 @@ export function Hero({
         not current. role="status" rather than "alert": nothing is broken, the data is just old.
       */}
       {isStale && (
-        <p role="status" className="mt-4 border border-sky-ink-muted px-3 py-2 text-sm text-sky-ink">
-          Showing the last reading that loaded. {failureMessage}
+        <p
+          role="status"
+          className="flex items-start gap-2.5 rounded-xl bg-surface-container-high px-4 py-3 type-body-sm text-on-surface lg:col-span-2"
+        >
+          <Icon name="info" size={20} className="mt-px shrink-0 text-secondary" />
+          <span>Showing the last reading that loaded. {failureMessage}</span>
         </p>
       )}
 
-      {errorMessage ? (
-        <div className="mt-5 max-w-xl">
-          <p role="alert" className="text-sm text-sky-ink">
-            {errorMessage}
-          </p>
-          {/* Without this the only way out of a failed load is a page reload. */}
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            className="eyebrow mt-3 border border-sky-ink-muted px-3 py-1.5 text-sky-ink outline-none hover:bg-sky-ink hover:text-canvas focus-visible:ring-2 focus-visible:ring-sky-ink disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isRefreshing ? 'Trying…' : 'Try again'}
-          </button>
-        </div>
-      ) : isLoading || !current ? (
-        <p role="status" className="mt-5 text-sm text-sky-ink-muted">
-          {isLoading ? 'Loading current conditions…' : 'Current conditions are unavailable.'}
-        </p>
-      ) : (
-        <>
-          <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-            <p
-              className="font-display text-5xl leading-none text-sky-ink tabular-nums sm:text-6xl"
-              aria-label={describeTemperature(current.temperatureF, unitSystem)}
-            >
-              {formatTemperature(current.temperatureF, unitSystem)}
-            </p>
-            <p className="text-sm text-sky-ink">
-              {current.conditionLabel} · {isDay ? 'Daytime' : 'Night'} · High{' '}
-              {formatTemperature(current.highF, unitSystem)} · Low {formatTemperature(current.lowF, unitSystem)}
-              {data?.sun?.sunset && isDay && <> · Sunset {formatTime(data.sun.sunset, timeZone)}</>}
-              {data?.sun?.sunrise && !isDay && <> · Sunrise {formatTime(data.sun.sunrise, timeZone)}</>}
-            </p>
+      <Surface
+        tone="lowest"
+        elevation="raised"
+        radius="2xl"
+        // Alone on its row until a reading arrives, so a loading or failed hero isn't half-width.
+        className={`relative overflow-hidden ${current ? '' : 'lg:col-span-2'}`}
+      >
+        <div className="relative flex h-56 flex-col justify-end overflow-hidden p-5" style={atmosphereStyle(atmosphere)}>
+          <HeroIllustration palette={atmosphere} />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-linear-to-t from-surface-container-lowest via-surface-container-high/40 to-transparent"
+          />
+
+          <div className="relative flex flex-col gap-1.5">
+            {errorMessage ? (
+              <>
+                <p role="alert" className="type-body-md text-sky-ink">
+                  {errorMessage}
+                </p>
+                {/* Without this the only way out of a failed load is a page reload. */}
+                <button
+                  type="button"
+                  onClick={onRefresh}
+                  disabled={isRefreshing}
+                  className="mt-1 inline-flex min-h-11 items-center gap-2 self-start rounded-full bg-secondary-container px-5 type-label-lg text-secondary-fixed shadow-card outline-none hover:bg-surface-bright focus-visible:ring-2 focus-visible:ring-secondary-fixed disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Icon name="refresh" size={18} />
+                  {isRefreshing ? 'Trying…' : 'Try again'}
+                </button>
+              </>
+            ) : isLoading || !current || !data ? (
+              <p role="status" className="type-body-md text-sky-ink-muted">
+                {isLoading ? 'Loading current conditions…' : 'Current conditions are unavailable.'}
+              </p>
+            ) : (
+              <>
+                {region && (
+                  <Chip dot className="self-start shadow-card backdrop-blur-md">
+                    {region}
+                  </Chip>
+                )}
+                <h3 className="mt-1 type-headline-sm font-bold tracking-tight text-sky-ink">
+                  {skyHeadline(current.condition, isDay, current.observedAt, timeZone)}
+                </h3>
+                <p className="type-body-sm text-sky-ink-muted">{daySummary(data, isDay, unitSystem)}</p>
+              </>
+            )}
           </div>
+        </div>
 
-          {hours.length > 0 && (
-            <>
-              <h3 id={hoursLabelId} className="sr-only">
-                Next hours
-              </h3>
-              {/*
-                A row of hairline-separated columns rather than a chart: this is the shape of the
-                next few hours at a glance, and it stays readable in greyscale and at phone width.
-                It scrolls horizontally rather than shrinking below legibility.
+        {data?.airQuality && <AirQualityStrip airQuality={data.airQuality} />}
+      </Surface>
 
-                Because it scrolls, it has to be reachable by keyboard — otherwise the hours past
-                the right edge are simply unavailable without a pointer, which is what happens at
-                phone width where the overflow actually bites. Focusable regions need a name, so it
-                borrows the heading above it.
-              */}
-              <ul
-                tabIndex={0}
-                aria-labelledby={hoursLabelId}
-                className="mt-6 flex overflow-x-auto border-t border-line-strong pt-4 outline-none focus-visible:ring-2 focus-visible:ring-sky-ink"
-              >
-                {hours.map((hour) => (
-                  <li
-                    key={hour.time}
-                    className="flex min-w-[4.5rem] flex-1 flex-col gap-1 border-l border-line px-3 first:border-l-0 first:pl-0"
-                  >
-                    <span className="eyebrow text-sky-ink-muted">{formatHour(hour.time, timeZone)}</span>
-                    <span className="font-display text-2xl leading-none text-sky-ink tabular-nums">
-                      {formatTemperature(hour.temperatureF, unitSystem)}
-                    </span>
-                    <span className="text-[0.6875rem] text-sky-ink-muted">{hour.precipitationChance}% rain</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </>
+      {data && current && <CurrentConditionsSummary data={data} isDay={isDay} unitSystem={unitSystem} />}
+
+      {data && current && !errorMessage && (
+        <div className="lg:col-span-2">
+          <HourlyStrip data={data} unitSystem={unitSystem} />
+        </div>
       )}
     </section>
   );

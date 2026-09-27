@@ -40,6 +40,16 @@ export function formatLocationLabel(location: SelectedLocation): string {
 }
 
 /**
+ * The place's wider area — "Oregon • United States" — for the hero chip. Null when neither is
+ * known (a geolocated "Current location" has no names at all), so the chip is omitted rather than
+ * filled with a guess.
+ */
+export function formatRegionLabel(location: Pick<SelectedLocation, 'region' | 'country'>): string | null {
+  const parts = [location.region, location.country].map((part) => part.trim()).filter(Boolean);
+  return parts.length > 0 ? parts.join(' • ') : null;
+}
+
+/**
  * Browser geolocation gives coordinates but no place name, and Open-Meteo's geocoding API is
  * forward-only (name to coordinates), so there is nothing to reverse-look-up the name with.
  * The location is labelled generically; the forecast itself is unaffected because the weather

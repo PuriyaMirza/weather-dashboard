@@ -2,60 +2,67 @@ import type { CSSProperties } from 'react';
 import type { WeatherCondition } from './types';
 
 /**
- * Maps the weather onto the sky behind the hero.
+ * Maps the weather onto the sky above the hero's tree line.
  *
- * This is separate from light/dark mode, which follows the system setting. This is atmosphere:
- * a clear afternoon and a midnight storm should not look identical. It is decorative — every
- * value it depicts is also stated in words elsewhere, so nothing is conveyed by colour alone.
+ * This is atmosphere, not theming: a clear afternoon and a midnight storm should not look
+ * identical. It is decorative — the condition and time of day are always stated in words in the
+ * hero's heading — so nothing is conveyed by colour alone.
  *
- * The palettes are warm greys rather than blues: on a monochrome page a literal blue sky reads as
- * a stray photograph. Condition and time of day come through as *weight* — clear is light and
- * open, storm is dense and close — which survives greyscale printing and low-quality displays,
- * where a hue shift would not.
+ * Every palette stays inside the Forest family (deep greens), because a literal blue sky reads as a
+ * stray photograph on an evergreen page. Condition and time of day come through as *weight*: clear
+ * days are the most open, storms and nights close in — a shift that survives greyscale and poor
+ * displays, where a hue change would not.
  */
 export interface AtmospherePalette {
-  /** Gradient stops, consumed by the `.atmosphere` class in globals.css. */
+  /** Top of the sky. Only the band above the hero text — free to be the lightest stop. */
   from: string;
+  /** The sky where the hero text begins (see `HERO_TEXT_TOP`). */
   via: string;
+  /** The horizon, behind the fog banks and tree line. */
   to: string;
-  /** Text colours that stay legible against the gradient above. */
+  /** Heading colour on this sky. */
   ink: string;
+  /** Body colour on this sky. */
   inkMuted: string;
-  /** Short description of the sky, used as the hero's accessible backdrop label. */
+  /** Short description of the sky, for tests and any future text alternative. */
   label: string;
 }
 
 type ConditionPalettes = Record<WeatherCondition, AtmospherePalette>;
 
+/*
+  The hero's text colours are Forest's --primary and --on-surface-variant. They are repeated here as
+  literals, not read from CSS, so the contrast test can check the pairs the hero actually paints.
+*/
+const INK = '#ffffff';
+const INK_MUTED = '#c2c8c4';
+
+function palette(from: string, via: string, to: string, label: string): AtmospherePalette {
+  return { from, via, to, ink: INK, inkMuted: INK_MUTED, label };
+}
+
 const DAY: ConditionPalettes = {
-  sunny: { from: '#f7f5ef', via: '#f4f3f0', to: '#e9e6dd', ink: '#16150f', inkMuted: '#4a4840', label: 'Clear daytime sky' },
-  'partly-cloudy': { from: '#efede7', via: '#eae8e2', to: '#dedbd2', ink: '#16150f', inkMuted: '#4a4840', label: 'Partly cloudy sky' },
-  cloudy: { from: '#e6e4dd', via: '#e0ded7', to: '#d3d0c7', ink: '#16150f', inkMuted: '#484640', label: 'Overcast sky' },
-  rain: { from: '#dedcd6', via: '#d7d5cf', to: '#c8c5bd', ink: '#141309', inkMuted: '#454338', label: 'Rainy sky' },
-  snow: { from: '#f4f4f2', via: '#eeeeec', to: '#e0e0dc', ink: '#16150f', inkMuted: '#4a4840', label: 'Snowy sky' },
-  storm: { from: '#cfccc4', via: '#c5c2b9', to: '#b3afa5', ink: '#100f08', inkMuted: '#3a382e', label: 'Stormy sky' },
-  fog: { from: '#e8e8e6', via: '#e1e1de', to: '#d4d4d0', ink: '#16150f', inkMuted: '#474640', label: 'Foggy sky' },
+  sunny: palette('#46786a', '#2a5346', '#183a30', 'Clear daytime sky'),
+  'partly-cloudy': palette('#3e6c5e', '#264c40', '#16362d', 'Partly cloudy sky'),
+  cloudy: palette('#355a50', '#22433a', '#14312a', 'Overcast sky'),
+  rain: palette('#2c4c44', '#1c3a33', '#112a24', 'Rainy sky'),
+  snow: palette('#4a6a62', '#2c4b44', '#1a3730', 'Snowy sky'),
+  storm: palette('#22393a', '#15292a', '#0c1c1b', 'Stormy sky'),
+  fog: palette('#445d57', '#2b433d', '#1a312b', 'Foggy sky'),
 };
 
 const NIGHT: ConditionPalettes = {
-  sunny: { from: '#1a1a16', via: '#0d0d0b', to: '#000000', ink: '#f5f3ee', inkMuted: '#a5a299', label: 'Clear night sky' },
-  'partly-cloudy': { from: '#181815', via: '#0c0c0a', to: '#000000', ink: '#f2f0eb', inkMuted: '#a29f96', label: 'Partly cloudy night sky' },
-  cloudy: { from: '#151513', via: '#0a0a09', to: '#000000', ink: '#efede8', inkMuted: '#9f9c93', label: 'Overcast night sky' },
-  rain: { from: '#121211', via: '#090908', to: '#000000', ink: '#ecebe6', inkMuted: '#9c9990', label: 'Rainy night sky' },
-  snow: { from: '#1c1c1a', via: '#0e0e0d', to: '#000000', ink: '#f7f6f2', inkMuted: '#a8a59c', label: 'Snowy night sky' },
-  storm: { from: '#0e0e0d', via: '#070706', to: '#000000', ink: '#e9e7e2', inkMuted: '#99968d', label: 'Stormy night sky' },
-  fog: { from: '#191918', via: '#0d0d0c', to: '#000000', ink: '#f0efec', inkMuted: '#a09e97', label: 'Foggy night sky' },
+  sunny: palette('#12302e', '#0a1f1e', '#051413', 'Clear night sky'),
+  'partly-cloudy': palette('#112b28', '#0a1d1a', '#051311', 'Partly cloudy night sky'),
+  cloudy: palette('#102622', '#0a1a17', '#041210', 'Overcast night sky'),
+  rain: palette('#0e221f', '#081815', '#03100e', 'Rainy night sky'),
+  snow: palette('#16302c', '#0d201d', '#061513', 'Snowy night sky'),
+  storm: palette('#0b1b1a', '#061312', '#020b0a', 'Stormy night sky'),
+  fog: palette('#152a26', '#0c1c19', '#051210', 'Foggy night sky'),
 };
 
 /** Used before any weather has loaded, and whenever the condition is unknown. */
-export const NEUTRAL_ATMOSPHERE: AtmospherePalette = {
-  from: '#eceae4',
-  via: '#f4f3f0',
-  to: '#e4e1d9',
-  ink: '#16150f',
-  inkMuted: '#4a4840',
-  label: 'Daytime sky',
-};
+export const NEUTRAL_ATMOSPHERE: AtmospherePalette = palette('#142f28', '#0e2720', '#08241d', 'Forest sky');
 
 export function getAtmosphere(condition: WeatherCondition | null | undefined, isDay: boolean): AtmospherePalette {
   if (!condition) return NEUTRAL_ATMOSPHERE;
@@ -63,8 +70,34 @@ export function getAtmosphere(condition: WeatherCondition | null | undefined, is
 }
 
 /**
- * The palette as inline custom properties. Returned as a style object rather than a class so the
- * gradient can vary continuously with the data without generating a class per condition.
+ * The fixed layers of the hero art that can sit behind its text. Shared with the illustration so
+ * the contrast test measures what is actually drawn rather than a copy that could drift.
+ */
+export const HERO_ART = {
+  /** Mid-elevation fog banks, back to front. */
+  fogBands: [
+    { color: '#243e37', opacity: 0.6 },
+    { color: '#2d5043', opacity: 0.8 },
+  ],
+  /** The pale low-fog glow drifting across the tree line. */
+  fogGlow: { color: '#c4ebda', opacity: 0.12 },
+  /**
+   * The mist overlay (--surface-container-high) at its thinnest anywhere behind text. It is opaque
+   * at the bottom of the art and 40% at mid-height, fading out towards the top.
+   */
+  mist: { color: '#142f28', minOpacityBehindText: 0.35 },
+} as const;
+
+/**
+ * Fraction of the art's height above which hero text never sits — the chip, heading and body are
+ * bottom-anchored and even a three-line body at 320px stays below it. The sky's `via` stop sits
+ * here, so text only ever overlaps the `via`→`to` part of the gradient.
+ */
+export const HERO_TEXT_TOP = 0.3;
+
+/**
+ * The palette as inline custom properties, consumed by the `text-sky-ink` utilities. A style
+ * object rather than a class so the tones can vary with the data without a class per condition.
  */
 export function atmosphereStyle(palette: AtmospherePalette): CSSProperties {
   return {
@@ -89,4 +122,71 @@ export function inferIsDay(observedAt: string, sunrise: string | null, sunset: s
   if (Number.isNaN(observed) || Number.isNaN(rise) || Number.isNaN(set)) return true;
 
   return observed >= rise && observed < set;
+}
+
+export type TimeOfDay = 'Morning' | 'Afternoon' | 'Evening' | 'Night' | 'Day';
+
+/** Hour of the day (0–23) at the location, or null when the timestamp or zone can't be read. */
+function localHour(isoTimestamp: string, timeZone?: string): number | null {
+  const date = new Date(isoTimestamp);
+  if (Number.isNaN(date.getTime())) return null;
+  const format = (zone?: string) =>
+    Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: zone }).format(date));
+  try {
+    return format(timeZone);
+  } catch {
+    return format();
+  }
+}
+
+/**
+ * The part of the day at the location. Daylight decides day versus night (so a 6 PM sunset in
+ * December reads as evening, not afternoon); the clock only splits each half. Without a readable
+ * time it says just "Day" or "Night" rather than guessing.
+ */
+export function timeOfDay(observedAt: string, isDay: boolean, timeZone?: string): TimeOfDay {
+  const hour = localHour(observedAt, timeZone);
+  if (hour === null) return isDay ? 'Day' : 'Night';
+  if (isDay) {
+    if (hour < 12) return 'Morning';
+    if (hour < 17) return 'Afternoon';
+    return 'Evening';
+  }
+  return hour >= 17 && hour < 22 ? 'Evening' : 'Night';
+}
+
+const HEADLINE_WORD: Record<WeatherCondition, [day: string, night: string]> = {
+  sunny: ['Sunny', 'Clear'],
+  'partly-cloudy': ['Partly Cloudy', 'Partly Cloudy'],
+  cloudy: ['Overcast', 'Overcast'],
+  rain: ['Rainy', 'Rainy'],
+  snow: ['Snowy', 'Snowy'],
+  storm: ['Stormy', 'Stormy'],
+  fog: ['Foggy', 'Foggy'],
+};
+
+/** The hero's heading, e.g. "Partly Cloudy Afternoon" or "Clear Night". */
+export function skyHeadline(
+  condition: WeatherCondition,
+  isDay: boolean,
+  observedAt: string,
+  timeZone?: string,
+): string {
+  const word = HEADLINE_WORD[condition][isDay ? 0 : 1];
+  return `${word} ${timeOfDay(observedAt, isDay, timeZone)}`;
+}
+
+const SHORT_WORD: Record<WeatherCondition, [day: string, night: string]> = {
+  sunny: ['Sunny', 'Clear'],
+  'partly-cloudy': ['Clouds', 'Clouds'],
+  cloudy: ['Overcast', 'Overcast'],
+  rain: ['Rain', 'Rain'],
+  snow: ['Snow', 'Snow'],
+  storm: ['Storm', 'Storm'],
+  fog: ['Fog', 'Fog'],
+};
+
+/** One word for a condition, short enough for a 70px hour pill. */
+export function conditionShortLabel(condition: WeatherCondition, isDay = true): string {
+  return SHORT_WORD[condition][isDay ? 0 : 1];
 }
