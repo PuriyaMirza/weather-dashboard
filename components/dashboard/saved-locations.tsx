@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from '@/components/ui/icon';
 import { formatLocationLabel, type SelectedLocation } from '@/lib/weather/location';
 
 interface SavedLocationsProps {
@@ -9,6 +10,8 @@ interface SavedLocationsProps {
   onSave: (location: SelectedLocation) => void;
   onRemove: (id: string) => void;
 }
+
+const FOCUS_RING = 'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-secondary-fixed';
 
 /**
  * Quick-switch row for places the user keeps. Every control names its location, so a screen-reader
@@ -27,16 +30,20 @@ export function SavedLocations({ active, saved, onSelect, onSave, onRemove }: Sa
         return (
           <span
             key={location.id}
-            className={`inline-flex items-center border text-xs font-semibold ${
-              isActive ? 'border-transparent bg-ink text-card' : 'border-line bg-card text-ink'
+            className={`inline-flex min-h-11 items-center overflow-hidden rounded-full type-label-lg ${
+              isActive
+                ? 'bg-secondary-container text-secondary-fixed'
+                : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest'
             }`}
           >
             <button
               type="button"
               onClick={() => onSelect(location)}
               aria-current={isActive ? 'true' : undefined}
-              className="py-1.5 pl-3 pr-2 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className={`inline-flex min-h-11 items-center gap-1.5 rounded-l-full py-2 pl-4 pr-1.5 ${FOCUS_RING}`}
             >
+              {/* The pin marks the current place alongside aria-current, so it is not colour alone. */}
+              {isActive && <Icon name="location" size={16} />}
               {location.name}
               <span className="sr-only">{`Show weather for ${label}`}</span>
             </button>
@@ -44,9 +51,9 @@ export function SavedLocations({ active, saved, onSelect, onSave, onRemove }: Sa
               type="button"
               onClick={() => onRemove(location.id)}
               aria-label={`Remove ${label} from saved locations`}
-              className="py-1.5 pl-1 pr-3 opacity-70 outline-none hover:opacity-100 focus-visible:ring-2 focus-visible:ring-accent"
+              className={`flex h-11 w-10 items-center justify-center rounded-r-full pr-1 opacity-80 hover:opacity-100 ${FOCUS_RING}`}
             >
-              <span aria-hidden="true">×</span>
+              <Icon name="close" size={16} />
             </button>
           </span>
         );
@@ -56,9 +63,10 @@ export function SavedLocations({ active, saved, onSelect, onSave, onRemove }: Sa
         <button
           type="button"
           onClick={() => onSave(active)}
-          className="inline-flex items-center gap-1 border border-dashed border-line-strong bg-transparent px-3 py-1.5 text-xs font-semibold text-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-accent"
+          className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border border-dashed border-on-surface-variant px-4 type-label-lg text-on-surface-variant hover:border-secondary-fixed hover:text-secondary-fixed ${FOCUS_RING}`}
         >
-          <span aria-hidden="true">+</span> Save {active.name}
+          <Icon name="bookmark" size={16} />
+          Save {active.name}
         </button>
       )}
     </div>

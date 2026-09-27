@@ -2,6 +2,7 @@
 
 import { useId, useRef, useState } from 'react';
 import { LocationSearch } from '@/components/location/location-search';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { getCardDefinition, type WeatherCardId } from '@/components/weather/card-registry';
 import { useDialogFocus } from '@/lib/hooks/use-dialog-focus';
 import { ACTIVITIES, type ActivityId } from '@/lib/weather/activity-windows';
@@ -25,12 +26,25 @@ const STEP_TITLE: Record<Step, string> = {
   modules: 'Here is your dashboard',
 };
 
+const ACTIVITY_ICONS: Record<ActivityId, IconName> = {
+  walk: 'walk',
+  run: 'run',
+  cycle: 'bike',
+  garden: 'garden',
+};
+
+const FOCUS_RING ='outline-none focus-visible:ring-2 focus-visible:ring-secondary-fixed';
+
 const PRIMARY =
-  'border border-line-strong bg-accent px-4 py-2 text-xs uppercase tracking-[0.14em] text-accent-ink outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex min-h-11 items-center gap-1.5 rounded-full bg-secondary-fixed px-5 type-label-lg text-on-secondary ' +
+  `hover:bg-primary-fixed ${FOCUS_RING} focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-low ` +
+  'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-secondary-fixed';
 const SECONDARY =
-  'border border-line-strong px-4 py-2 text-xs uppercase tracking-[0.14em] text-ink outline-none hover:bg-accent hover:text-accent-ink focus-visible:ring-2 focus-visible:ring-accent';
+  'inline-flex min-h-11 items-center gap-1.5 rounded-full border border-outline-variant px-5 type-label-lg ' +
+  `text-on-surface hover:bg-surface-container-high ${FOCUS_RING}`;
 const QUIET =
-  'eyebrow text-muted underline underline-offset-4 outline-none hover:text-ink-strong focus-visible:ring-2 focus-visible:ring-accent';
+  'inline-flex min-h-11 shrink-0 items-center rounded-full px-3 type-label-md text-on-surface-variant underline ' +
+  `underline-offset-4 hover:text-primary ${FOCUS_RING}`;
 
 /**
  * The first-run flow: three questions that compose a dashboard.
@@ -93,22 +107,30 @@ export function Onboarding({ initialLocation, onComplete, onSkip }: OnboardingPr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-canvas/95 px-4 py-8 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-surface/90 px-4 py-8 backdrop-blur-sm sm:items-center">
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-2xl border border-line-strong bg-card"
+        className="w-full max-w-2xl rounded-2xl bg-surface-container-low text-on-surface shadow-raised"
       >
-        <div className="flex items-baseline justify-between gap-4 border-b border-line-strong px-6 py-4">
+        <div className="flex items-start justify-between gap-4 px-6 pb-4 pt-6">
           <div>
-            <h2 id={titleId} className="font-display text-3xl leading-none text-ink-strong">
+            <p aria-hidden="true" className="mb-3 flex gap-1.5">
+              {STEPS.map((candidate, index) => (
+                <span
+                  key={candidate}
+                  className={`h-1.5 rounded-full ${index <= stepIndex ? 'w-8 bg-secondary-fixed' : 'w-4 bg-surface-container-highest'}`}
+                />
+              ))}
+            </p>
+            <h2 id={titleId} className="font-display text-3xl leading-tight text-primary">
               {STEP_TITLE[step]}
             </h2>
             {/* Spoken as well as drawn: the position in the flow is stated in words, and announced
                 on change, rather than living only in a row of marks. */}
-            <p aria-live="polite" className="eyebrow mt-2 text-muted">
+            <p aria-live="polite" className="mt-1 type-label-sm uppercase text-secondary">
               Step {stepIndex + 1} of {STEPS.length}
             </p>
           </div>
@@ -117,29 +139,32 @@ export function Onboarding({ initialLocation, onComplete, onSkip }: OnboardingPr
           </button>
         </div>
 
-        <div className="px-6 py-6">
+        <div className="px-6 pb-6 pt-2">
           {step === 'location' && (
             <>
-              <p className="text-sm text-ink">
+              <p className="type-body-md text-on-surface-variant">
                 Search for a place, or use your current location. This stays in this browser — there is
                 no account and nothing is sent anywhere but the forecast request itself.
               </p>
               <div className="mt-5 max-w-md">
                 <LocationSearch onSelect={setLocation} />
               </div>
-              <p className="mt-5 border-t border-line pt-3 text-sm text-ink">
-                Using <span className="font-display text-xl text-ink-strong">{formatLocationLabel(location)}</span>
+              <p className="mt-5 flex items-center gap-2 rounded-xl bg-surface-container-high px-4 py-3 type-body-sm text-on-surface">
+                <Icon name="location" size={18} className="shrink-0 text-secondary-fixed" />
+                <span>
+                  Using <span className="type-label-lg text-primary">{formatLocationLabel(location)}</span>
+                </span>
               </p>
             </>
           )}
 
           {step === 'activities' && (
             <>
-              <p className="text-sm text-ink">
+              <p className="type-body-md text-on-surface-variant">
                 Pick any that apply. The dashboard uses these to work out which readings matter to you —
                 and to tell you the best time to go out. You can skip this and still get a full dashboard.
               </p>
-              <ul className="mt-5">
+              <ul className="mt-5 flex flex-col gap-2">
                 {ACTIVITIES.map((activity) => (
                   <CheckRow
                     key={activity.id}
@@ -147,6 +172,7 @@ export function Onboarding({ initialLocation, onComplete, onSkip }: OnboardingPr
                     title={activity.label}
                     description={activity.description}
                     isChecked={activities.includes(activity.id)}
+                    icon={ACTIVITY_ICONS[activity.id]}
                     onToggle={() => toggleActivity(activity.id)}
                   />
                 ))}
@@ -156,12 +182,12 @@ export function Onboarding({ initialLocation, onComplete, onSkip }: OnboardingPr
 
           {step === 'modules' && (
             <>
-              <p className="text-sm text-ink">
+              <p className="type-body-md text-on-surface-variant">
                 {activities.length > 0
                   ? 'Built from your answers. Switch off anything you do not want — you can add the rest from the menu later.'
                   : 'A starting point, since you did not pick any activities. You can change all of this from the menu later.'}
               </p>
-              <ul className="mt-5">
+              <ul className="mt-5 flex flex-col gap-2">
                 {proposed.map((entry) => {
                   const definition = getCardDefinition(entry.id);
                   if (!definition) return null;
@@ -178,7 +204,7 @@ export function Onboarding({ initialLocation, onComplete, onSkip }: OnboardingPr
                 })}
               </ul>
               {chosen.length === 0 && (
-                <p role="status" className="mt-4 border border-dashed border-line px-3 py-2 text-xs text-muted">
+                <p role="status" className="mt-4 rounded-xl border border-dashed border-on-surface-variant px-4 py-3 type-body-sm text-on-surface">
                   Keep at least one module — an empty dashboard has nothing to show.
                 </p>
               )}
@@ -186,13 +212,14 @@ export function Onboarding({ initialLocation, onComplete, onSkip }: OnboardingPr
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-4 border-t border-line-strong px-6 py-4">
+        <div className="flex items-center justify-between gap-4 border-t border-outline-variant px-6 py-4">
           <button
             type="button"
             onClick={goBack}
             disabled={stepIndex === 0}
-            className={`${SECONDARY} disabled:cursor-not-allowed disabled:opacity-40`}
+            className={`${SECONDARY} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent`}
           >
+            <Icon name="arrow-back" size={18} />
             Back
           </button>
 
@@ -203,11 +230,13 @@ export function Onboarding({ initialLocation, onComplete, onSkip }: OnboardingPr
               disabled={chosen.length === 0}
               className={PRIMARY}
             >
+              <Icon name="check" size={18} />
               Use this dashboard
             </button>
           ) : (
             <button type="button" onClick={goNext} className={PRIMARY}>
               Continue
+              <Icon name="arrow-forward" size={18} />
             </button>
           )}
         </div>
@@ -229,21 +258,28 @@ function CheckRow({
   description,
   isChecked,
   onToggle,
+  icon,
 }: {
   id: string;
   title: string;
   description: string;
   isChecked: boolean;
   onToggle: () => void;
+  icon?: IconName;
 }) {
   return (
-    <li className="border-t border-line last:border-b">
-      <label className="flex cursor-pointer items-center justify-between gap-3 py-3">
-        <span className="min-w-0">
-          <span id={`${id}-label`} className="block text-sm text-ink">
+    <li>
+      <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl bg-surface-container-high px-4 py-3 hover:bg-surface-container-highest has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-secondary-fixed">
+        {icon && (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary-container text-secondary-fixed">
+            <Icon name={icon} size={20} />
+          </span>
+        )}
+        <span className="min-w-0 flex-1">
+          <span id={`${id}-label`} className="block type-label-lg text-on-surface">
             {title}
           </span>
-          <span id={`${id}-description`} className="block text-xs text-muted">
+          <span id={`${id}-description`} className="block type-body-sm text-on-surface-variant">
             {description}
           </span>
         </span>
@@ -257,9 +293,9 @@ function CheckRow({
         />
         <span
           aria-hidden="true"
-          className="flex h-5 w-5 shrink-0 items-center justify-center border border-line-strong text-[0.6rem] leading-none text-accent-ink peer-checked:bg-accent peer-focus-visible:ring-2 peer-focus-visible:ring-accent"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 border-on-surface-variant text-on-secondary peer-checked:border-secondary-fixed peer-checked:bg-secondary-fixed"
         >
-          {isChecked ? '✓' : ''}
+          {isChecked && <Icon name="check" size={16} />}
         </span>
       </label>
     </li>
