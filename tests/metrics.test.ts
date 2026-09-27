@@ -80,6 +80,40 @@ describe('metric modules', () => {
     expect(reading?.detail).toMatch(/warmer|cooler|same as/i);
   });
 
+  it('gives every reading a header icon', () => {
+    for (const metric of METRIC_MODULES) {
+      expect(metric.icon, `${metric.id} has no icon`).toBeTruthy();
+    }
+  });
+
+  /**
+   * The progress bar is only honest for metrics with a natural 0–max scale. A bar under a
+   * temperature or a pressure would imply a "full" that does not exist.
+   */
+  it('sets a 0–1 scale only for metrics with a natural maximum', () => {
+    const scaled = METRIC_MODULES.filter((metric) => metric.read(mockWeatherData, 'imperial')?.scale != null).map(
+      (metric) => metric.id,
+    );
+    expect(scaled.sort()).toEqual(['air-quality-index', 'cloud-cover', 'humidity', 'precipitation-chance', 'uv-index']);
+
+    for (const metric of METRIC_MODULES) {
+      const scale = metric.read(mockWeatherData, 'imperial')?.scale;
+      if (scale != null) {
+        expect(scale).toBeGreaterThanOrEqual(0);
+        expect(scale).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
+  it('splits a unit off the number without changing the reading', () => {
+    const wind = getMetricModule('wind-speed')?.read(mockWeatherData, 'imperial');
+    expect(wind?.value).toBe('8');
+    expect(wind?.unit).toBe('mph');
+    expect(getMetricModule('wind-speed')?.read(mockWeatherData, 'metric')?.unit).toBe('km/h');
+    // Strength in words, not only a number.
+    expect(wind?.detail).toBe('Moderate, from the NW');
+  });
+
   it('getMetricModule returns undefined for an unknown id rather than throwing', () => {
     expect(getMetricModule('not-a-metric')).toBeUndefined();
   });

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useState } from 'react';
+import { Icon } from '@/components/ui/icon';
 import { useDebouncedValue } from '@/lib/hooks/use-debounced-value';
 import { coordinatesToLocation, geocodingResultToLocation, type SelectedLocation } from '@/lib/weather/location';
 import type { OpenMeteoGeocodingResult } from '@/lib/weather/schemas';
@@ -179,11 +180,16 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
 
   return (
     <div className="w-full">
-      <label htmlFor={`${baseId}-input`} className="block text-sm font-medium text-ink">
+      <label htmlFor={`${baseId}-input`} className="block type-label-md text-on-surface">
         Search for a city or postal code
       </label>
 
       <div className="relative mt-2">
+        <Icon
+          name="search"
+          size={20}
+          className="pointer-events-none absolute left-3.5 top-3 text-on-surface-variant"
+        />
         <input
           id={`${baseId}-input`}
           type="text"
@@ -202,7 +208,7 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
             setDismissedQuery(null);
           }}
           onKeyDown={handleKeyDown}
-          className="w-full rounded-2xl border border-line-strong bg-card px-4 py-2.5 text-ink outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent"
+          className="min-h-11 w-full rounded-xl border border-outline-variant bg-surface-container-high py-2.5 pl-11 pr-4 type-body-md text-on-surface outline-none placeholder:text-on-surface-variant focus:border-secondary-fixed focus:ring-2 focus:ring-secondary-fixed/40"
         />
 
         <ul
@@ -210,7 +216,7 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
           role="listbox"
           aria-label="Location results"
           hidden={!isOpen}
-          className="absolute z-10 mt-1 max-h-72 w-full overflow-auto rounded-2xl border border-line bg-card py-1 "
+          className="absolute z-10 mt-1.5 max-h-72 w-full overflow-auto rounded-xl bg-surface-container-highest p-1 shadow-raised"
         >
           {results.map((location, index) => (
             <li
@@ -224,17 +230,20 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
                 choose(location);
               }}
               onMouseEnter={() => setActive({ query: debouncedQuery, index })}
-              className={`cursor-pointer px-4 py-2 text-sm ${
-                index === activeIndex ? 'bg-accent text-card' : 'text-ink'
+              className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-3 py-2 type-body-sm ${
+                index === activeIndex ? 'bg-secondary-container text-secondary-fixed' : 'text-on-surface'
               }`}
             >
-              <span className="font-medium">{location.name}</span>
-              {(location.region || location.country) && (
-                <span className={index === activeIndex ? 'text-accent-soft' : 'text-muted'}>
-                  {' — '}
-                  {[location.region, location.country].filter(Boolean).join(', ')}
-                </span>
-              )}
+              <Icon name="location" size={16} className="shrink-0 opacity-80" />
+              <span className="min-w-0">
+                <span className="font-semibold">{location.name}</span>
+                {(location.region || location.country) && (
+                  <span className={index === activeIndex ? 'text-primary-fixed' : 'text-on-surface-variant'}>
+                    {' — '}
+                    {[location.region, location.country].filter(Boolean).join(', ')}
+                  </span>
+                )}
+              </span>
             </li>
           ))}
         </ul>
@@ -250,14 +259,15 @@ export function LocationSearch({ onSelect }: LocationSearchProps) {
           type="button"
           onClick={requestCurrentLocation}
           disabled={isLocating}
-          className="border border-line-strong bg-card px-4 py-2 text-sm font-medium text-ink outline-none hover:bg-canvas focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-secondary-container px-4 type-label-lg text-secondary-fixed outline-none hover:bg-surface-bright focus-visible:ring-2 focus-visible:ring-secondary-fixed disabled:cursor-not-allowed disabled:opacity-60"
         >
+          <Icon name="my-location" size={18} />
           {isLocating ? 'Finding your location…' : 'Use my current location'}
         </button>
       </div>
 
       {geolocationError && (
-        <p role="alert" className="mt-2 text-sm text-danger">
+        <p role="alert" className="mt-2 type-body-sm text-error">
           {geolocationError}
         </p>
       )}

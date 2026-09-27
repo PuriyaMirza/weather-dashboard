@@ -13,7 +13,10 @@ app/                      Next.js App Router. page.tsx (static shell) + layout.t
                            api/weather, api/geocode route handlers. No other pages — this is a
                            single-dashboard app.
 components/
-  dashboard/               Dashboard shell, menu, arrange-mode toolbar, hero, card grid/sorting.
+  dashboard/               Dashboard shell, frosted site header, menu, arrange-mode toolbar, hero
+                           (illustration, right-now card, hourly strip), card grid/sorting.
+  ui/                      Theme-agnostic primitives: Icon (inline Material Symbols SVG), Surface,
+                           Chip, ProgressBar, RangeBar, RingGauge, SectionHeader.
   weather/                 One file per card + card-registry.tsx (the extension point) +
                            card-frame.tsx (shared loading/error/unavailable/ready states).
   location/                Location search and the change-location dialog.
@@ -24,7 +27,7 @@ lib/
                            card-layout (registry/defaults/presets), activity-windows, share-link.
   hooks/                   use-weather-data, use-has-hydrated, use-dialog-focus, use-escape-key, etc.
   api/http.ts              jsonError() — the shared { error: string } response shape.
-  rate-limit.ts, theme.ts  Cross-cutting utilities.
+  rate-limit.ts, theme.ts  Cross-cutting utilities. theme.ts is the theme registry (THEMES).
 store/dashboard-store.ts   Single Zustand store: location, saved locations, units, theme, card
                            layout, activities, hasOnboarded (persisted) + isEditing (transient).
 tests/                     Flat directory, mirrors lib/components by filename (not colocated).
@@ -133,6 +136,7 @@ npx playwright test tests/e2e/home.spec.ts  # one e2e spec
 - **The internal weather model is always imperial** (`temperatureF`, `windMph`, …); unit choice
   (`lib/weather/units.ts`) is purely presentational and never triggers a re-fetch.
 - Historical/past weather is an explicit **non-goal** (PRD §3) — don't build backward-looking views.
+- **Running Playwright locally in the cloud sandbox:** set `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium` (the pinned Playwright expects a different Chromium build); WebKit isn't installed there, so CI is the only WebKit run. Subagent worktrees live in `.claude/worktrees/` (excluded from vitest/eslint); Turbopack refuses a symlinked `node_modules`, so hard-link-copy it (`cp -al`) inside a worktree instead.
 - **In Playwright, use `getByRole` not `getByText` on anything with a decorative icon inside** —
   `aria-hidden` excludes the icon from the accessible name but not from raw DOM text, so
   `getByText('Readings', { exact: true })` stops matching the moment an icon glyph sits next to the
@@ -193,11 +197,13 @@ Because of `skipHydration`, the store rehydrates explicitly after mount via `use
 
 ### Theming and design tokens
 
-`app/globals.css` defines semantic tokens (`--canvas`, `--card`, `--ink`, `--muted`, `--line`, `--accent`, plus chart and severity scales) mapped into Tailwind. Use `bg-card` / `text-ink`, not raw palette classes. Both light and dark palettes are verified against WCAG AA.
+The app has **named themes**, not light/dark. `lib/theme.ts` holds the registry (`THEME_IDS`, `THEMES`: label, description, browser `themeColor`, per-theme copy such as the grid title); **Forest** is the first and default. Each theme is a token block in `app/globals.css` (`[data-theme="<id>"]`, Forest also on `:root`) whose names mirror the Figma "Theme" variable collection 1:1: `surface`, `surface-container-{lowest,low,,high,highest}`, `primary`, `primary-fixed`, `secondary`, `secondary-fixed`, `secondary-container`, `on-surface`, `on-surface-variant`, `on-secondary-container`, `on-secondary`, `outline-variant`, `error*`, plus chart, severity-scale (`--scale-N`/`-bg`) and shadow tokens. Components use only these (`bg-surface-container-high`, `text-on-surface`, `shadow-card`…) and the `type-*` utilities (the Figma text styles: `type-display-lg`, `type-headline-md/sm`, `type-label-lg/md/sm`, `type-body-md/sm`) — never raw colours. Fonts: Manrope (`font-sans`) + Newsreader (`font-display`) via `next/font`.
 
-Dark mode follows the system with a Light / Auto / Dark override. An inline script in `app/layout.tsx` sets `data-theme` before first paint (no flash); `Dashboard` keeps the attribute in sync when the user changes it afterward. `prefers-reduced-motion` is handled globally in `globals.css` so it also covers Recharts and dnd-kit.
+**Adding a theme** = a `THEMES` entry + a token block; no component changes. `tests/theme-contrast.test.ts` reads every theme's block straight from `globals.css` and asserts WCAG AA for each text/surface pair, so a new palette is checked automatically.
 
-Light mode is the "Postal Ledger" direction: Fraunces (serif, oldstyle numerals) + Space Grotesk (sans), a cream/ink palette with a single red and single blue accent, defined as literal tokens (`--cream`, `--red`, `--blue`, `--ink-soft`, `--ink-muted`, `--ledger-ink`, `--hairline`, plus `--ledger-chart-*` and `--ledger-danger`) in `app/globals.css` alongside the semantic ones. These literal tokens are never redefined for dark mode — a ledger card's paper stays cream regardless of theme, so content painted on it (including `LedgerMetric`, in `card-frame.tsx`) must reach for `--ledger-ink`/`--ink-soft`/`--ink-muted`, never the theme-aware `--ink`/`--ink-strong`/`--muted`, or it renders illegibly light-on-cream in dark mode. `CardFrame`/`CardBoundary` (`components/weather/card-frame.tsx`) take a `variant="ledger"` that swaps in the double-border ledger shell without touching a card's states, data, or props — every card in the registry now opts into it; the `default` shell remains supported by the shell itself but is currently unused by any weather card. `components/dashboard/menu.tsx` also went full ledger (`bg-cream`, `text-ledger-ink`, `border-hairline`) rather than the theme-aware chrome tokens, so it reads as one more sheet of paper regardless of theme — the same `--ledger-ink`-not-`--ink` rule applies there too.
+The server renders `data-theme="forest"`; an inline script in `app/layout.tsx` swaps in a saved theme before first paint, and `Dashboard` keeps it in sync after. Retired `light`/`dark`/`system` values (persist version < 9, old share links) map to the default via `toThemeId`. `prefers-reduced-motion` is handled globally in `globals.css`.
+
+Icons are `components/ui/icon.tsx` — Material Symbols Rounded paths inlined as SVG (no icon font: it's megabytes and flashes ligature words). Always `aria-hidden`; every icon sits beside text that carries the meaning. `conditionIcon()` (`lib/weather/condition-icon.ts`) maps a condition to its glyph. Module cards paint their own surface (`rounded-xl bg-surface-container-high shadow-card`, in `card-frame.tsx`); the grid cell wrapper carries only the radius, so arrange/drop/placement outlines follow the corners. The header's backdrop blur lives on a separate layer so it never becomes the containing block for `position: fixed` children (the menu drawer is also portalled to `<body>`).
 
 ### API routes
 

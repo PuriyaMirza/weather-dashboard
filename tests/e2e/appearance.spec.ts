@@ -12,46 +12,32 @@ async function openMenu(page: Page) {
   return page.getByRole('dialog', { name: /dashboard settings/i });
 }
 
-/**
- * The radio itself is visually hidden inside its label, so a real user clicks the label. Doing the
- * same here also proves the label/input association is correct — which is the property that makes
- * the control usable at all.
- */
-function themeOption(page: Page, name: RegExp) {
-  return page.getByRole('radio', { name }).locator('xpath=ancestor::label[1]');
-}
-
-test('theme choice applies and survives a reload with no flash of the wrong theme', async ({ page }) => {
+test('the page renders in the Forest theme by default and keeps it across a reload', async ({ page }) => {
   await page.goto('/');
 
   const html = page.locator('html');
-  // "Auto" is the default and deliberately sets no attribute, letting CSS follow the OS.
-  await expect(html).not.toHaveAttribute('data-theme', /.*/);
+  await expect(html).toHaveAttribute('data-theme', 'forest');
 
-  await openMenu(page);
-  await themeOption(page, /always use the dark theme/i).click();
-  await expect(html).toHaveAttribute('data-theme', 'dark');
+  const menu = await openMenu(page);
+  await expect(menu.getByRole('radio', { name: /forest/i })).toBeChecked();
 
-  // The pre-paint script must apply this before React hydrates, or dark-mode users see a white flash.
   await page.reload();
-  await expect(html).toHaveAttribute('data-theme', 'dark');
-
-  await openMenu(page);
-  await expect(page.getByRole('radio', { name: /always use the dark theme/i })).toBeChecked();
-
-  await themeOption(page, /match my system/i).click();
-  await expect(html).not.toHaveAttribute('data-theme', /.*/);
+  await expect(html).toHaveAttribute('data-theme', 'forest');
 });
 
-test('dark theme actually recolours the page, not just the attribute', async ({ page }) => {
+test('a retired light/dark preference from an older version lands on Forest', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'weather-dashboard',
+      JSON.stringify({ state: { theme: 'dark', hasOnboarded: true }, version: 8 }),
+    );
+  });
   await page.goto('/');
-  const lightBackground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 
-  await openMenu(page);
-  await themeOption(page, /always use the dark theme/i).click();
-  const darkBackground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-
-  expect(darkBackground).not.toBe(lightBackground);
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'forest');
+  // The Forest canvas is a deep green, not the retired black or cream.
+  const background = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(background).toBe('rgb(0, 23, 17)');
 });
 
 test('locations can be saved and switched between', async ({ page }) => {

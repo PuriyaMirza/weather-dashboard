@@ -65,7 +65,7 @@ test('the menu offers every module, grouped into readings and panels', async ({ 
     await expect(menu.getByRole('checkbox', { name, exact: true })).toHaveCount(1);
   }
 
-  // Unit and appearance controls live here too, rather than cluttering the header.
+  // Unit and theme controls live here too, rather than cluttering the header.
   await expect(menu.getByRole('radio', { name: /fahrenheit/i })).toBeChecked();
-  await expect(menu.getByRole('radio', { name: /match my system/i })).toBeChecked();
+  await expect(menu.getByRole('radio', { name: /forest/i })).toBeChecked();
 });

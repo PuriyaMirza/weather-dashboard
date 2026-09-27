@@ -1,10 +1,18 @@
-import { findActivityWindows } from '@/lib/weather/activity-windows';
+import { Icon, type IconName } from '@/components/ui/icon';
+import { findActivityWindows, type ActivityId } from '@/lib/weather/activity-windows';
 import { formatHour } from '@/lib/weather/units';
 import type { WeatherCardProps } from './card-registry';
 import { CardBoundary } from './card-frame';
 
 const TITLE = 'Best Time To Go Out';
 const DESCRIPTION = 'The best stretch of the next day for walking, running, cycling, and gardening.';
+
+const ACTIVITY_ICON: Record<ActivityId, IconName> = {
+  walk: 'walk',
+  run: 'run',
+  cycle: 'bike',
+  garden: 'garden',
+};
 
 /**
  * The one module that answers a question rather than reporting a reading.
@@ -24,43 +32,51 @@ export function ActivityWindowsCard({ data, isLoading, errorMessage, activities 
     <CardBoundary
       title={TITLE}
       description={DESCRIPTION}
+      icon="forest"
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={isUnavailable}
       loadingLabel="Working out the best times to go out…"
       unavailableLabel="Hourly data is unavailable, so no windows can be worked out."
-      variant="ledger"
     >
       {!isUnavailable && (
-        <dl className="flex flex-col divide-y divide-hairline">
+        <ul className="flex flex-col gap-2">
           {outlooks.map(({ definition, window }) => (
-            <div key={definition.id} className="flex flex-col gap-1 py-3.5 first:pt-0 last:pb-0">
-              <div className="flex items-baseline justify-between gap-4">
-                <dt className="ledger-label">{definition.label}</dt>
-                {window && (
-                  <dd className="font-display min-w-0 text-xl leading-none text-ledger-ink">
-                    {formatHour(window.start, timeZone)} – {formatHour(window.end, timeZone)}
-                  </dd>
+            <li
+              key={definition.id}
+              className="flex items-start gap-3 rounded-lg bg-surface-container-highest/60 px-3 py-2.5"
+            >
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-container text-secondary-fixed">
+                <Icon name={ACTIVITY_ICON[definition.id]} size={18} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                  <p className="type-label-lg text-primary">{definition.label}</p>
+                  {window && (
+                    <p className="type-label-lg text-secondary-fixed">
+                      {formatHour(window.start, timeZone)} – {formatHour(window.end, timeZone)}
+                    </p>
+                  )}
+                </div>
+                {window ? (
+                  <p className="mt-0.5 type-body-sm text-on-surface-variant">
+                    {window.reasons.join(' · ')}
+                    {/* Stated rather than implied: a window can be perfectly good and still dark. */}
+                    {window.darkFrom && ' · After sunset'}
+                    {/* The daylight portion alone was enough to report on its own, but the
+                        suitable stretch keeps going after dark — said, not dropped. */}
+                    {window.extendsUntil && ` · Also fine until ${formatHour(window.extendsUntil, timeZone)} after dark`}
+                  </p>
+                ) : (
+                  <>
+                    <p className="mt-0.5 type-body-sm text-on-surface">No good window in the next day.</p>
+                    <p className="type-body-sm text-on-surface-variant">{definition.description}</p>
+                  </>
                 )}
               </div>
-              {window ? (
-                <p className="text-[11.5px] leading-relaxed text-ink-soft">
-                  {window.reasons.join(' · ')}
-                  {/* Stated rather than implied: a window can be perfectly good and still dark. */}
-                  {window.darkFrom && ' · After sunset'}
-                  {/* The daylight portion alone was enough to report on its own, but the
-                      suitable stretch keeps going after dark — said, not dropped. */}
-                  {window.extendsUntil && ` · Also fine until ${formatHour(window.extendsUntil, timeZone)} after dark`}
-                </p>
-              ) : (
-                <>
-                  <p className="text-sm text-ink-muted">No good window in the next day.</p>
-                  <p className="mt-1 text-[11.5px] leading-relaxed text-ink-soft">{definition.description}</p>
-                </>
-              )}
-            </div>
+            </li>
           ))}
-        </dl>
+        </ul>
       )}
     </CardBoundary>
   );

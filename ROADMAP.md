@@ -146,3 +146,21 @@ are guarded too, so a browser refusing to store data costs persistence rather th
 Covered by unit tests and an end-to-end test that seeds truncated JSON before load — both verified
 to fail against the unfixed store.
 
+## v5 — Themes: Forest — done
+
+The Postal Ledger look and its Light/Auto/Dark setting are retired in favour of **named themes**,
+starting with **Forest** (from the approved Figma design). Every customization feature is unchanged.
+
+- **Theme system.** `lib/theme.ts` registry + a token block per theme in `globals.css`, named 1:1
+  after the Figma variable collection. The menu's Appearance control is now a Theme picker.
+  Saved/shared `light`/`dark`/`system` preferences map onto Forest (persist version 9).
+- **Forest UI.** Frosted sticky header; illustrated hero (tree line tinted by condition and
+  day/night, real region chip, condition + time-of-day heading, real high/low/sunset, air-quality
+  strip); right-now card with a next-hour rain ring and quick stats; hour pills; bento module tiles
+  with progress bars; range-bar 7-day rows; rounded, gap-based grid with outlines that follow the
+  corners; Forest menu, dialogs and onboarding. Newsreader + Manrope; Material Symbols icons as
+  inline SVG.
+- **Guardrails.** `tests/theme-contrast.test.ts` checks every theme's text/surface pairs for AA;
+  the axe scans now run on Forest in every state.
+- **Next themes** (Alpine, Seaside — explored in Figma) need only a `THEMES` entry and a token block.
+

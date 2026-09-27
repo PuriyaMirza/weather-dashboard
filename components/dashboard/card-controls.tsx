@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from '@/components/ui/icon';
 import { CARD_SIZES, CARD_SIZE_LABEL, type CardSize } from '@/lib/weather/card-layout';
 
 interface CardControlsProps {
@@ -38,19 +39,20 @@ interface CardControlsProps {
  */
 const HANDLE =
   'flex h-11 w-11 shrink-0 cursor-grab touch-none select-none [-webkit-touch-callout:none] items-center ' +
-  'justify-center border border-line-strong text-sm outline-none focus-visible:ring-2 ' +
-  'focus-visible:ring-accent active:cursor-grabbing';
+  'justify-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-secondary-fixed ' +
+  'active:cursor-grabbing';
 
 /** Quieter than the handle now that dragging works, but never hidden: this is the only route that
  *  needs no pointer at all, so it must not sit behind a disclosure. */
 const NUDGE =
-  'flex h-8 w-8 items-center justify-center text-ink-strong outline-none hover:bg-accent ' +
-  'hover:text-accent-ink focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed ' +
-  'disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-ink-strong';
+  'flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-highest text-on-surface ' +
+  'outline-none hover:bg-surface-bright focus-visible:ring-2 focus-visible:ring-secondary-fixed ' +
+  'disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-surface-container-highest';
 
+/** 28px wide rather than 32 so the pill and both nudges still fit a ~170px phone module. */
 const SIZE_CHIP =
-  'flex h-8 w-8 items-center justify-center text-[0.625rem] uppercase tracking-[0.14em] outline-none ' +
-  'focus-visible:ring-2 focus-visible:ring-accent';
+  'flex h-8 w-7 items-center justify-center rounded-full type-label-md outline-none ' +
+  'focus-visible:ring-2 focus-visible:ring-secondary-fixed';
 
 /**
  * Edit affordances for a single module.
@@ -80,7 +82,7 @@ export function CardControls({
   dragHandleRef,
 }: CardControlsProps) {
   return (
-    <div className="mb-2 flex flex-col gap-1.5 border-b border-line pb-2">
+    <div className="mb-2 flex flex-col gap-1.5">
       <div className="flex items-center gap-1.5">
         <button
           type="button"
@@ -89,7 +91,9 @@ export function CardControls({
           onClick={onToggleLift}
           aria-pressed={isLifted}
           className={`${HANDLE} ${
-            isLifted ? 'bg-accent text-accent-ink' : 'bg-card text-ink hover:bg-accent hover:text-accent-ink'
+            isLifted
+              ? 'bg-secondary-container text-secondary-fixed'
+              : 'bg-surface-container-highest text-on-surface hover:bg-surface-bright'
           }`}
           // Deliberately "Reorder" rather than "Move": the two arrows beside it are already
           // "Move X earlier" / "Move X later", and three buttons per module opening with the same
@@ -105,31 +109,36 @@ export function CardControls({
               : `Reorder ${title}. Position ${position} of ${total}. Press space or enter, then use the arrow keys, or tap to pick it up and choose a new slot.`
           }
         >
-          <span aria-hidden="true">⠿</span>
+          <Icon name="drag" size={22} />
         </button>
 
         <button
           type="button"
           onClick={onRemove}
-          className="ml-auto flex min-h-11 items-center border border-danger-line bg-card px-3 text-[0.625rem] uppercase tracking-[0.14em] text-danger outline-none hover:bg-danger-soft focus-visible:ring-2 focus-visible:ring-danger"
+          className="ml-auto flex min-h-11 items-center gap-1 rounded-full bg-surface-container-highest px-3 type-label-md text-error outline-none hover:bg-error-container focus-visible:ring-2 focus-visible:ring-error"
           aria-label={`Remove ${title} from the dashboard`}
         >
+          <Icon name="delete" size={16} />
           Remove
         </button>
       </div>
 
       <div className="flex items-center gap-1">
         <button type="button" onClick={onMoveUp} disabled={isFirst} className={NUDGE} aria-label={`Move ${title} earlier`}>
-          <span aria-hidden="true">←</span>
+          <Icon name="arrow-back" size={18} />
         </button>
 
         <button type="button" onClick={onMoveDown} disabled={isLast} className={NUDGE} aria-label={`Move ${title} later`}>
-          <span aria-hidden="true">→</span>
+          <Icon name="arrow-forward" size={18} />
         </button>
 
         {/* A radio group, not a cycling button: the three sizes are all visible and directly
             reachable, and the current one is announced rather than merely drawn. */}
-        <div role="radiogroup" aria-label={`Size of ${title}`} className="ml-auto flex gap-1">
+        <div
+          role="radiogroup"
+          aria-label={`Size of ${title}`}
+          className="ml-auto flex rounded-full bg-surface-container-highest p-0.5"
+        >
           {CARD_SIZES.map((candidate) => (
             <button
               key={candidate}
@@ -139,8 +148,8 @@ export function CardControls({
               onClick={() => onSetSize(candidate)}
               className={
                 size === candidate
-                  ? `${SIZE_CHIP} border border-line-strong bg-accent text-accent-ink`
-                  : `${SIZE_CHIP} border border-transparent text-muted hover:bg-accent hover:text-accent-ink`
+                  ? `${SIZE_CHIP} bg-secondary-container text-secondary-fixed`
+                  : `${SIZE_CHIP} text-on-surface-variant hover:text-primary`
               }
               aria-label={`${CARD_SIZE_LABEL[candidate]} ${title}`}
             >

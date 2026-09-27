@@ -1,4 +1,5 @@
-import type { WeatherDashboardData } from './types';
+import type { IconName } from '@/components/ui/icon';
+import type { AirQualityCategory, WeatherDashboardData } from './types';
 import {
   UNAVAILABLE,
   describeTemperature,
@@ -23,9 +24,17 @@ import {
  */
 export interface MetricReading {
   value: string;
+  /** Printed small beside the value ("mph", "US AQI"); `value` + " " + `unit` is the full reading. */
+  unit?: string;
   spoken?: string;
   detail?: string;
   qualifier?: string;
+  /**
+   * Where the value sits on the metric's natural 0–max scale, 0–1, for the tile's progress bar.
+   * Only set for metrics that have such a scale (percentages, UV, AQI); a bar under a temperature
+   * or a pressure would imply a "full" that doesn't exist.
+   */
+  scale?: number;
 }
 
 export type MetricModuleId =
@@ -46,8 +55,35 @@ export interface MetricModuleDefinition {
   id: MetricModuleId;
   title: string;
   description: string;
+  /** Decorative glyph for the tile header — the title beside it carries the meaning. */
+  icon: IconName;
   /** Returns null when the underlying data is absent, which the module renders as unavailable. */
   read: (data: WeatherDashboardData, unitSystem: UnitSystem) => MetricReading | null;
+}
+
+/**
+ * Splits a formatted reading ("8 mph", "30.08 inHg", "5:35 AM") into its number and its unit, so
+ * the tile can set the unit smaller. Joined back with a space it is the original string, which
+ * keeps the text a screen reader hears unchanged.
+ */
+function splitUnit(formatted: string): { value: string; unit?: string } {
+  const space = formatted.lastIndexOf(' ');
+  if (formatted === UNAVAILABLE || space === -1) return { value: formatted };
+  return { value: formatted.slice(0, space), unit: formatted.slice(space + 1) };
+}
+
+function clampScale(value: number, max: number): number {
+  return Math.min(1, Math.max(0, value / max));
+}
+
+/** Descriptive band so wind strength is conveyed in words, not only by a number. */
+export function describeWindStrength(milesPerHour: number): string {
+  if (milesPerHour < 1) return 'Calm';
+  if (milesPerHour < 8) return 'Light';
+  if (milesPerHour < 19) return 'Moderate';
+  if (milesPerHour < 32) return 'Fresh';
+  if (milesPerHour < 47) return 'Strong';
+  return 'Gale';
 }
 
 function describeUv(uvIndex: number): string {
@@ -73,7 +109,7 @@ function describeCloudCover(percent: number): string {
   return 'Overcast';
 }
 
-const AQI_CATEGORY_LABEL: Record<string, string> = {
+export const AQI_CATEGORY_LABEL: Record<AirQualityCategory, string> = {
   good: 'Good',
   moderate: 'Moderate',
   sensitive: 'Unhealthy for sensitive groups',
@@ -95,6 +131,7 @@ export const METRIC_MODULES: MetricModuleDefinition[] = [
     id: 'temperature',
     title: 'Temperature',
     description: 'The current reading.',
+    icon: 'thermostat',
     read: (data, units) => {
       const current = data.current;
       if (!current) return null;
@@ -110,6 +147,7 @@ export const METRIC_MODULES: MetricModuleDefinition[] = [
     id: 'feels-like',
     title: 'Feels Like',
     description: 'Apparent temperature, accounting for wind and humidity.',
+    icon: 'feels-like',
     read: (data, units) => {
       const current = data.current;
       if (!current) return null;
@@ -128,12 +166,14 @@ export const METRIC_MODULES: MetricModuleDefinition[] = [
     id: 'precipitation-chance',
     title: 'Rain Chance',
     description: 'Likelihood of precipitation right now.',
+    icon: 'umbrella',
     read: (data) => {
       const chance = data.current?.precipitationChance;
       if (chance == null) return null;
       return {
         value: formatPercent(chance),
         detail: chance >= 50 ? 'Rain is more likely than not' : 'Rain is unlikely',
+        scale: clampScale(chance, 100),
       };
     },
   },
@@ -141,12 +181,13 @@ export const METRIC_MODULES: MetricModuleDefinition[] = [
     id: 'wind-speed',
     title: 'Wind',
     description: 'Current wind speed and direction.',
+    icon: 'air',
     read: (data, units) => {
       const current = data.current;
       if (!current) return null;
       return {
-        value: formatSpeed(current.windMph, units),
-        detail: `From the ${current.windDirection}`,
+        ...splitUnit(formatSpeed(current.windMph, units)),
+        detail: `${describeWindStrength(current.windMph)}, from the ${current.windDirection}`,
         qualifier: data.wind?.gustMph != null ? `Gusting ${formatSpeed(data.wind.gustMph, units)}` : undefined,
       };
     },
@@ -155,16 +196,18 @@ export const METRIC_MODULES: MetricModuleDefinition[] = [
     id: 'humidity',
     title: 'Humidity',
     description: 'Relative humidity.',
+    icon: 'humidity',
     read: (data) => {
       const humidity = data.comfort?.humidityPercent;
       if (humidity == null) return null;
-      return { value: formatPercent(humidity), detail: describeHumidity(humidity) };
+      return { value: formatPercent(humidity), detail: describeHumidity(humidity), scale: clampScale(humidity, 100) };
     },
   },
   {
     id: 'dew-point',
     title: 'Dew Point',
     description: 'The temperature at which air becomes saturated.',
+    icon: 'dew-point',
     read: (data, units) => {
       const dewPoint = data.comfort?.dewPointF;
       if (dewPoint == null) return null;
@@ -179,22 +222,24 @@ export const METRIC_MODULES: MetricModuleDefinition[] = [
     id: 'uv-index',
     title: 'UV Index',
     description: 'Current ultraviolet exposure.',
+    icon: 'uv',
     read: (data) => {
       const uv = data.sun?.uvIndexNow ?? data.comfort?.uvIndex ?? null;
       if (uv == null) return null;
-      return { value: formatIndex(uv), detail: describeUv(uv), qualifier: 'Out of 11+' };
+      return { value: formatIndex(uv), detail: describeUv(uv), qualifier: 'Out of 11+', scale: clampScale(uv, 11) };
     },
   },
   {
     id: 'pressure',
     title: 'Pressure',
     description: 'Barometric pressure at sea level.',
+    icon: 'pressure',
     read: (data, units) => {
       const pressure = data.atmospheric?.pressureInHg ?? data.comfort?.pressureInHg ?? null;
       if (pressure == null) return null;
       const trend = data.atmospheric?.pressureTrend;
       return {
-        value: formatPressure(pressure, units),
+        ...splitUnit(formatPressure(pressure, units)),
         detail: trend ? `${trend.charAt(0).toUpperCase()}${trend.slice(1)}` : undefined,
       };
     },
@@ -203,11 +248,12 @@ export const METRIC_MODULES: MetricModuleDefinition[] = [
     id: 'visibility',
     title: 'Visibility',
     description: 'How far you can see.',
+    icon: 'visibility',
     read: (data, units) => {
       const visibility = data.atmospheric?.visibilityMiles ?? data.comfort?.visibilityMiles ?? null;
       if (visibility == null) return null;
       return {
-        value: formatDistance(visibility, units),
+        ...splitUnit(formatDistance(visibility, units)),
         detail: visibility >= 6 ? 'Clear' : visibility >= 3 ? 'Hazy' : 'Poor',
       };
     },
@@ -216,24 +262,28 @@ export const METRIC_MODULES: MetricModuleDefinition[] = [
     id: 'cloud-cover',
     title: 'Cloud Cover',
     description: 'Portion of the sky covered by cloud.',
+    icon: 'cloud-cover',
     read: (data) => {
       const cloud = data.atmospheric?.cloudCoverPercent;
       if (cloud == null) return null;
-      return { value: formatPercent(cloud), detail: describeCloudCover(cloud) };
+      return { value: formatPercent(cloud), detail: describeCloudCover(cloud), scale: clampScale(cloud, 100) };
     },
   },
   {
     id: 'air-quality-index',
     title: 'Air Quality',
     description: 'US Air Quality Index.',
+    icon: 'leaf',
     read: (data) => {
       const aqi = data.airQuality?.usAqi ?? data.comfort?.airQualityIndex ?? null;
       if (aqi == null) return null;
       const category = data.airQuality?.category;
       return {
         value: formatIndex(aqi),
+        unit: 'US AQI',
         detail: category ? AQI_CATEGORY_LABEL[category] : undefined,
-        qualifier: 'US AQI',
+        // The bar tops out where the EPA bands reach "Hazardous"; the index itself can run past it.
+        scale: clampScale(aqi, 300),
       };
     },
   },
@@ -241,14 +291,14 @@ export const METRIC_MODULES: MetricModuleDefinition[] = [
     id: 'sunrise-sunset',
     title: 'Sun',
     description: 'Sunrise and sunset for this location.',
+    icon: 'twilight',
     read: (data) => {
       const sun = data.sun;
       if (!sun || (!sun.sunrise && !sun.sunset)) return null;
       const zone = data.location.timezone;
-      const sunrise = formatTime(sun.sunrise, zone);
       const sunset = formatTime(sun.sunset, zone);
       return {
-        value: sunrise === UNAVAILABLE ? UNAVAILABLE : sunrise,
+        ...splitUnit(formatTime(sun.sunrise, zone)),
         detail: `Sunset ${sunset}`,
         qualifier: 'Sunrise',
       };

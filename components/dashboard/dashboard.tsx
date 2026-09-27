@@ -5,16 +5,15 @@ import { arrayMove } from '@dnd-kit/sortable';
 import { ArrangeToolbar } from '@/components/dashboard/arrange-toolbar';
 import { CardGrid } from '@/components/dashboard/card-grid';
 import { Hero } from '@/components/dashboard/hero';
-import { LedgerFooter } from '@/components/dashboard/ledger-footer';
 import { Menu } from '@/components/dashboard/menu';
+import { SiteHeader } from '@/components/dashboard/site-header';
 import { LocationPanel } from '@/components/location/location-panel';
 import { Onboarding } from '@/components/onboarding/onboarding';
 import { getCardDefinition, type WeatherCardId } from '@/components/weather/card-registry';
 import { useEscapeKey } from '@/lib/hooks/use-escape-key';
 import { useHasHydrated } from '@/lib/hooks/use-has-hydrated';
-import { useResolvedTheme } from '@/lib/hooks/use-resolved-theme';
 import { useWeatherData } from '@/lib/hooks/use-weather-data';
-import { applyThemePreference } from '@/lib/theme';
+import { applyTheme } from '@/lib/theme';
 import { buildShareUrl, decodePreferences, SHARE_PARAM } from '@/lib/weather/share-link';
 import { useDashboardStore } from '@/store/dashboard-store';
 
@@ -40,7 +39,6 @@ export function Dashboard() {
   const setUnitSystem = useDashboardStore((state) => state.setUnitSystem);
   const theme = useDashboardStore((state) => state.theme);
   const setTheme = useDashboardStore((state) => state.setTheme);
-  const resolvedTheme = useResolvedTheme(theme);
   const cards = useDashboardStore((state) => state.cards);
   const isEditing = useDashboardStore((state) => state.isEditing);
   const setEditing = useDashboardStore((state) => state.setEditing);
@@ -102,7 +100,7 @@ export function Dashboard() {
   // The inline script in layout.tsx sets the theme before paint; this keeps the attribute in step
   // when the user changes it afterwards.
   useEffect(() => {
-    if (hasHydrated) applyThemePreference(theme, document.documentElement);
+    if (hasHydrated) applyTheme(theme, document.documentElement);
   }, [theme, hasHydrated]);
 
   // Until saved preferences have loaded we don't know which location to request, so no fetch is
@@ -182,7 +180,7 @@ export function Dashboard() {
   });
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col">
+    <>
       {/* Waits for hydration like the grid does: rendering before saved preferences load would show
           the first-run flow to someone who finished it months ago. */}
       {hasHydrated && !hasOnboarded && (
@@ -193,27 +191,17 @@ export function Dashboard() {
         />
       )}
 
-      <header className="flex items-start justify-between gap-4 border-b border-line-strong pb-4">
-        <div>
-          <h1 className="font-display text-3xl leading-none tracking-tight text-ink-strong sm:text-4xl">
-            Weather
-          </h1>
-          <p className="eyebrow mt-2 text-muted">Open-Meteo · arranged however you like</p>
-        </div>
-
-        <div className="flex items-start gap-3">
-          {/* Purely decorative masthead stamp — no information beyond what the wordmark already
-              states, so it stays out of the accessibility tree rather than duplicating it. */}
-          <div
-            aria-hidden="true"
-            className="relative flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-ink-strong"
-          >
-            <span className="pointer-events-none absolute inset-1 rounded-full border border-dashed border-muted" />
-            <span className="font-display relative text-center text-[9px] leading-[1.15] tracking-[0.06em] text-ink-strong">
-              WX
-            </span>
-          </div>
-
+      <SiteHeader
+        location={location}
+        hasHydrated={hasHydrated}
+        updatedAt={data?.updatedAt}
+        timeZone={data?.location.timezone}
+        isStale={isStale}
+        onRefresh={refresh}
+        isRefreshing={isRefreshing}
+        onOpenLocationPanel={() => setIsLocationPanelOpen(true)}
+        locationButtonRef={locationButtonRef}
+        menu={
           <Menu
             isOpen={isMenuOpen}
             onOpen={() => setIsMenuOpen(true)}
@@ -232,23 +220,7 @@ export function Dashboard() {
             onRestartOnboarding={restartOnboarding}
             triggerRef={menuTriggerRef}
           />
-        </div>
-      </header>
-
-      <Hero
-        location={location}
-        data={data}
-        isLoading={isLoading && !data}
-        errorMessage={isStale ? undefined : failed}
-        unitSystem={unitSystem}
-        hasHydrated={hasHydrated}
-        resolvedTheme={resolvedTheme}
-        onRefresh={refresh}
-        isRefreshing={isRefreshing}
-        isStale={isStale}
-        failureMessage={failed}
-        onOpenLocationPanel={() => setIsLocationPanelOpen(true)}
-        locationButtonRef={locationButtonRef}
+        }
       />
 
       <LocationPanel
@@ -263,36 +235,50 @@ export function Dashboard() {
         onRemove={removeSavedLocation}
       />
 
-      {isEditing && (
-        <ArrangeToolbar
-          onDone={exitArranging}
-          liftedTitle={liftedTitle}
-          onCancelLift={cancelLift}
-          announcement={moveAnnouncement}
+      {/* One column for everything below the header, so the arrange toolbar's sticky range spans
+          the whole page rather than ending with a wrapper. */}
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pt-5 pb-8">
+        <Hero
+          location={location}
+          data={data}
+          isLoading={isLoading && !data}
+          errorMessage={isStale ? undefined : failed}
+          unitSystem={unitSystem}
+          onRefresh={refresh}
+          isRefreshing={isRefreshing}
+          isStale={isStale}
+          failureMessage={failed}
         />
-      )}
 
-      {/* Rendering the saved layout before rehydration would flash the defaults, so the grid waits. */}
-      <CardGrid
-        cards={cards}
-        isHydrated={hasHydrated}
-        cardProps={{ data, isLoading: isLoading && !data, unitSystem, activities }}
-        isEditing={isEditing}
-        onReorder={reorderCards}
-        onMove={moveCard}
-        onSetSize={setCardSize}
-        onRemove={removeCard}
-        onDragActiveChange={(isDragActive) => {
-          isDraggingCardRef.current = isDragActive;
-          // Starting a drag abandons a pending tap-placement: one move at a time.
-          if (isDragActive) setLiftedId(null);
-        }}
-        liftedId={liftedId}
-        onToggleLift={toggleLift}
-        onPlaceAt={placeLiftedAt}
-      />
+        {isEditing && (
+          <ArrangeToolbar
+            onDone={exitArranging}
+            liftedTitle={liftedTitle}
+            onCancelLift={cancelLift}
+            announcement={moveAnnouncement}
+          />
+        )}
 
-      <LedgerFooter />
-    </div>
+        {/* Rendering the saved layout before rehydration would flash the defaults, so the grid waits. */}
+        <CardGrid
+          cards={cards}
+          isHydrated={hasHydrated}
+          cardProps={{ data, isLoading: isLoading && !data, unitSystem, activities }}
+          isEditing={isEditing}
+          onReorder={reorderCards}
+          onMove={moveCard}
+          onSetSize={setCardSize}
+          onRemove={removeCard}
+          onDragActiveChange={(isDragActive) => {
+            isDraggingCardRef.current = isDragActive;
+            // Starting a drag abandons a pending tap-placement: one move at a time.
+            if (isDragActive) setLiftedId(null);
+          }}
+          liftedId={liftedId}
+          onToggleLift={toggleLift}
+          onPlaceAt={placeLiftedAt}
+        />
+      </div>
+    </>
   );
 }

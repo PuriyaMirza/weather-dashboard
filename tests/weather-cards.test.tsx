@@ -136,6 +136,26 @@ describe('daily forecast card', () => {
   });
 });
 
+describe('daily forecast rows', () => {
+  it("spells out each day's low and high for assistive tech, beside the decorative range bar", () => {
+    const DailyForecast = cardComponent('daily-forecast');
+    render(<DailyForecast data={mockWeatherData} unitSystem="imperial" />);
+
+    const [first] = mockWeatherData.daily;
+    const name = `Low ${Math.round(first.lowF)}°, high ${Math.round(first.highF)}°`;
+    expect(screen.getAllByRole('cell', { name }).length).toBeGreaterThan(0);
+  });
+});
+
+describe('reading tiles', () => {
+  it('keeps the number and its unit together as one reading', () => {
+    const Wind = cardComponent('wind-speed');
+    render(<Wind data={mockWeatherData} unitSystem="imperial" />);
+
+    expect(screen.getByRole('article', { name: 'Wind' })).toHaveTextContent('8 mph');
+  });
+});
+
 describe('sun and UV card', () => {
   it('describes UV risk in words, not only by colour', () => {
     const SunUv = cardComponent('sun-uv');
