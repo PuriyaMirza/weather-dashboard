@@ -296,7 +296,7 @@ A saved layout referencing a card this version no longer has degrades to the rem
 | **Rendering** | Live data must render per-request, never frozen at build time | ✅ `dynamic = 'force-dynamic'` |
 | **Type safety** | `strict: true`, no `any` in the data pipeline | ✅ |
 | **Browser support** | Modern evergreen browsers | ✅ Implicit |
-| **Dark mode** | Follows the system, with a manual override | ✅ Complete — semantic token layer, verified AA in both palettes |
+| **Themes** | Named visual themes chosen in the menu (replaced the earlier light/dark mode) | ✅ Forest shipped — per-theme token blocks, AA-checked by `tests/theme-contrast.test.ts`; more themes (Alpine, Seaside) planned |
 
 ---
 
@@ -396,7 +396,7 @@ a four-column grid, collapsing to two columns on a phone. This replaces the earl
 narrow/wide span. Layouts saved under the old shape are translated, not discarded.
 
 **All customization lives in one menu.** A hamburger in the top-right opens a dialog containing the
-module toggle list, units, appearance, presets, restore-defaults, and arrange mode — replacing the
+module toggle list, units, theme, presets, restore-defaults, and arrange mode — replacing the
 header toolbar, the add-card drawer, and the inline preset row.
 
 **Visual language.** Monochrome, square-cornered, hairline-ruled, with an editorial serif for

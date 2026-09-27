@@ -1,5 +1,5 @@
 import type { IconName } from '@/components/ui/icon';
-import type { WeatherDashboardData } from './types';
+import type { AirQualityCategory, WeatherDashboardData } from './types';
 import {
   UNAVAILABLE,
   describeTemperature,
@@ -109,7 +109,7 @@ function describeCloudCover(percent: number): string {
   return 'Overcast';
 }
 
-const AQI_CATEGORY_LABEL: Record<string, string> = {
+export const AQI_CATEGORY_LABEL: Record<AirQualityCategory, string> = {
   good: 'Good',
   moderate: 'Moderate',
   sensitive: 'Unhealthy for sensitive groups',

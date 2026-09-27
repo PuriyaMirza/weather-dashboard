@@ -21,7 +21,9 @@ interface HourlyStripProps {
  * crosses midnight, and tomorrow's 6 AM measured against today's sunset would read as night.
  */
 function isHourDaytime(hour: HourlyPoint, data: WeatherDashboardData): boolean {
-  const day = data.daily.find((entry) => entry.date === hour.time.slice(0, 10));
+  // Tolerates a malformed daily row: the strip sits outside any module boundary, so a bad entry
+  // here would take down the whole page rather than just the Daily Forecast tile.
+  const day = data.daily.find((entry) => entry?.date === hour.time.slice(0, 10));
   return inferIsDay(hour.time, day?.sunrise ?? null, day?.sunset ?? null);
 }
 

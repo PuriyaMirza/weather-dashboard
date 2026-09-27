@@ -124,7 +124,7 @@ export function CardGrid({
 
   if (!isHydrated) {
     return (
-      <div className="mt-8">
+      <div>
         {header}
         <p role="status" className={PLACEHOLDER}>
           Loading your dashboard…
@@ -135,7 +135,7 @@ export function CardGrid({
 
   if (cards.length === 0) {
     return (
-      <div className="mt-8">
+      <div>
         {header}
         <p role="status" className={PLACEHOLDER}>
           Your dashboard is empty. Open the menu to choose what to show.
@@ -145,7 +145,7 @@ export function CardGrid({
   }
 
   return (
-    <div className="mt-8">
+    <div>
       {header}
       <DndContext
         sensors={sensors}

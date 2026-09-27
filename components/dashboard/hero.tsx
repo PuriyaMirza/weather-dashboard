@@ -14,7 +14,8 @@ import {
   skyHeadline,
 } from '@/lib/weather/atmosphere';
 import { formatRegionLabel, type SelectedLocation } from '@/lib/weather/location';
-import type { AirQualityCategory, AirQualityMetrics, WeatherDashboardData } from '@/lib/weather/types';
+import type { AirQualityMetrics, WeatherDashboardData } from '@/lib/weather/types';
+import { AQI_CATEGORY_LABEL } from '@/lib/weather/metrics';
 import { formatTemperature, formatTime, type UnitSystem } from '@/lib/weather/units';
 
 interface HeroProps {
@@ -30,15 +31,6 @@ interface HeroProps {
   /** Why the newest attempt failed, shown whether or not there is stale data behind it. */
   failureMessage?: string;
 }
-
-const AIR_QUALITY_LABEL: Record<AirQualityCategory, string> = {
-  good: 'Good',
-  moderate: 'Moderate',
-  sensitive: 'Unhealthy for sensitive groups',
-  unhealthy: 'Unhealthy',
-  'very-unhealthy': 'Very unhealthy',
-  hazardous: 'Hazardous',
-};
 
 /**
  * The sentence under the hero heading: today's range and the next sun event. The sunset is only
@@ -64,7 +56,7 @@ function AirQualityStrip({ airQuality }: { airQuality: AirQualityMetrics }) {
       <Icon name="air" size={20} className="shrink-0 text-secondary" />
       <div className="flex min-w-0 flex-col">
         <p className="type-label-md text-on-surface">
-          Air Quality: {category ? AIR_QUALITY_LABEL[category] : MISSING}
+          Air Quality: {category ? AQI_CATEGORY_LABEL[category] : MISSING}
         </p>
         <p className="type-label-sm text-on-secondary-container">
           US AQI {usAqi == null ? MISSING : Math.round(usAqi)} • PM2.5{' '}

@@ -72,37 +72,6 @@
      toolbar) sits beneath it instead of underneath it. */
   --header-height: 5rem;
 
-  /* ---- Legacy tokens (TEMPORARY) ------------------------------------------------------------
-     Pre-Forest names, mapped onto Forest values so not-yet-converted components still render
-     legibly during the migration. Removed once nothing references them. */
-  --canvas: var(--surface);
-  --card: var(--surface-container-low);
-  --card-raised: var(--surface-container-high);
-  --ink: var(--on-surface);
-  --ink-strong: var(--primary);
-  --muted: var(--on-surface-variant);
-  --line: var(--outline-variant);
-  --line-strong: var(--secondary);
-  --accent: var(--secondary-fixed);
-  --accent-ink: var(--on-secondary);
-  --accent-soft: var(--secondary-container);
-  --accent-soft-ink: var(--secondary-fixed);
-  --danger: var(--error);
-  --danger-soft: var(--error-container);
-  --danger-line: var(--error);
-  --cream: var(--surface-container-low);
-  --cream-2: var(--surface-container-high);
-  --ink-soft: var(--on-secondary-container);
-  --ink-muted: var(--on-surface-variant);
-  --red: var(--secondary-fixed);
-  --blue: var(--secondary);
-  --hairline: var(--outline-variant);
-  --ledger-ink: var(--on-surface);
-  --ledger-chart-grid: var(--chart-grid);
-  --ledger-chart-axis: var(--chart-axis);
-  --ledger-chart-bar: var(--chart-bar);
-  --ledger-danger: var(--error);
-
   color-scheme: dark;
 }
 
@@ -137,32 +106,6 @@
   --shadow-card: 0 1px 3px rgb(var(--shadow-color) / 0.35);
   --shadow-raised: 0 8px 24px rgb(var(--shadow-color) / 0.5);
   --shadow-header: 0 4px 24px rgb(var(--shadow-color) / 0.6);
-
-  /* Legacy (TEMPORARY) — see the note in the token block. */
-  --color-canvas: var(--canvas);
-  --color-card: var(--card);
-  --color-card-raised: var(--card-raised);
-  --color-ink: var(--ink);
-  --color-ink-strong: var(--ink-strong);
-  --color-muted: var(--muted);
-  --color-line: var(--line);
-  --color-line-strong: var(--line-strong);
-  --color-accent: var(--accent);
-  --color-accent-ink: var(--accent-ink);
-  --color-accent-soft: var(--accent-soft);
-  --color-accent-soft-ink: var(--accent-soft-ink);
-  --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
-  --color-danger-line: var(--danger-line);
-  --color-cream: var(--cream);
-  --color-cream-2: var(--cream-2);
-  --color-ink-soft: var(--ink-soft);
-  --color-ink-muted: var(--ink-muted);
-  --color-ledger-ink: var(--ledger-ink);
-  --color-ledger-danger: var(--ledger-danger);
-  --color-red: var(--red);
-  --color-blue: var(--blue);
-  --color-hairline: var(--hairline);
 }
 
 body {
@@ -234,30 +177,6 @@ body {
   &::-webkit-scrollbar {
     display: none;
   }
-}
-
-/* Legacy (TEMPORARY): pre-Forest label classes, kept until every component is converted. */
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.6875rem;
-  font-weight: 500;
-}
-
-.ledger-label {
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--on-secondary-container);
-}
-
-/* The atmospheric wash behind the hero. Its tones come from atmosphere.ts and change with the
-   weather; it is decorative only, and never the sole carrier of information. */
-.atmosphere {
-  background-image:
-    radial-gradient(130% 100% at 12% 0%, var(--sky-from) 0%, transparent 62%),
-    linear-gradient(180deg, var(--sky-via) 0%, var(--sky-to) 100%);
 }
 
 /*
