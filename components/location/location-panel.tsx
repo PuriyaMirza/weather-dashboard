@@ -2,6 +2,7 @@
 
 import { useCallback, useId, useRef, type RefObject } from 'react';
 import { SavedLocations } from '@/components/dashboard/saved-locations';
+import { Icon } from '@/components/ui/icon';
 import { useDialogFocus } from '@/lib/hooks/use-dialog-focus';
 import type { SelectedLocation } from '@/lib/weather/location';
 import { LocationSearch } from './location-search';
@@ -64,25 +65,26 @@ export function LocationPanel({
     <>
       {/* Not a focus target: Escape and the close button cover keyboard users, and a tabbable
           overlay would just be a dead stop in the order — same reasoning as the settings menu. */}
-      <div className="fixed inset-0 z-40 bg-canvas/70" onClick={close} aria-hidden="true" />
+      <div className="fixed inset-0 z-40 bg-surface/70 backdrop-blur-sm" onClick={close} aria-hidden="true" />
 
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="fixed left-1/2 top-24 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 border border-line-strong bg-card p-5"
+        className="fixed left-1/2 top-24 z-50 max-h-[calc(100dvh-7rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 overflow-y-auto rounded-2xl bg-surface-container-low p-5 text-on-surface shadow-raised"
       >
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 id={titleId} className="font-display text-2xl leading-none text-ink-strong">
+        <div className="flex items-center justify-between gap-4">
+          <h2 id={titleId} className="type-headline-sm text-primary">
             Change location
           </h2>
           <button
             type="button"
             onClick={close}
-            className="eyebrow text-muted outline-none hover:text-ink-strong focus-visible:ring-2 focus-visible:ring-accent"
+            aria-label="Close"
+            className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant outline-none hover:bg-surface-container-high hover:text-primary focus-visible:ring-2 focus-visible:ring-secondary-fixed"
           >
-            Close
+            <Icon name="close" size={22} />
           </button>
         </div>
 
@@ -91,7 +93,11 @@ export function LocationPanel({
         </div>
 
         {hasHydrated && (
-          <div className="mt-5 border-t border-line pt-4">
+          <div className="mt-5 border-t border-outline-variant pt-4">
+            {/* Visual only: SavedLocations carries its own (screen-reader) heading. */}
+            <p aria-hidden="true" className="mb-3 type-label-sm uppercase text-secondary">
+              Saved places
+            </p>
             <SavedLocations active={active} saved={saved} onSelect={handleSelect} onSave={onSave} onRemove={onRemove} />
           </div>
         )}

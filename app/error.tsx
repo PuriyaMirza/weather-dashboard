@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Route-level fallback: the last line of defence if something throws outside a module boundary.
@@ -17,21 +18,25 @@ export default function DashboardError({ error, retry }: { error: Error & { dige
   }, [error]);
 
   return (
-    <main className="min-h-screen bg-canvas px-4 py-8 sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-2xl border border-line-strong bg-card p-8">
-        <h1 className="font-display text-3xl leading-none text-ink-strong">Something went wrong</h1>
-        <p className="mt-4 text-sm text-ink">
+    <main className="min-h-screen bg-surface px-4 py-8 sm:px-8 lg:px-12">
+      <div className="mx-auto max-w-2xl rounded-2xl bg-surface-container-low p-8 text-on-surface shadow-raised">
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-error-container text-error">
+          <Icon name="error" size={22} />
+        </span>
+        <h1 className="mt-4 font-display text-3xl leading-tight text-primary">Something went wrong</h1>
+        <p className="mt-3 type-body-md text-on-surface-variant">
           The dashboard hit an unexpected problem. Your saved locations and layout are untouched.
         </p>
         {/* The digest is the only handle on a production error, whose message Next deliberately
             strips before it reaches the browser. Without it a bug report has nothing to match on. */}
-        {error.digest && <p className="eyebrow mt-3 text-muted">Reference {error.digest}</p>}
+        {error.digest && <p className="mt-3 type-label-sm uppercase text-secondary">Reference {error.digest}</p>}
 
         <button
           type="button"
           onClick={retry}
-          className="eyebrow mt-6 border border-line-strong px-4 py-2 text-ink outline-none hover:bg-accent hover:text-accent-ink focus-visible:ring-2 focus-visible:ring-accent"
+          className="mt-6 inline-flex min-h-11 items-center gap-1.5 rounded-full bg-secondary-fixed px-5 type-label-lg text-on-secondary outline-none hover:bg-primary-fixed focus-visible:ring-2 focus-visible:ring-secondary-fixed focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-low"
         >
+          <Icon name="refresh" size={18} />
           Try again
         </button>
       </div>
