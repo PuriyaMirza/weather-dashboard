@@ -43,15 +43,16 @@ const HANDLE =
   'active:cursor-grabbing';
 
 /** Quieter than the handle now that dragging works, but never hidden: this is the only route that
- *  needs no pointer at all, so it must not sit behind a disclosure. */
+ *  needs no pointer at all, so it must not sit behind a disclosure. The visible word sits inside
+ *  the accessible name, so voice control can say what it sees. */
 const NUDGE =
-  'flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-highest text-on-surface ' +
-  'outline-none hover:bg-surface-bright focus-visible:ring-2 focus-visible:ring-secondary-fixed ' +
-  'disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-surface-container-highest';
+  'flex h-11 min-w-0 flex-1 items-center justify-center gap-1 rounded-full bg-surface-container-highest ' +
+  'type-label-md text-on-surface outline-none hover:bg-surface-bright focus-visible:ring-2 ' +
+  'focus-visible:ring-secondary-fixed disabled:cursor-not-allowed disabled:opacity-35 ' +
+  'disabled:hover:bg-surface-container-highest';
 
-/** 28px wide rather than 32 so the pill and both nudges still fit a ~170px phone module. */
 const SIZE_CHIP =
-  'flex h-8 w-7 items-center justify-center rounded-full type-label-md outline-none ' +
+  'flex h-11 min-w-0 flex-1 items-center justify-center rounded-full type-label-md outline-none ' +
   'focus-visible:ring-2 focus-visible:ring-secondary-fixed';
 
 /**
@@ -62,8 +63,9 @@ const SIZE_CHIP =
  * Every control carries the module's name, so a screen-reader user is never left guessing which
  * "Move up" they are on.
  *
- * Two rows by design rather than by accident: at two columns a module is about 170px wide, and
- * five usable targets do not fit on one line at any size worth tapping.
+ * Three rows by design rather than by accident: at two columns a module is 155–170px wide, and
+ * stacking is the only way every target stays a full 44px square. It costs height only while
+ * arranging, which is when the targets matter.
  */
 export function CardControls({
   title,
@@ -123,40 +125,41 @@ export function CardControls({
         </button>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <button type="button" onClick={onMoveUp} disabled={isFirst} className={NUDGE} aria-label={`Move ${title} earlier`}>
           <Icon name="arrow-back" size={18} />
+          Earlier
         </button>
-
         <button type="button" onClick={onMoveDown} disabled={isLast} className={NUDGE} aria-label={`Move ${title} later`}>
+          Later
           <Icon name="arrow-forward" size={18} />
         </button>
+      </div>
 
-        {/* A radio group, not a cycling button: the three sizes are all visible and directly
-            reachable, and the current one is announced rather than merely drawn. */}
-        <div
-          role="radiogroup"
-          aria-label={`Size of ${title}`}
-          className="ml-auto flex rounded-full bg-surface-container-highest p-0.5"
-        >
-          {CARD_SIZES.map((candidate) => (
-            <button
-              key={candidate}
-              type="button"
-              role="radio"
-              aria-checked={size === candidate}
-              onClick={() => onSetSize(candidate)}
-              className={
-                size === candidate
-                  ? `${SIZE_CHIP} bg-secondary-container text-secondary-fixed`
-                  : `${SIZE_CHIP} text-on-surface-variant hover:text-primary`
-              }
-              aria-label={`${CARD_SIZE_LABEL[candidate]} ${title}`}
-            >
-              {CARD_SIZE_LABEL[candidate].charAt(0)}
-            </button>
-          ))}
-        </div>
+      {/* A radio group, not a cycling button: the three sizes are all visible and directly
+          reachable, and the current one is announced rather than merely drawn. */}
+      <div
+        role="radiogroup"
+        aria-label={`Size of ${title}`}
+        className="flex gap-0.5 rounded-full bg-surface-container-highest p-0.5"
+      >
+        {CARD_SIZES.map((candidate) => (
+          <button
+            key={candidate}
+            type="button"
+            role="radio"
+            aria-checked={size === candidate}
+            onClick={() => onSetSize(candidate)}
+            className={
+              size === candidate
+                ? `${SIZE_CHIP} bg-secondary-container text-secondary-fixed`
+                : `${SIZE_CHIP} text-on-surface-variant hover:text-primary`
+            }
+            aria-label={`${CARD_SIZE_LABEL[candidate]} ${title}`}
+          >
+            {CARD_SIZE_LABEL[candidate].charAt(0)}
+          </button>
+        ))}
       </div>
     </div>
   );
