@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { Dashboard } from '@/components/dashboard/dashboard';
 import { Hero } from '@/components/dashboard/hero';
-import { rainRangeLabel } from '@/components/dashboard/hourly-strip';
 import { DEFAULT_CARD_LAYOUT } from '@/lib/weather/card-layout';
 import { DEFAULT_LOCATION, coordinatesToLocation } from '@/lib/weather/location';
 import { mockWeatherData } from '@/lib/weather/mock-data';
@@ -146,38 +145,6 @@ describe('right now card', () => {
     expect(screen.getByText('22 degrees Celsius')).toBeInTheDocument();
     const stats = screen.getByText('Pressure').closest('dl') as HTMLElement;
     expect(within(stats).getAllByRole('definition').at(-1)).toHaveTextContent('1019 hPa');
-  });
-});
-
-describe('next hours strip', () => {
-  it('lists each hour with its time, temperature and condition in text', () => {
-    renderHero();
-
-    const list = screen.getByRole('list', { name: /next hours/i });
-    const items = within(list).getAllByRole('listitem');
-    expect(items).toHaveLength(mockWeatherData.hourly.length);
-    expect(items[0]).toHaveTextContent('9 AM');
-    expect(items[0]).toHaveTextContent('62°');
-    expect(items[0]).toHaveTextContent('Clouds');
-    expect(items[0]).toHaveTextContent('8% chance of rain');
-  });
-
-  it('marks the hour containing the observation as now, with the observed reading and its clock hour', () => {
-    renderHero();
-
-    const items = within(screen.getByRole('list', { name: /next hours/i })).getAllByRole('listitem');
-    const now = items.find((item) => item.textContent?.includes('Now'));
-    expect(now).toBeDefined();
-    expect(now).toHaveTextContent('3 PM');
-    // The observed 72°, not the 77° forecast for the hour, so it matches the card above it.
-    expect(now).toHaveTextContent('72°');
-  });
-
-  it('summarises the rain range of the hours shown', () => {
-    renderHero();
-    expect(screen.getByText('Rain 6–18%')).toBeInTheDocument();
-    expect(rainRangeLabel([])).toBeNull();
-    expect(rainRangeLabel(mockWeatherData.hourly.slice(0, 1))).toBe('Rain 8%');
   });
 });
 

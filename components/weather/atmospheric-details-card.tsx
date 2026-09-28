@@ -26,7 +26,14 @@ function describeCloudCover(percent: number): string {
   return 'Overcast';
 }
 
-export function AtmosphericDetailsCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
+export function AtmosphericDetailsCard({
+  data,
+  isLoading,
+  errorMessage,
+  unitSystem,
+  isEditing,
+  onRemove,
+}: WeatherCardProps) {
   const atmospheric = data?.atmospheric;
 
   return (
@@ -34,6 +41,8 @@ export function AtmosphericDetailsCard({ data, isLoading, errorMessage, unitSyst
       title={TITLE}
       description={DESCRIPTION}
       icon="pressure"
+      isEditing={isEditing}
+      onRemove={onRemove}
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={!atmospheric}

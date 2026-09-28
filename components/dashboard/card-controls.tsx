@@ -6,17 +6,14 @@ import { CARD_SIZES, CARD_SIZE_LABEL, type CardSize } from '@/lib/weather/card-l
 interface CardControlsProps {
   title: string;
   size: CardSize;
-  isFirst: boolean;
-  isLast: boolean;
   position: number;
   total: number;
   /** This module is waiting to be placed somewhere. */
   isLifted: boolean;
   onToggleLift: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
   onSetSize: (size: CardSize) => void;
-  onRemove: () => void;
+  /** False for a module with exactly one shape (Next Hours): nothing to choose, so nothing to show. */
+  sizable?: boolean;
   /** Props from useSortable that turn the handle into a drag/keyboard-drag affordance. */
   dragHandleProps: React.HTMLAttributes<HTMLButtonElement>;
   /** Tells dnd-kit which element is the activator. Kept apart from the props above: a ref cannot
@@ -42,125 +39,88 @@ const HANDLE =
   'justify-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-secondary-fixed ' +
   'active:cursor-grabbing';
 
-/** Quieter than the handle now that dragging works, but never hidden: this is the only route that
- *  needs no pointer at all, so it must not sit behind a disclosure. The visible word sits inside
- *  the accessible name, so voice control can say what it sees. */
-const NUDGE =
-  'flex h-11 min-w-0 flex-1 items-center justify-center gap-1 rounded-full bg-surface-container-highest ' +
-  'type-label-md text-on-surface outline-none hover:bg-surface-bright focus-visible:ring-2 ' +
-  'focus-visible:ring-secondary-fixed disabled:cursor-not-allowed disabled:opacity-35 ' +
-  'disabled:hover:bg-surface-container-highest';
-
 const SIZE_CHIP =
   'flex h-11 min-w-0 flex-1 items-center justify-center rounded-full type-label-md outline-none ' +
   'focus-visible:ring-2 focus-visible:ring-secondary-fixed';
 
 /**
- * Edit affordances for a single module.
+ * Edit affordances for a single module: the drag handle, and — unless the module has only one
+ * shape — the size picker. Reordering is never pointer-only: the handle carries dnd-kit's keyboard
+ * sensor (space/enter to lift, arrow keys to move) as well as tap-to-place (tap the handle, then
+ * tap a destination tile), so a keyboard or screen-reader user loses nothing by there being no
+ * separate move buttons. Removing a module now lives on the module's own header (see
+ * components/weather/card-frame.tsx) rather than here, so its icon and its edit affordance sit
+ * next to each other instead of in two different places on the tile.
  *
- * Neither reordering nor resizing is ever pointer-only: the move buttons do the same job as a
- * drag with no drag model at all, and size is a labelled radio group rather than a corner handle.
- * Every control carries the module's name, so a screen-reader user is never left guessing which
- * "Move up" they are on.
- *
- * Three rows by design rather than by accident: at two columns a module is 155–170px wide, and
- * stacking is the only way every target stays a full 44px square. It costs height only while
- * arranging, which is when the targets matter.
+ * Two rows, not one: the handle and three 44px size chips do not fit a ~170px module on the same
+ * line (measured — it shrank the chips to 8.6px wide, below the 24px accessibility floor), so the
+ * size picker keeps the full row width it always had. It costs height only while arranging.
  */
 export function CardControls({
   title,
   size,
-  isFirst,
-  isLast,
   position,
   total,
   isLifted,
   onToggleLift,
-  onMoveUp,
-  onMoveDown,
   onSetSize,
-  onRemove,
+  sizable = true,
   dragHandleProps,
   dragHandleRef,
 }: CardControlsProps) {
   return (
     <div className="mb-2 flex flex-col gap-1.5">
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          ref={dragHandleRef}
-          {...dragHandleProps}
-          onClick={onToggleLift}
-          aria-pressed={isLifted}
-          className={`${HANDLE} ${
-            isLifted
-              ? 'bg-secondary-container text-secondary-fixed'
-              : 'bg-surface-container-highest text-on-surface hover:bg-surface-bright'
-          }`}
-          // Deliberately "Reorder" rather than "Move": the two arrows beside it are already
-          // "Move X earlier" / "Move X later", and three buttons per module opening with the same
-          // verb is worse to listen through than it is to look at.
-          //
-          // The label names both routes because which one you get depends on your input, not on a
-          // setting. Space or Enter reaches dnd-kit's keyboard drag — its sensor calls
-          // preventDefault, which suppresses this button's click, so the two never both fire — and
-          // a pointer or touch tap falls through to the click and picks the module up instead.
-          aria-label={
-            isLifted
-              ? `Cancel moving ${title}`
-              : `Reorder ${title}. Position ${position} of ${total}. Press space or enter, then use the arrow keys, or tap to pick it up and choose a new slot.`
-          }
-        >
-          <Icon name="drag" size={22} />
-        </button>
-
-        <button
-          type="button"
-          onClick={onRemove}
-          className="ml-auto flex min-h-11 items-center gap-1 rounded-full bg-surface-container-highest px-3 type-label-md text-error outline-none hover:bg-error-container focus-visible:ring-2 focus-visible:ring-error"
-          aria-label={`Remove ${title} from the dashboard`}
-        >
-          <Icon name="delete" size={16} />
-          Remove
-        </button>
-      </div>
-
-      <div className="flex items-center gap-1.5">
-        <button type="button" onClick={onMoveUp} disabled={isFirst} className={NUDGE} aria-label={`Move ${title} earlier`}>
-          <Icon name="arrow-back" size={18} />
-          Earlier
-        </button>
-        <button type="button" onClick={onMoveDown} disabled={isLast} className={NUDGE} aria-label={`Move ${title} later`}>
-          Later
-          <Icon name="arrow-forward" size={18} />
-        </button>
-      </div>
-
-      {/* A radio group, not a cycling button: the three sizes are all visible and directly
-          reachable, and the current one is announced rather than merely drawn. */}
-      <div
-        role="radiogroup"
-        aria-label={`Size of ${title}`}
-        className="flex gap-0.5 rounded-full bg-surface-container-highest p-0.5"
+      <button
+        type="button"
+        ref={dragHandleRef}
+        {...dragHandleProps}
+        onClick={onToggleLift}
+        aria-pressed={isLifted}
+        className={`${HANDLE} ${
+          isLifted
+            ? 'bg-secondary-container text-secondary-fixed'
+            : 'bg-surface-container-highest text-on-surface hover:bg-surface-bright'
+        }`}
+        // The label names both routes because which one you get depends on your input, not on a
+        // setting. Space or Enter reaches dnd-kit's keyboard drag — its sensor calls
+        // preventDefault, which suppresses this button's click, so the two never both fire — and
+        // a pointer or touch tap falls through to the click and picks the module up instead.
+        aria-label={
+          isLifted
+            ? `Cancel moving ${title}`
+            : `Reorder ${title}. Position ${position} of ${total}. Press space or enter, then use the arrow keys, or tap to pick it up and choose a new slot.`
+        }
       >
-        {CARD_SIZES.map((candidate) => (
-          <button
-            key={candidate}
-            type="button"
-            role="radio"
-            aria-checked={size === candidate}
-            onClick={() => onSetSize(candidate)}
-            className={
-              size === candidate
-                ? `${SIZE_CHIP} bg-secondary-container text-secondary-fixed`
-                : `${SIZE_CHIP} text-on-surface-variant hover:text-primary`
-            }
-            aria-label={`${CARD_SIZE_LABEL[candidate]} ${title}`}
-          >
-            {CARD_SIZE_LABEL[candidate].charAt(0)}
-          </button>
-        ))}
-      </div>
+        <Icon name="drag" size={22} />
+      </button>
+
+      {sizable && (
+        // A radio group, not a cycling button: the three sizes are all visible and directly
+        // reachable, and the current one is announced rather than merely drawn.
+        <div
+          role="radiogroup"
+          aria-label={`Size of ${title}`}
+          className="flex gap-0.5 rounded-full bg-surface-container-highest p-0.5"
+        >
+          {CARD_SIZES.map((candidate) => (
+            <button
+              key={candidate}
+              type="button"
+              role="radio"
+              aria-checked={size === candidate}
+              onClick={() => onSetSize(candidate)}
+              className={
+                size === candidate
+                  ? `${SIZE_CHIP} bg-secondary-container text-secondary-fixed`
+                  : `${SIZE_CHIP} text-on-surface-variant hover:text-primary`
+              }
+              aria-label={`${CARD_SIZE_LABEL[candidate]} ${title}`}
+            >
+              {CARD_SIZE_LABEL[candidate].charAt(0)}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

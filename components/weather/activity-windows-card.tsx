@@ -21,7 +21,14 @@ const ACTIVITY_ICON: Record<ActivityId, IconName> = {
  * activity has no good window it says so plainly; a confident bad recommendation would be worse
  * than an honest blank.
  */
-export function ActivityWindowsCard({ data, isLoading, errorMessage, activities }: WeatherCardProps) {
+export function ActivityWindowsCard({
+  data,
+  isLoading,
+  errorMessage,
+  activities,
+  isEditing,
+  onRemove,
+}: WeatherCardProps) {
   const timeZone = data?.location.timezone;
   // An empty selection means "unspecified", not "none" — see findActivityWindows.
   const outlooks = data ? findActivityWindows(data, activities) : [];
@@ -33,6 +40,8 @@ export function ActivityWindowsCard({ data, isLoading, errorMessage, activities 
       title={TITLE}
       description={DESCRIPTION}
       icon="forest"
+      isEditing={isEditing}
+      onRemove={onRemove}
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={isUnavailable}

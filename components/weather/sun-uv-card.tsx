@@ -18,7 +18,7 @@ function describeUvIndex(uvIndex: number): { label: string; advice: string; scal
   return { label: 'Extreme', advice: 'Take full precautions; avoid sun exposure.', scale: 'scale-5' };
 }
 
-export function SunUvCard({ data, isLoading, errorMessage }: WeatherCardProps) {
+export function SunUvCard({ data, isLoading, errorMessage, isEditing, onRemove }: WeatherCardProps) {
   const timeZone = data?.location.timezone;
   const sun = data?.sun;
   const uvNow = sun?.uvIndexNow ?? null;
@@ -29,6 +29,8 @@ export function SunUvCard({ data, isLoading, errorMessage }: WeatherCardProps) {
       title={TITLE}
       description={DESCRIPTION}
       icon="uv"
+      isEditing={isEditing}
+      onRemove={onRemove}
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={!sun}

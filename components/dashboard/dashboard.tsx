@@ -44,7 +44,6 @@ export function Dashboard() {
   const setEditing = useDashboardStore((state) => state.setEditing);
   const toggleCard = useDashboardStore((state) => state.toggleCard);
   const removeCard = useDashboardStore((state) => state.removeCard);
-  const moveCard = useDashboardStore((state) => state.moveCard);
   const setCardSize = useDashboardStore((state) => state.setCardSize);
   const reorderCards = useDashboardStore((state) => state.reorderCards);
   const applyPreset = useDashboardStore((state) => state.applyPreset);
@@ -266,7 +265,6 @@ export function Dashboard() {
           cardProps={{ data, isLoading: isLoading && !data, unitSystem, activities }}
           isEditing={isEditing}
           onReorder={reorderCards}
-          onMove={moveCard}
           onSetSize={setCardSize}
           onRemove={removeCard}
           onDragActiveChange={(isDragActive) => {

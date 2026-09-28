@@ -5,7 +5,6 @@ import { Icon } from '@/components/ui/icon';
 import { Surface } from '@/components/ui/surface';
 import { CurrentConditionsSummary, MISSING } from '@/components/dashboard/current-conditions-summary';
 import { HeroIllustration } from '@/components/dashboard/hero-illustration';
-import { HourlyStrip } from '@/components/dashboard/hourly-strip';
 import { WeatherEffect } from '@/components/dashboard/weather-effect';
 import {
   atmosphereStyle,
@@ -181,12 +180,6 @@ export function Hero({
       </Surface>
 
       {data && current && <CurrentConditionsSummary data={data} isDay={isDay} unitSystem={unitSystem} />}
-
-      {data && current && !errorMessage && (
-        <div className="lg:col-span-2">
-          <HourlyStrip data={data} unitSystem={unitSystem} />
-        </div>
-      )}
     </section>
   );
 }

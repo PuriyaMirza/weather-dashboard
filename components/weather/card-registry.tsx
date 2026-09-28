@@ -10,6 +10,7 @@ import { ComfortCard } from './comfort-card';
 import { CurrentConditionsCard } from './current-conditions-card';
 import { DailyForecastCard } from './daily-forecast-card';
 import { HourlyTemperatureCard } from './hourly-temperature-card';
+import { NextHoursCard } from './next-hours-card';
 import { PrecipitationCard } from './precipitation-card';
 import { createStatModule } from './stat-module';
 import { SunUvCard } from './sun-uv-card';
@@ -23,6 +24,7 @@ export type CompositeCardId =
   | 'current-conditions'
   | 'comfort'
   | 'hourly-temperature'
+  | 'next-hours'
   | 'precipitation'
   | 'wind'
   | 'daily-forecast'
@@ -44,6 +46,9 @@ export interface WeatherCardProps {
    * never reach for the store or a request of their own.
    */
   activities?: ActivityId[];
+  /** Arrange mode: turns each card's header icon into its own remove button. See card-frame.tsx. */
+  isEditing?: boolean;
+  onRemove?: () => void;
 }
 
 /** How a module presents in the menu's toggle list: a single reading, or a grouped panel. */
@@ -85,6 +90,13 @@ const compositeCards: WeatherCardDefinition[] = [
     description: 'Temperature trend for the next several hours.',
     kind: 'panel',
     Component: HourlyTemperatureCard,
+  },
+  {
+    id: 'next-hours',
+    title: 'Next Hours',
+    description: 'Temperature and rain chance for the next several hours, hour by hour.',
+    kind: 'panel',
+    Component: NextHoursCard,
   },
   {
     id: 'precipitation',

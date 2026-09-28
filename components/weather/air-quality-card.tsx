@@ -29,7 +29,7 @@ function formatConcentration(value: number | null): string {
   return `${value.toFixed(1)} µg/m³`;
 }
 
-export function AirQualityCard({ data, isLoading, errorMessage }: WeatherCardProps) {
+export function AirQualityCard({ data, isLoading, errorMessage, isEditing, onRemove }: WeatherCardProps) {
   const airQuality = data?.airQuality;
   const category = airQuality?.category ? CATEGORY[airQuality.category] : null;
 
@@ -38,6 +38,8 @@ export function AirQualityCard({ data, isLoading, errorMessage }: WeatherCardPro
       title={TITLE}
       description={DESCRIPTION}
       icon="leaf"
+      isEditing={isEditing}
+      onRemove={onRemove}
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={!airQuality}

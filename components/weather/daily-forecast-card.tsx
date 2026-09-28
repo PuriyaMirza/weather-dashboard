@@ -21,7 +21,14 @@ function todayIsoDate(timeZone?: string): string {
   }
 }
 
-export function DailyForecastCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
+export function DailyForecastCard({
+  data,
+  isLoading,
+  errorMessage,
+  unitSystem,
+  isEditing,
+  onRemove,
+}: WeatherCardProps) {
   const days = data?.daily ?? [];
   const today = todayIsoDate(data?.location.timezone);
   // Every row's bar shares the week's scale, so a warm day visibly sits further right than a cold one.
@@ -33,6 +40,8 @@ export function DailyForecastCard({ data, isLoading, errorMessage, unitSystem }:
       title={TITLE}
       description={DESCRIPTION}
       icon="calendar"
+      isEditing={isEditing}
+      onRemove={onRemove}
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={days.length === 0}

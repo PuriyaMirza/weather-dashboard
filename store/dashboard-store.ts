@@ -6,7 +6,6 @@ import {
   LAYOUT_PRESETS,
   CARD_SIZES,
   defaultSizeFor,
-  moveEntry,
   reconcileLayout,
   type CardLayoutEntry,
   type CardSize,
@@ -62,9 +61,7 @@ export interface DashboardState extends PersistedPreferences {
   setCardSize: (id: WeatherCardId, size: CardSize) => void;
   /** Advances a module to the next size, wrapping large back round to small. */
   cycleCardSize: (id: WeatherCardId) => void;
-  /** Moves a card one position earlier (-1) or later (+1); a no-op at the ends. */
-  moveCard: (id: WeatherCardId, direction: -1 | 1) => void;
-  /** Reorders to an explicit id sequence — used by drag-and-drop. */
+  /** Reorders to an explicit id sequence — used by drag-and-drop and tap-to-place. */
   reorderCards: (orderedIds: WeatherCardId[]) => void;
   applyPreset: (presetId: string) => void;
   restoreDefaults: () => void;
@@ -246,15 +243,6 @@ export const useDashboardStore = create<DashboardState>()(
           ),
         })),
 
-      moveCard: (id, direction) =>
-        set((state) => {
-          const from = state.cards.findIndex((card) => card.id === id);
-          if (from < 0) return state;
-          const to = from + direction;
-          if (to < 0 || to >= state.cards.length) return state;
-          return { cards: moveEntry(state.cards, from, to) };
-        }),
-
       reorderCards: (orderedIds) =>
         set((state) => {
           const byId = new Map(state.cards.map((card) => [card.id, card]));
@@ -300,7 +288,7 @@ export const useDashboardStore = create<DashboardState>()(
       },
       // Bump when the persisted shape changes so old saved state is never deserialized into a
       // shape the code no longer understands.
-      version: 9,
+      version: 10,
       // Without a migrate, zustand *discards* state saved under an older version — which would
       // throw away every existing dashboard on upgrade and make reconcileLayout's span-to-size
       // translation dead code. Older state is handed through instead, because `merge` below

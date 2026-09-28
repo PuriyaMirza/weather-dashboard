@@ -124,48 +124,29 @@ describe('edit mode', () => {
   it('is off by default, exposing no per-module controls', () => {
     render(<Dashboard />);
 
-    expect(screen.queryByRole('button', { name: /^move /i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^reorder /i })).not.toBeInTheDocument();
   });
 
   it('reveals the per-module controls when turned on', () => {
     render(<Dashboard />);
     enterEditMode();
 
-    expect(screen.getAllByRole('button', { name: /^move .* earlier$/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: /^reorder /i }).length).toBeGreaterThan(0);
   });
 });
 
 describe('reordering without a pointer', () => {
-  it('offers move earlier and later buttons for every module, naming the module', () => {
+  // There is no longer a separate move-earlier/move-later button: the drag handle alone carries
+  // both dnd-kit's keyboard sensor (space/enter to lift, arrow keys to move — exercised for real
+  // in tests/e2e/customization.spec.ts, since jsdom has no layout for dnd-kit's coordinate math to
+  // work with) and tap-to-place (exercised in tests/dashboard-placement.test.tsx). This asserts
+  // the old buttons are truly gone, not just untested.
+  it('offers no move-earlier or move-later buttons — the handle is the only route', () => {
     render(<Dashboard />);
     enterEditMode();
 
-    // Drag is never the only route: each module has explicit, labelled move buttons.
-    expect(screen.getAllByRole('button', { name: /^move .* earlier$/i })).toHaveLength(DEFAULT_CARD_LAYOUT.length);
-    expect(screen.getAllByRole('button', { name: /^move .* later$/i })).toHaveLength(DEFAULT_CARD_LAYOUT.length);
-  });
-
-  it('moves a module earlier with its move button', () => {
-    render(<Dashboard />);
-    enterEditMode();
-
-    const before = useDashboardStore.getState().cards.map((card) => card.id);
-    fireEvent.click(screen.getByRole('button', { name: /^move humidity earlier$/i }));
-
-    const after = useDashboardStore.getState().cards.map((card) => card.id);
-    expect(after.indexOf('humidity')).toBe(before.indexOf('humidity') - 1);
-  });
-
-  it('disables the move buttons at each end rather than letting them silently do nothing', () => {
-    render(<Dashboard />);
-    enterEditMode();
-
-    const upButtons = screen.getAllByRole('button', { name: /^move .* earlier$/i });
-    const downButtons = screen.getAllByRole('button', { name: /^move .* later$/i });
-
-    expect(upButtons[0]).toBeDisabled();
-    expect(downButtons.at(-1)).toBeDisabled();
-    expect(upButtons[1]).toBeEnabled();
+    expect(screen.queryByRole('button', { name: /^move .* earlier$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^move .* later$/i })).not.toBeInTheDocument();
   });
 
   it('gives each drag handle a label describing its position and how to use it by keyboard', () => {
@@ -180,10 +161,12 @@ describe('reordering without a pointer', () => {
 });
 
 describe('removing a module from the grid', () => {
-  it('removes it from the layout', () => {
+  it('removes it from the layout via its header icon, which becomes a remove button in edit mode', () => {
     render(<Dashboard />);
     enterEditMode();
 
+    // Same accessible name the old separate Remove button carried, so this also proves screen
+    // reader users hear no change from where the control used to live.
     fireEvent.click(screen.getByRole('button', { name: /remove humidity from the dashboard/i }));
 
     expect(useDashboardStore.getState().cards.map((card) => card.id)).not.toContain('humidity');
@@ -209,6 +192,14 @@ describe('module size', () => {
 
     expect(useDashboardStore.getState().cards.find((card) => card.id === 'humidity')?.size).toBe('large');
     expect(within(group).getByRole('radio', { name: /large humidity/i })).toBeChecked();
+  });
+
+  it('offers no size picker for a full-width module — it has one shape, not a choice of three', () => {
+    render(<Dashboard />);
+    enterEditMode();
+
+    expect(screen.getByRole('button', { name: /^reorder next hours/i })).toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup', { name: /size of next hours/i })).not.toBeInTheDocument();
   });
 });
 

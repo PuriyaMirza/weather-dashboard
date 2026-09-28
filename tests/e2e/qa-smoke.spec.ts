@@ -174,11 +174,12 @@ test('the hourly strip opens at the current hour, not at the start of the day', 
 
   await page.goto('/');
 
-  const hero = page.locator('section[aria-labelledby="hero-heading"]');
-  await expect(hero.getByText('1 PM', { exact: true })).toBeVisible();
+  // The strip now lives in its own "Next Hours" module in the grid, not fixed inside the hero.
+  const grid = page.getByLabel('Weather modules');
+  await expect(grid.getByText('1 PM', { exact: true })).toBeVisible();
   // The overnight hours are the signature of the old, midnight-anchored window.
-  await expect(hero.getByText('12 AM', { exact: true })).toHaveCount(0);
-  await expect(hero.getByText('3 AM', { exact: true })).toHaveCount(0);
+  await expect(grid.getByText('12 AM', { exact: true })).toHaveCount(0);
+  await expect(grid.getByText('3 AM', { exact: true })).toHaveCount(0);
 });
 
 test('the activity module states a real window, in words', async ({ page }) => {

@@ -77,9 +77,11 @@ ROADMAP.md, PRD.md         Source of truth for status and requirements — check
   every card in the registry has all four `CardBoundary` states, so a new card without them fails
   automatically.
 - **Accessibility is enforced, not aspirational**: every interactive path has a non-drag/non-mouse
-  equivalent (keyboard move buttons alongside dnd-kit dragging, tap-to-place alongside both), no
-  information is conveyed by colour alone, and `tests/e2e/accessibility.spec.ts` runs an axe scan
-  (serious/critical only) over every major UI state — extend that file when adding a new state.
+  equivalent. Reordering has no button of its own — the drag handle alone carries dnd-kit's
+  keyboard sensor (space/enter to lift, arrow keys to move) and tap-to-place (tap the handle, then
+  tap a destination tile), both reachable by Tab and Enter/Space alone. No information is conveyed
+  by colour alone, and `tests/e2e/accessibility.spec.ts` runs an axe scan (serious/critical only)
+  over every major UI state — extend that file when adding a new state.
 - **No new dependencies without discussion.** Local-first: no auth, no database, no accounts —
   preferences live in `localStorage`; the only "sync" mechanism is a self-contained shareable link
   (`lib/weather/share-link.ts`).
@@ -207,7 +209,7 @@ The weather route settles the forecast and air-quality upstreams independently w
 
 ### Accessibility is a build requirement
 
-Every customization action works by keyboard alone — each card carries labelled move-earlier / move-later buttons alongside dnd-kit dragging. Every chart has a text or table equivalent. No information is conveyed by colour alone (UV risk, wind strength, pressure trend all carry words). Keep this parity when touching cards or edit mode.
+Every customization action works by keyboard alone — the drag handle carries dnd-kit's keyboard sensor (space/enter to lift, arrow keys to move) and tap-to-place (tap the handle, then Tab/Enter to a destination tile), so reordering needs no separate move buttons and no pointer. Removing a module is the header icon (turns into a labelled red X in arrange mode; see card-frame.tsx), not a button elsewhere on the tile. Every chart has a text or table equivalent. No information is conveyed by colour alone (UV risk, wind strength, pressure trend all carry words). Keep this parity when touching cards or edit mode.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
