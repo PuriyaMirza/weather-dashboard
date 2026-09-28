@@ -180,6 +180,126 @@ body {
 }
 
 /*
+  Decorative per-condition motion in the hero (components/dashboard/weather-effect.tsx). Every
+  keyframe here only moves transform/opacity, which the browser composites on its own layer
+  instead of the main thread — free of the cost of animating layout properties like top/left, and
+  it can't compete with React renders, drag-and-drop, or scroll elsewhere on the page. The
+  prefers-reduced-motion block below already zeroes every animation-duration on `*`, so these get
+  that support for nothing extra.
+
+  #c4ebda deliberately matches HERO_ART.fogGlow.color in lib/weather/atmosphere.ts rather than a
+  theme token: this is fixed decorative art in the same sense as the fog bands and glow drawn in
+  hero-illustration.tsx, which are literals for the same reason (see that file's own comment).
+*/
+@keyframes weather-rain-fall {
+  from {
+    transform: translateY(-20%);
+    opacity: 0;
+  }
+  10%,
+  90% {
+    opacity: 0.5;
+  }
+  to {
+    transform: translateY(220%);
+    opacity: 0;
+  }
+}
+
+@keyframes weather-snow-fall {
+  from {
+    transform: translate(0, -10%);
+    opacity: 0;
+  }
+  10%,
+  90% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(6px, 100%);
+  }
+  to {
+    transform: translate(-4px, 220%);
+    opacity: 0;
+  }
+}
+
+@keyframes weather-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/*
+  Storm only. Flashes at ~97% and ~99% of a 7s loop — roughly one pair every 7 seconds, nowhere
+  near WCAG's 3-flashes-per-second general flash threshold, and quiet enough not to read as a
+  strobe next to the weather data someone's actually trying to read.
+*/
+@keyframes weather-flash {
+  0%,
+  96%,
+  98%,
+  100% {
+    opacity: 0;
+  }
+  97% {
+    opacity: 0.5;
+  }
+  99% {
+    opacity: 0.3;
+  }
+}
+
+.weather-effect-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.weather-effect-streak {
+  position: absolute;
+  top: -10%;
+  width: 1.5px;
+  height: 14%;
+  background: linear-gradient(to bottom, transparent, #c4ebda 60%, transparent);
+  animation-name: weather-rain-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  opacity: 0;
+}
+
+.weather-effect-flake {
+  position: absolute;
+  top: -6%;
+  border-radius: 9999px;
+  background: #c4ebda;
+  animation-name: weather-snow-fall;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  opacity: 0;
+}
+
+.weather-effect-glow {
+  position: absolute;
+  inset: -20% -20% 30% -20%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, #c4ebda 0%, transparent 65%);
+  animation: weather-glow-pulse 5s ease-in-out infinite;
+}
+
+.weather-effect-flash {
+  position: absolute;
+  inset: 0;
+  background: #c4ebda;
+  animation: weather-flash 7s linear infinite;
+}
+
+/*
   Respect the OS-level "reduce motion" setting. Applied globally so it covers third-party
   animation too (Recharts transitions, drag-and-drop) rather than relying on each component to
   remember. Motion is reduced to near-zero rather than removed outright, so transition/animation

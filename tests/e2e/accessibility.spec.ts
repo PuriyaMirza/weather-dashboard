@@ -135,3 +135,20 @@ test('the failure state has no serious accessibility violations', async ({ page 
   const violations = await scan(page);
   expect(violations, describe(violations)).toEqual([]);
 });
+
+test('a stormy hero has no serious accessibility violations', async ({ page }) => {
+  // The default mockWeatherData condition ('partly-cloudy') has no weather-effect layer at all —
+  // storm is the densest one, and the only one with a flash, so it's the one worth its own scan.
+  await page.route('**/api/weather*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ...mockWeatherData, current: { ...mockWeatherData.current!, condition: 'storm' } }),
+    }),
+  );
+  await page.goto('/');
+  await expect(page.getByLabel('Weather modules')).toBeVisible();
+
+  const violations = await scan(page);
+  expect(violations, describe(violations)).toEqual([]);
+});
