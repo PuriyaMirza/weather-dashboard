@@ -6,6 +6,7 @@ import { Surface } from '@/components/ui/surface';
 import { CurrentConditionsSummary, MISSING } from '@/components/dashboard/current-conditions-summary';
 import { HeroIllustration } from '@/components/dashboard/hero-illustration';
 import { HourlyStrip } from '@/components/dashboard/hourly-strip';
+import { WeatherEffect } from '@/components/dashboard/weather-effect';
 import {
   atmosphereStyle,
   getAtmosphere,
@@ -133,6 +134,7 @@ export function Hero({
       >
         <div className="relative flex h-56 flex-col justify-end overflow-hidden p-5" style={atmosphereStyle(atmosphere)}>
           <HeroIllustration palette={atmosphere} />
+          {current && <WeatherEffect condition={current.condition} isDay={isDay} />}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 bg-linear-to-t from-surface-container-lowest via-surface-container-high/40 to-transparent"
