@@ -38,9 +38,9 @@ Unit-aware formatting is handled by `lib/weather/units.ts` with an imperial/metr
 
 ## Milestone 7 — Customization — done
 
-Edit mode, add-card drawer, remove-card action, card size controls, pointer reordering (dnd-kit), keyboard reordering, move-up/move-down buttons, restore-defaults, and persistence through Zustand browser storage.
+Edit mode, add-card drawer, remove-card action (the card's own header icon, in arrange mode), card size controls, pointer reordering (dnd-kit), keyboard reordering, tap-to-place, restore-defaults, and persistence through Zustand browser storage.
 
-Reordering never depends on dragging: every card carries labelled move-earlier/move-later buttons that name the card, and dnd-kit's keyboard sensor gives arrow-key dragging for those who want it. Edit mode is transient and deliberately not persisted, so a reload never reopens it.
+Reordering has no button of its own: the drag handle alone carries both dnd-kit's keyboard sensor (space/enter to lift, arrow keys to move) and tap-to-place (tap the handle, then a destination tile), so a keyboard or screen-reader user loses nothing without a separate move-earlier/move-later control. Edit mode is transient and deliberately not persisted, so a reload never reopens it.
 
 Persisted layouts are reconciled against the card registry on load (`lib/weather/card-layout.ts`), so a layout saved by an older version referencing a card that no longer exists degrades to the remaining valid cards rather than rendering a hole or crashing.
 

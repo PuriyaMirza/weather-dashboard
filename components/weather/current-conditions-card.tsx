@@ -8,13 +8,22 @@ import { describeTemperature, formatPercent, formatSpeed, formatTemperature, for
 const TITLE = 'Current Conditions';
 const DESCRIPTION = 'Snapshot of temperature, conditions, wind, and precipitation chance.';
 
-export function CurrentConditionsCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
+export function CurrentConditionsCard({
+  data,
+  isLoading,
+  errorMessage,
+  unitSystem,
+  isEditing,
+  onRemove,
+}: WeatherCardProps) {
   const current = data?.current;
 
   return (
     <CardBoundary
       title={TITLE}
       description={DESCRIPTION}
+      isEditing={isEditing}
+      onRemove={onRemove}
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={!current}

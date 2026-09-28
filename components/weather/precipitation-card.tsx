@@ -9,7 +9,14 @@ const TITLE = 'Precipitation';
 const DESCRIPTION = 'Chance and amount of rain or snow over the coming hours.';
 const HOURS_SHOWN = 12;
 
-export function PrecipitationCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
+export function PrecipitationCard({
+  data,
+  isLoading,
+  errorMessage,
+  unitSystem,
+  isEditing,
+  onRemove,
+}: WeatherCardProps) {
   const timeZone = data?.location.timezone;
   const hourly = (data?.hourly ?? []).slice(0, HOURS_SHOWN);
 
@@ -37,6 +44,8 @@ export function PrecipitationCard({ data, isLoading, errorMessage, unitSystem }:
       title={TITLE}
       description={DESCRIPTION}
       icon="umbrella"
+      isEditing={isEditing}
+      onRemove={onRemove}
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={hourly.length === 0}

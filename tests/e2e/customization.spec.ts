@@ -44,9 +44,16 @@ test('layout customization survives a reload', async ({ page }) => {
   await expect(grid.getByRole('heading', { name: 'Humidity', exact: true })).toHaveCount(0);
 
   // Arrange mode is transient and must not come back after a reload.
-  await expect(page.getByRole('button', { name: /^move /i })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^reorder /i })).toHaveCount(0);
 });
 
+/**
+ * dnd-kit's own keyboard sensor, on the handle — there is no separate move-earlier/move-later
+ * button any more, so this is the whole proof that reordering still costs a keyboard user nothing.
+ * Space/Enter lifts the module, an arrow key moves it, Space/Enter drops it; the sensor calls
+ * preventDefault on the activating key, which is what stops the handle's own click (tap-to-place)
+ * from also firing.
+ */
 test('modules can be reordered by keyboard alone, with no dragging', async ({ page }) => {
   await page.goto('/');
   await enterArrangeMode(page);
@@ -55,19 +62,32 @@ test('modules can be reordered by keyboard alone, with no dragging', async ({ pa
   const moduleHeadings = page.getByLabel('Weather modules').getByRole('heading', { level: 2 });
   const before = await moduleHeadings.allTextContents();
 
-  // Move a module earlier using its button — no pointer drag involved.
-  await page.getByRole('button', { name: /^move humidity earlier$/i }).click();
+  const handle = page.getByRole('button', { name: /^reorder humidity/i });
+  // dnd-kit's own live region (separate from the app's "Moving X..." one) — several [aria-live]
+  // elements exist on the page, so this is matched by the text it actually announces.
+  const dndAnnouncer = page.locator('[aria-live]', { hasText: 'droppable area' });
+  await handle.focus();
+  await page.keyboard.press('Enter');
+  // Waiting for the announcement (rather than firing the next key immediately) is what makes this
+  // reliable — the sensor computes the next position from measured rects, and sending keys faster
+  // than that settles raced it into a no-op.
+  await expect(dndAnnouncer).toContainText('humidity');
+  // dnd-kit picks the nearest tile in the pressed direction by rect, not "the next array index" —
+  // at the default layout's 4-column width, Right lands on Humidity's one grid neighbour, UV Index.
+  await page.keyboard.press('ArrowRight');
+  await expect(dndAnnouncer).toContainText('uv-index');
+  await page.keyboard.press('Enter');
 
   const after = await moduleHeadings.allTextContents();
   expect(after).not.toEqual(before);
-  expect(after.indexOf('Humidity')).toBe(before.indexOf('Humidity') - 1);
+  expect(after.indexOf('Humidity')).toBe(before.indexOf('Humidity') + 1);
 
   await page.reload();
   // The grid shows a placeholder until persisted preferences rehydrate, so wait for real modules
   // before reading the order.
   await expect(page.getByLabel('Weather modules').getByRole('heading', { name: 'Humidity', exact: true })).toBeVisible();
   const afterReload = await page.getByLabel('Weather modules').getByRole('heading', { level: 2 }).allTextContents();
-  expect(afterReload.indexOf('Humidity')).toBe(before.indexOf('Humidity') - 1);
+  expect(afterReload.indexOf('Humidity')).toBe(before.indexOf('Humidity') + 1);
 });
 
 /**
@@ -133,7 +153,7 @@ test('modules can be reordered by tapping a handle and then a slot', async ({ pa
   await page.getByRole('button', { name: /^reorder rain chance/i }).click();
   await expect(page.getByText(/placing rain chance/i)).toBeVisible();
 
-  await page.getByRole('button', { name: /move rain chance to position 4 of 5/i }).click();
+  await page.getByRole('button', { name: /move rain chance to position 5 of 6/i }).click();
 
   await expect(page.getByText(/placing rain chance/i)).toHaveCount(0);
   await expect.poll(() => headings.allTextContents()).not.toEqual(before);
@@ -192,7 +212,7 @@ test('arrange mode can be left without going back through the menu', async ({ pa
   await page.getByRole('button', { name: /^done$/i }).click();
 
   await expect(page.getByRole('group', { name: /arranging modules/i })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /^move /i })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^reorder /i })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /open menu/i })).toBeFocused();
 });
 
@@ -203,7 +223,7 @@ test('arrange mode also exits on Escape', async ({ page }) => {
   await page.keyboard.press('Escape');
 
   await expect(page.getByRole('group', { name: /arranging modules/i })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /^move /i })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^reorder /i })).toHaveCount(0);
 });
 
 test('a module can be resized without dragging a corner handle', async ({ page }) => {

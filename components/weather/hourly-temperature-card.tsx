@@ -20,7 +20,14 @@ function isDaytime(time: string, daily: DailyForecastDay[]): boolean {
   return at >= new Date(day.sunrise).getTime() && at < new Date(day.sunset).getTime();
 }
 
-export function HourlyTemperatureCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
+export function HourlyTemperatureCard({
+  data,
+  isLoading,
+  errorMessage,
+  unitSystem,
+  isEditing,
+  onRemove,
+}: WeatherCardProps) {
   const timeZone = data?.location.timezone;
   const hourly = data?.hourly ?? [];
   const daily = data?.daily ?? [];
@@ -30,6 +37,8 @@ export function HourlyTemperatureCard({ data, isLoading, errorMessage, unitSyste
       title={TITLE}
       description={DESCRIPTION}
       icon="schedule"
+      isEditing={isEditing}
+      onRemove={onRemove}
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={hourly.length === 0}

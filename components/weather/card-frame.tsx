@@ -15,15 +15,22 @@ export function CardFrame({
   title,
   description,
   icon,
+  isEditing,
+  onRemove,
   children,
 }: {
   title: string;
   description: string;
   /** Decorative glyph beside the title; the title carries the meaning. */
   icon?: IconName;
+  /** While arranging, the icon above stands in for the old separate Remove button — its own slot,
+   *  not a second control, so a module's identity and the way to remove it sit in the same place. */
+  isEditing?: boolean;
+  onRemove?: () => void;
   children: ReactNode;
 }) {
   const titleId = `${title.toLowerCase().replaceAll(' ', '-')}-title`;
+  const showRemove = isEditing && onRemove;
 
   return (
     <article
@@ -34,7 +41,21 @@ export function CardFrame({
         <h2 id={titleId} className="min-w-0 type-label-sm text-secondary uppercase">
           {title}
         </h2>
-        {icon && <Icon name={icon} size={20} className="shrink-0 text-secondary-fixed" />}
+        {showRemove ? (
+          // Padding grows the tap target to 44px; the matching negative margin cancels it back out
+          // of the flex layout, so the header's height and the title's available width don't
+          // change just because arrange mode is on.
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={`Remove ${title} from the dashboard`}
+            className="-m-3 shrink-0 rounded-full p-3 text-error outline-none hover:bg-error-container focus-visible:ring-2 focus-visible:ring-error"
+          >
+            <Icon name="close" size={20} />
+          </button>
+        ) : (
+          icon && <Icon name={icon} size={20} className="shrink-0 text-secondary-fixed" />
+        )}
       </div>
       {/* The description is useful context but must not compete with the reading, so it is
           available to assistive tech and to the menu rather than printed on every module. */}
@@ -61,6 +82,8 @@ interface CardBoundaryProps {
   title: string;
   description: string;
   icon?: IconName;
+  isEditing?: boolean;
+  onRemove?: () => void;
   isLoading?: boolean;
   errorMessage?: string;
   /** True when the request succeeded but this module's particular data isn't present. */
@@ -79,6 +102,8 @@ export function CardBoundary({
   title,
   description,
   icon,
+  isEditing,
+  onRemove,
   isLoading,
   errorMessage,
   isUnavailable,
@@ -93,7 +118,7 @@ export function CardBoundary({
   else if (isUnavailable) content = <CardState label={unavailableLabel} />;
 
   return (
-    <CardFrame title={title} description={description} icon={icon}>
+    <CardFrame title={title} description={description} icon={icon} isEditing={isEditing} onRemove={onRemove}>
       {content}
     </CardFrame>
   );

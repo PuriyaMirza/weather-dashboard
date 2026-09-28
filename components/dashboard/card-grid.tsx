@@ -32,7 +32,6 @@ interface CardGridProps {
   cardProps: WeatherCardProps;
   isEditing: boolean;
   onReorder: (orderedIds: WeatherCardId[]) => void;
-  onMove: (id: WeatherCardId, direction: -1 | 1) => void;
   onSetSize: (id: WeatherCardId, size: CardSize) => void;
   onRemove: (id: WeatherCardId) => void;
   /** Lets the dashboard know a drag is in flight, so Escape cancels the drag rather than leaving
@@ -57,7 +56,6 @@ export function CardGrid({
   cardProps,
   isEditing,
   onReorder,
-  onMove,
   onSetSize,
   onRemove,
   onDragActiveChange,
@@ -189,8 +187,6 @@ export function CardGrid({
                   entry={entry}
                   cardProps={cardProps}
                   isEditing={isEditing}
-                  isFirst={index === 0}
-                  isLast={index === cards.length - 1}
                   position={index + 1}
                   total={cards.length}
                   isLifted={liftedId === entry.id}
@@ -199,8 +195,6 @@ export function CardGrid({
                   isDropDestination={activeId !== null && overId === entry.id && activeId !== entry.id}
                   onToggleLift={() => onToggleLift(entry.id)}
                   onPlaceHere={() => onPlaceAt(entry.id)}
-                  onMoveUp={() => onMove(entry.id, -1)}
-                  onMoveDown={() => onMove(entry.id, 1)}
                   onSetSize={(size) => onSetSize(entry.id, size)}
                   onRemove={() => onRemove(entry.id)}
                 />

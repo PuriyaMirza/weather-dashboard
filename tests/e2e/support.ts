@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 export const STORAGE_KEY = 'weather-dashboard';
 
 /** Matches the persist `version` in store/dashboard-store.ts. */
-export const STORAGE_VERSION = 9;
+export const STORAGE_VERSION = 10;
 
 /**
  * Marks the browser as having already been through the first-run flow.

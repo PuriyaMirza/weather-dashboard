@@ -3,7 +3,13 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { WeatherCardDefinition, WeatherCardProps } from '@/components/weather/card-registry';
-import { CARD_SIZE_CLASS, type CardLayoutEntry, type CardSize } from '@/lib/weather/card-layout';
+import {
+  CARD_SIZE_CLASS,
+  FULL_WIDTH_CARD_IDS,
+  FULL_WIDTH_CLASS,
+  type CardLayoutEntry,
+  type CardSize,
+} from '@/lib/weather/card-layout';
 import { Icon } from '@/components/ui/icon';
 import { ModuleBoundary } from '@/components/weather/module-boundary';
 import { CardControls } from './card-controls';
@@ -13,8 +19,6 @@ interface SortableCardProps {
   entry: CardLayoutEntry;
   cardProps: WeatherCardProps;
   isEditing: boolean;
-  isFirst: boolean;
-  isLast: boolean;
   position: number;
   total: number;
   /** This module is the one waiting to be placed. */
@@ -27,8 +31,6 @@ interface SortableCardProps {
   isDropDestination: boolean;
   onToggleLift: () => void;
   onPlaceHere: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
   onSetSize: (size: CardSize) => void;
   onRemove: () => void;
 }
@@ -38,8 +40,6 @@ export function SortableCard({
   entry,
   cardProps,
   isEditing,
-  isFirst,
-  isLast,
   position,
   total,
   isLifted,
@@ -48,8 +48,6 @@ export function SortableCard({
   isDropDestination,
   onToggleLift,
   onPlaceHere,
-  onMoveUp,
-  onMoveDown,
   onSetSize,
   onRemove,
 }: SortableCardProps) {
@@ -61,6 +59,8 @@ export function SortableCard({
     });
 
   const Component = definition.Component;
+  const isFullWidth = FULL_WIDTH_CARD_IDS.has(entry.id);
+  const sizeClass = isFullWidth ? FULL_WIDTH_CLASS : CARD_SIZE_CLASS[entry.size];
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -83,22 +83,18 @@ export function SortableCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative flex min-w-0 flex-col rounded-xl ${CARD_SIZE_CLASS[entry.size]} ${outline}`}
+      className={`relative flex min-w-0 flex-col rounded-xl ${sizeClass} ${outline}`}
     >
       {isEditing && (
         <CardControls
           title={definition.title}
           size={entry.size}
-          isFirst={isFirst}
-          isLast={isLast}
           position={position}
           total={total}
           isLifted={isLifted}
           onToggleLift={onToggleLift}
-          onMoveUp={onMoveUp}
-          onMoveDown={onMoveDown}
           onSetSize={onSetSize}
-          onRemove={onRemove}
+          sizable={!isFullWidth}
           dragHandleProps={{ ...attributes, ...listeners }}
           // Separate from the props above because a ref cannot ride along in an HTMLAttributes
           // bag. Without it dnd-kit never learns which element is the activator, and its
@@ -110,7 +106,7 @@ export function SortableCard({
       <div className="min-h-0 flex-1">
         {/* Per module, not per page: a throw here costs this tile, not the whole dashboard. */}
         <ModuleBoundary title={definition.title} description={definition.description}>
-          <Component {...cardProps} />
+          <Component {...cardProps} isEditing={isEditing} onRemove={onRemove} />
         </ModuleBoundary>
       </div>
 

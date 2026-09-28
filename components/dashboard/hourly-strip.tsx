@@ -14,6 +14,10 @@ const HOUR_MS = 60 * 60 * 1000;
 interface HourlyStripProps {
   data: WeatherDashboardData;
   unitSystem: UnitSystem;
+  /** True when a wrapping card already renders its own "Next Hours" heading (see
+   *  next-hours-card.tsx) — skips this component's own heading so the two don't repeat, while
+   *  keeping the rain-range summary and the full pill list exactly the same. */
+  embedded?: boolean;
 }
 
 /**
@@ -52,20 +56,24 @@ export function rainRangeLabel(hours: HourlyPoint[]): string | null {
  * It scrolls horizontally rather than shrinking below legibility, so the list is focusable — the
  * hours past the right edge would otherwise be unreachable without a pointer.
  */
-export function HourlyStrip({ data, unitSystem }: HourlyStripProps) {
+export function HourlyStrip({ data, unitSystem, embedded = false }: HourlyStripProps) {
   const headingId = useId();
   const hours = data.hourly.slice(0, STRIP_HOURS);
   if (hours.length === 0) return null;
 
   const timeZone = data.location.timezone;
   const current = data.current;
+  const rainRange = rainRangeLabel(hours);
 
   return (
     <div className="flex flex-col gap-2">
-      <SectionHeader id={headingId} title="Next Hours" meta={rainRangeLabel(hours)} />
+      {embedded
+        ? rainRange && <p className="type-label-sm uppercase text-secondary-fixed">{rainRange}</p>
+        : <SectionHeader id={headingId} title="Next Hours" meta={rainRange} />}
       <ul
         tabIndex={0}
-        aria-labelledby={headingId}
+        aria-labelledby={embedded ? undefined : headingId}
+        aria-label={embedded ? 'Next Hours' : undefined}
         className="-mx-5 flex gap-2 overflow-x-auto scroll-px-5 px-5 pb-1.5 scrollbar-none outline-none focus-visible:ring-2 focus-visible:ring-secondary-fixed focus-visible:ring-inset"
       >
         {hours.map((hour) => {

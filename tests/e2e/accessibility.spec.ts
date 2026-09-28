@@ -91,10 +91,11 @@ test('edit mode has no serious accessibility violations', async ({ page }) => {
   await page.getByRole('button', { name: /open menu/i }).click();
   await page.getByRole('switch', { name: /arrange mode/i }).click();
 
-  // The sticky toolbar and the per-module move, size and remove controls only exist here, and
-  // there are a lot of them.
+  // The sticky toolbar, the per-module drag handles and size pickers, and each header's remove
+  // icon only exist here, and there are a lot of them.
   await expect(page.getByRole('group', { name: /arranging modules/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^move .* earlier$/i }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /^reorder /i }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /remove .* from the dashboard/i }).first()).toBeVisible();
 
   const violations = await scan(page);
   expect(violations, describe(violations)).toEqual([]);

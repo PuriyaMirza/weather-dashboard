@@ -3,6 +3,7 @@ import {
   ALL_CARD_IDS,
   DEFAULT_CARD_LAYOUT,
   defaultSizeFor,
+  FULL_WIDTH_CARD_IDS,
   moveEntry,
   reconcileLayout,
 } from '@/lib/weather/card-layout';
@@ -26,6 +27,18 @@ describe('DEFAULT_CARD_LAYOUT', () => {
   it('has no duplicates', () => {
     const ids = DEFAULT_CARD_LAYOUT.map((entry) => entry.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('FULL_WIDTH_CARD_IDS', () => {
+  it('is shown by default, since it always was before it joined the grid', () => {
+    expect(DEFAULT_CARD_LAYOUT.map((entry) => entry.id)).toContain('next-hours');
+  });
+
+  it('only names a registered card', () => {
+    for (const id of FULL_WIDTH_CARD_IDS) {
+      expect(ALL_CARD_IDS).toContain(id);
+    }
   });
 });
 

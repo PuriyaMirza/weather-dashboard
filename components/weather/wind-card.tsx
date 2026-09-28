@@ -27,7 +27,7 @@ function WindDial({ degrees }: { degrees: number }) {
   );
 }
 
-export function WindCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
+export function WindCard({ data, isLoading, errorMessage, unitSystem, isEditing, onRemove }: WeatherCardProps) {
   const wind = data?.wind;
 
   return (
@@ -35,6 +35,8 @@ export function WindCard({ data, isLoading, errorMessage, unitSystem }: WeatherC
       title={TITLE}
       description={DESCRIPTION}
       icon="air"
+      isEditing={isEditing}
+      onRemove={onRemove}
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={!wind || wind.speedMph == null}

@@ -12,7 +12,7 @@ import { CardBoundary } from './card-frame';
  * the same typography, and the same spoken alternative for free.
  */
 export function createStatModule(definition: MetricModuleDefinition) {
-  function StatModule({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
+  function StatModule({ data, isLoading, errorMessage, unitSystem, isEditing, onRemove }: WeatherCardProps) {
     const reading = data ? definition.read(data, unitSystem) : null;
 
     return (
@@ -20,6 +20,8 @@ export function createStatModule(definition: MetricModuleDefinition) {
         title={definition.title}
         description={definition.description}
         icon={definition.icon}
+        isEditing={isEditing}
+        onRemove={onRemove}
         isLoading={isLoading}
         errorMessage={errorMessage}
         isUnavailable={!reading}

@@ -28,7 +28,7 @@ export const THEMES: Record<ThemeId, ThemeDefinition> = {
     label: 'Forest',
     description: 'Deep evergreen canopy with misty greens',
     themeColor: '#001711',
-    gridTitle: 'Forest Floor Readings',
+    gridTitle: 'Details',
   },
 };
 

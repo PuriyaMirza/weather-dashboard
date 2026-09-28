@@ -11,7 +11,7 @@ import {
 const TITLE = 'Comfort';
 const DESCRIPTION = 'Humidity, dew point, UV, visibility, pressure, and air quality.';
 
-export function ComfortCard({ data, isLoading, errorMessage, unitSystem }: WeatherCardProps) {
+export function ComfortCard({ data, isLoading, errorMessage, unitSystem, isEditing, onRemove }: WeatherCardProps) {
   const comfort = data?.comfort;
 
   return (
@@ -19,6 +19,8 @@ export function ComfortCard({ data, isLoading, errorMessage, unitSystem }: Weath
       title={TITLE}
       description={DESCRIPTION}
       icon="feels-like"
+      isEditing={isEditing}
+      onRemove={onRemove}
       isLoading={isLoading}
       errorMessage={errorMessage}
       isUnavailable={!comfort}

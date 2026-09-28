@@ -26,6 +26,15 @@ export const CARD_SIZE_CLASS: Record<CardSize, string> = {
   large: 'col-span-2 row-span-2',
 };
 
+/**
+ * Cards with exactly one shape, not a choice of three — full width at every breakpoint, always.
+ * Deliberately not a fourth `CardSize`: the type above is a closed set of three shapes by design
+ * (see its own comment), so a card that ignores that choice entirely is an exception named here,
+ * not a new size everything else could also pick.
+ */
+export const FULL_WIDTH_CARD_IDS: ReadonlySet<WeatherCardId> = new Set(['next-hours']);
+export const FULL_WIDTH_CLASS = 'col-span-2 md:col-span-4 row-span-1';
+
 export interface CardLayoutEntry {
   id: WeatherCardId;
   size: CardSize;
@@ -40,14 +49,18 @@ export interface CardLayoutEntry {
  * twice on a page that otherwise leads with a location name was the worse trade. The module still
  * exists in the registry and the menu for anyone who wants it in the grid too.
  *
- * `hourly-temperature` is also absent: the hero's own 8-hour strip already covers the near-term
- * view, and restating the same hours one scroll down read as duplication rather than more detail.
- * Anyone who wants the full 24-hour chart can switch it on from the menu.
+ * `hourly-temperature` is also absent: `next-hours`'s own strip already covers the near-term view,
+ * and restating the same hours one scroll down read as duplication rather than more detail. Anyone
+ * who wants the full 24-hour chart can switch it on from the menu.
  *
- * `daily-forecast` goes first so it claims columns 1-2 across both rows of the four-column desktop
- * grid; the four smalls that follow then fill columns 3-4 top and bottom with no leftover cells.
+ * `next-hours` goes first, full width, since it was always shown above everything else back when
+ * it lived fixed inside the hero rather than in this grid. `daily-forecast` follows and claims
+ * columns 1-2 across both rows of the four-column desktop grid; the four smalls that follow then
+ * fill columns 3-4 top and bottom with no leftover cells. `next-hours`'s own `size` is unused —
+ * see `FULL_WIDTH_CARD_IDS` — kept as `'large'` only because `CardLayoutEntry` requires one.
  */
 export const DEFAULT_CARD_LAYOUT: CardLayoutEntry[] = [
+  { id: 'next-hours', size: 'large' },
   { id: 'daily-forecast', size: 'large' },
   { id: 'precipitation-chance', size: 'small' },
   { id: 'wind-speed', size: 'small' },
@@ -75,6 +88,7 @@ export const ALL_CARD_IDS: WeatherCardId[] = [
   'air-quality-index',
   'sunrise-sunset',
   'activity-windows',
+  'next-hours',
   'hourly-temperature',
   'precipitation',
   'daily-forecast',
@@ -151,6 +165,9 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
 
 /** Panels carrying a chart or a table need the room; single readings do not. */
 function defaultSizeFor(id: WeatherCardId): CardSize {
+  // Rendering ignores this for a full-width card (see FULL_WIDTH_CARD_IDS) — 'large' just keeps
+  // the stored value sensible if it were ever read directly, e.g. by the "Everything" preset.
+  if (id === 'next-hours') return 'large';
   if (id === 'hourly-temperature' || id === 'precipitation' || id === 'daily-forecast') return 'large';
   if (id === 'activity-windows') return 'medium';
   if (id === 'current-conditions' || id === 'comfort' || id === 'wind' || id === 'sun-uv') return 'medium';

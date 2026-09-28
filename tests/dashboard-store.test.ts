@@ -41,7 +41,7 @@ describe('dashboard store', () => {
     expect(persisted.state.location).toEqual(SEATTLE);
     // partialize should keep actions out of storage.
     expect(persisted.state.setLocation).toBeUndefined();
-    expect(persisted.version).toBe(9);
+    expect(persisted.version).toBe(10);
   });
 
   it('does not read persisted state until rehydrate is called (skipHydration)', async () => {
@@ -192,26 +192,6 @@ describe('dashboard store — card layout', () => {
     expect(has('comfort')).toBe(false);
     useDashboardStore.getState().toggleCard('comfort');
     expect(has('comfort')).toBe(true);
-  });
-
-  it('moves a card up and down', () => {
-    const original = useDashboardStore.getState().cards.map((card) => card.id);
-
-    useDashboardStore.getState().moveCard(original[1], -1);
-    expect(useDashboardStore.getState().cards[0].id).toBe(original[1]);
-
-    useDashboardStore.getState().moveCard(original[1], 1);
-    expect(useDashboardStore.getState().cards.map((card) => card.id)).toEqual(original);
-  });
-
-  it('does not move past either end', () => {
-    const original = useDashboardStore.getState().cards.map((card) => card.id);
-
-    useDashboardStore.getState().moveCard(original[0], -1);
-    expect(useDashboardStore.getState().cards.map((card) => card.id)).toEqual(original);
-
-    useDashboardStore.getState().moveCard(original.at(-1) as typeof original[0], 1);
-    expect(useDashboardStore.getState().cards.map((card) => card.id)).toEqual(original);
   });
 
   it('reorders to an explicit sequence', () => {
