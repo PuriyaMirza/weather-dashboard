@@ -105,6 +105,13 @@ describe('hero region chip', () => {
   });
 });
 
+describe('hero layout', () => {
+  it('no longer carries the Right Now reading, which is a movable module now', () => {
+    renderHero();
+    expect(screen.queryByText('Next hour')).toBeNull();
+  });
+});
+
 describe('hero favorite readings', () => {
   function readings() {
     const strip = screen.getByText('High and low').closest('dl') as HTMLElement;
@@ -144,21 +151,6 @@ describe('hero favorite readings', () => {
   });
 });
 
-describe('right now card', () => {
-  it('shows the temperature, rain odds and quick readings', () => {
-    renderHero();
-
-    expect(screen.getByText('72 degrees Fahrenheit')).toBeInTheDocument();
-    expect(screen.getByText('12%')).toBeInTheDocument();
-    expect(screen.getByText('Next hour')).toBeInTheDocument();
-  });
-
-  it('follows the unit setting', () => {
-    renderHero(mockWeatherData, 'metric');
-    expect(screen.getByText('22 degrees Celsius')).toBeInTheDocument();
-  });
-});
-
 describe('hero failure states', () => {
   it('says the reading is stale without hiding it', () => {
     render(
@@ -175,7 +167,7 @@ describe('hero failure states', () => {
       />,
     );
     expect(screen.getByRole('status')).toHaveTextContent(/showing the last reading that loaded/i);
-    expect(screen.getByText('Partly cloudy')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: 'Partly Cloudy Afternoon' })).toBeInTheDocument();
   });
 
   it('offers a retry when there is no reading at all', () => {

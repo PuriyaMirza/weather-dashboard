@@ -315,7 +315,7 @@ export const useDashboardStore = create<DashboardState>()(
       },
       // Bump when the persisted shape changes so old saved state is never deserialized into a
       // shape the code no longer understands.
-      version: 11,
+      version: 12,
       // Without a migrate, zustand *discards* state saved under an older version — which would
       // throw away every existing dashboard on upgrade and make reconcileLayout's span-to-size
       // translation dead code. Older state is handed through instead, because `merge` below
@@ -324,10 +324,20 @@ export const useDashboardStore = create<DashboardState>()(
         // Anyone holding state from before onboarding existed has already arranged their dashboard
         // by hand. Defaulting them to "not yet onboarded" would greet a returning user with a
         // first-run wall over the dashboard they already built, so they are marked done.
-        if (version < 7 && typeof persisted === 'object' && persisted !== null) {
-          return { ...persisted, hasOnboarded: true } as DashboardState;
+        let state = persisted as DashboardState;
+        if (version < 7 && typeof state === 'object' && state !== null) {
+          state = { ...state, hasOnboarded: true };
         }
-        return persisted as DashboardState;
+        // Right Now was a fixed part of the hero before it joined the grid. A saved layout predates
+        // it and would otherwise make the current temperature silently vanish, so it goes back in
+        // at the top, where it always sat.
+        if (version < 12 && typeof state === 'object' && state !== null && Array.isArray(state.cards)) {
+          const cards = state.cards as CardLayoutEntry[];
+          if (!cards.some((card) => card?.id === 'right-now')) {
+            state = { ...state, cards: [{ id: 'right-now', size: 'medium' }, ...cards] };
+          }
+        }
+        return state;
       },
       // Persist preferences only. Actions are unserializable, and isEditing is transient.
       partialize: (state) => ({

@@ -3,7 +3,7 @@ import {
   ALL_CARD_IDS,
   DEFAULT_CARD_LAYOUT,
   defaultSizeFor,
-  FULL_WIDTH_CARD_IDS,
+  FIXED_SHAPE_CLASS,
   moveEntry,
   reconcileLayout,
 } from '@/lib/weather/card-layout';
@@ -30,13 +30,13 @@ describe('DEFAULT_CARD_LAYOUT', () => {
   });
 });
 
-describe('FULL_WIDTH_CARD_IDS', () => {
-  it('is shown by default, since it always was before it joined the grid', () => {
-    expect(DEFAULT_CARD_LAYOUT.map((entry) => entry.id)).toContain('next-hours');
+describe('FIXED_SHAPE_CLASS', () => {
+  it('shows both fixed-shape cards by default, since both were always shown before they joined the grid', () => {
+    expect(DEFAULT_CARD_LAYOUT.map((entry) => entry.id)).toEqual(expect.arrayContaining(['next-hours', 'right-now']));
   });
 
-  it('only names a registered card', () => {
-    for (const id of FULL_WIDTH_CARD_IDS) {
+  it('only names registered cards', () => {
+    for (const id of Object.keys(FIXED_SHAPE_CLASS)) {
       expect(ALL_CARD_IDS).toContain(id);
     }
   });

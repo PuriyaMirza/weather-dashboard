@@ -3,13 +3,12 @@
 import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
 import { Surface } from '@/components/ui/surface';
-import { CurrentConditionsSummary } from '@/components/dashboard/current-conditions-summary';
 import { HeroIllustration } from '@/components/dashboard/hero-illustration';
 import { WeatherEffect } from '@/components/dashboard/weather-effect';
 import {
   atmosphereStyle,
   getAtmosphere,
-  inferIsDay,
+  currentIsDay,
   NEUTRAL_ATMOSPHERE,
   skyHeadline,
 } from '@/lib/weather/atmosphere';
@@ -96,8 +95,9 @@ function FavoriteMetricsStrip({
 }
 
 /**
- * The top of the page: an illustrated card naming the sky and the day ahead, the current reading,
- * and the next hours.
+ * The top of the page: an illustrated card naming the sky and the day ahead, with the user's
+ * favorite readings beneath it. The current reading (Right Now) and the next hours are grid
+ * modules, so they can be moved.
  *
  * Everything the dashboard knows about the request's health is said here, once — a stale banner
  * over an old reading, or an alert with a retry when there is no reading at all — rather than
@@ -121,19 +121,15 @@ export function Hero({
   const current = data?.current ?? null;
   const timeZone = data?.location.timezone;
 
-  const isDay = current
-    ? (current.isDay ?? inferIsDay(current.observedAt, data?.sun?.sunrise ?? null, data?.sun?.sunset ?? null))
-    : true;
+  const isDay = data ? currentIsDay(data) : true;
 
   const atmosphere = current ? getAtmosphere(current.condition, isDay) : NEUTRAL_ATMOSPHERE;
   // The region of the reading on screen, not of the store's location: right after a location
   // change the old forecast is still showing, and its chip must not claim the new place.
   const region = formatRegionLabel(data?.location ?? location);
 
-  // Explicit minmax(0, 1fr) tracks (grid-cols-1): an implicit auto track grows to the hour strip's
-  // full scroll width, pushing the whole page wider than a phone.
   return (
-    <section aria-labelledby="hero-heading" className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <section aria-labelledby="hero-heading" className="grid grid-cols-1 gap-6">
       <h2 id="hero-heading" className="sr-only">
         Current conditions
       </h2>
@@ -146,7 +142,7 @@ export function Hero({
       {isStale && (
         <p
           role="status"
-          className="flex items-start gap-2.5 rounded-xl bg-surface-container-high px-4 py-3 type-body-sm text-on-surface lg:col-span-2"
+          className="flex items-start gap-2.5 rounded-xl bg-surface-container-high px-4 py-3 type-body-sm text-on-surface"
         >
           <Icon name="info" size={20} className="mt-px shrink-0 text-secondary" />
           <span>Showing the last reading that loaded. {failureMessage}</span>
@@ -157,8 +153,7 @@ export function Hero({
         tone="lowest"
         elevation="raised"
         radius="2xl"
-        // Alone on its row until a reading arrives, so a loading or failed hero isn't half-width.
-        className={`relative overflow-hidden ${current ? '' : 'lg:col-span-2'}`}
+        className="relative overflow-hidden"
       >
         <div className="relative flex h-56 flex-col justify-end overflow-hidden p-5" style={atmosphereStyle(atmosphere)}>
           <HeroIllustration palette={atmosphere} />
@@ -208,7 +203,6 @@ export function Hero({
         {data && current && <FavoriteMetricsStrip data={data} ids={favoriteMetrics} unitSystem={unitSystem} />}
       </Surface>
 
-      {data && current && <CurrentConditionsSummary data={data} isDay={isDay} unitSystem={unitSystem} />}
     </section>
   );
 }

@@ -5,8 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { WeatherCardDefinition, WeatherCardProps } from '@/components/weather/card-registry';
 import {
   CARD_SIZE_CLASS,
-  FULL_WIDTH_CARD_IDS,
-  FULL_WIDTH_CLASS,
+  FIXED_SHAPE_CLASS,
   type CardLayoutEntry,
   type CardSize,
 } from '@/lib/weather/card-layout';
@@ -59,8 +58,8 @@ export function SortableCard({
     });
 
   const Component = definition.Component;
-  const isFullWidth = FULL_WIDTH_CARD_IDS.has(entry.id);
-  const sizeClass = isFullWidth ? FULL_WIDTH_CLASS : CARD_SIZE_CLASS[entry.size];
+  const fixedShapeClass = FIXED_SHAPE_CLASS[entry.id];
+  const sizeClass = fixedShapeClass ?? CARD_SIZE_CLASS[entry.size];
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -94,7 +93,7 @@ export function SortableCard({
           isLifted={isLifted}
           onToggleLift={onToggleLift}
           onSetSize={onSetSize}
-          sizable={!isFullWidth}
+          sizable={!fixedShapeClass}
           dragHandleProps={{ ...attributes, ...listeners }}
           // Separate from the props above because a ref cannot ride along in an HTMLAttributes
           // bag. Without it dnd-kit never learns which element is the activator, and its

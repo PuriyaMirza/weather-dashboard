@@ -8,23 +8,31 @@ interface CurrentConditionsSummaryProps {
   data: WeatherDashboardData;
   isDay: boolean;
   unitSystem: UnitSystem;
+  /** Inside a grid module, whose own header already says "Right Now" and paints the surface. */
+  embedded?: boolean;
 }
 
 /**
  * "Right now": the current temperature and the next hour's rain odds. The quick readings that used
  * to sit under them are the user's pinned favourites and live in the hero's card instead.
  */
-export function CurrentConditionsSummary({ data, isDay, unitSystem }: CurrentConditionsSummaryProps) {
+export function CurrentConditionsSummary({ data, isDay, unitSystem, embedded = false }: CurrentConditionsSummaryProps) {
   const current = data.current;
   if (!current) return null;
 
   const rainChance = current.precipitationChance;
 
   return (
-    <div className="flex flex-col justify-center gap-5 rounded-2xl bg-surface-container-low p-5 shadow-card">
+    <div
+      className={
+        embedded
+          ? 'flex flex-1 flex-col justify-center'
+          : 'flex flex-col justify-center gap-5 rounded-2xl bg-surface-container-low p-5 shadow-card'
+      }
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col">
-          <p className="type-label-sm uppercase text-secondary">Right now</p>
+          {!embedded && <p className="type-label-sm uppercase text-secondary">Right now</p>}
           <p className="mt-1 flex items-baseline gap-1.5">
             <span aria-hidden="true" className="type-display-lg text-primary tabular-nums">
               {formatTemperature(current.temperatureF, unitSystem)}

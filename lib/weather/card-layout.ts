@@ -26,14 +26,20 @@ export const CARD_SIZE_CLASS: Record<CardSize, string> = {
   large: 'col-span-2 row-span-2',
 };
 
-/**
- * Cards with exactly one shape, not a choice of three — full width at every breakpoint, always.
- * Deliberately not a fourth `CardSize`: the type above is a closed set of three shapes by design
- * (see its own comment), so a card that ignores that choice entirely is an exception named here,
- * not a new size everything else could also pick.
- */
-export const FULL_WIDTH_CARD_IDS: ReadonlySet<WeatherCardId> = new Set(['next-hours']);
 export const FULL_WIDTH_CLASS = 'col-span-2 md:col-span-4 row-span-1';
+
+/**
+ * Cards with exactly one shape, not a choice of three: they can be moved but never resized, so
+ * arrange mode shows them no size picker. Next Hours is full width at every breakpoint; Right Now
+ * keeps the half-width footprint it had beside the hero (full width on a phone). Deliberately not
+ * extra `CardSize`s: the type above is a closed set of three shapes by design (see its own
+ * comment), so a card that ignores that choice is an exception named here, not a new size
+ * everything else could also pick.
+ */
+export const FIXED_SHAPE_CLASS: Partial<Record<WeatherCardId, string>> = {
+  'next-hours': FULL_WIDTH_CLASS,
+  'right-now': CARD_SIZE_CLASS.medium,
+};
 
 export interface CardLayoutEntry {
   id: WeatherCardId;
@@ -45,7 +51,7 @@ export interface CardLayoutEntry {
  * everything available: the dashboard should feel composed on arrival, with the rest discoverable
  * through the menu.
  *
- * `temperature` is deliberately absent: the hero now carries the current reading, and printing it
+ * `temperature` is deliberately absent: `right-now` already carries the current reading, and printing it
  * twice on a page that otherwise leads with a location name was the worse trade. The module still
  * exists in the registry and the menu for anyone who wants it in the grid too.
  *
@@ -53,13 +59,17 @@ export interface CardLayoutEntry {
  * and restating the same hours one scroll down read as duplication rather than more detail. Anyone
  * who wants the full 24-hour chart can switch it on from the menu.
  *
- * `next-hours` goes first, full width, since it was always shown above everything else back when
- * it lived fixed inside the hero rather than in this grid. `daily-forecast` follows and claims
+ * `right-now` leads, where it sat beside the hero before it joined the grid, with two smalls
+ * filling the rest of its desktop row: air quality (no longer in the hero by default, now that the
+ * hero shows the user's favorites) and sunrise/sunset. `next-hours` follows, full width. `daily-forecast` follows and claims
  * columns 1-2 across both rows of the four-column desktop grid; the four smalls that follow then
  * fill columns 3-4 top and bottom with no leftover cells. `next-hours`'s own `size` is unused —
  * see `FULL_WIDTH_CARD_IDS` — kept as `'large'` only because `CardLayoutEntry` requires one.
  */
 export const DEFAULT_CARD_LAYOUT: CardLayoutEntry[] = [
+  { id: 'right-now', size: 'medium' },
+  { id: 'air-quality-index', size: 'small' },
+  { id: 'sunrise-sunset', size: 'small' },
   { id: 'next-hours', size: 'large' },
   { id: 'daily-forecast', size: 'large' },
   { id: 'precipitation-chance', size: 'small' },
@@ -75,6 +85,7 @@ export const DEFAULT_CARD_LAYOUT: CardLayoutEntry[] = [
  * headline readings through the single measurements to the composite panels.
  */
 export const ALL_CARD_IDS: WeatherCardId[] = [
+  'right-now',
   'temperature',
   'feels-like',
   'precipitation-chance',
@@ -165,9 +176,10 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
 
 /** Panels carrying a chart or a table need the room; single readings do not. */
 function defaultSizeFor(id: WeatherCardId): CardSize {
-  // Rendering ignores this for a full-width card (see FULL_WIDTH_CARD_IDS) — 'large' just keeps
+  // Rendering ignores this for a fixed-shape card (see FIXED_SHAPE_CLASS) — 'large' just keeps
   // the stored value sensible if it were ever read directly, e.g. by the "Everything" preset.
   if (id === 'next-hours') return 'large';
+  if (id === 'right-now') return 'medium';
   if (id === 'hourly-temperature' || id === 'precipitation' || id === 'daily-forecast') return 'large';
   if (id === 'activity-windows') return 'medium';
   if (id === 'current-conditions' || id === 'comfort' || id === 'wind' || id === 'sun-uv') return 'medium';
@@ -193,15 +205,16 @@ export const ACTIVITY_MODULES: Record<ActivityId, WeatherCardId[]> = {
 };
 
 /**
- * Present whatever the answers: the shape of the day ahead. Not `temperature` — the hero already
- * carries the current reading, same as the curated default above. Not `hourly-temperature` either,
+ * Present whatever the answers: the reading at this moment (`right-now`, which used to be fixed
+ * beside the hero) and the shape of the day ahead. Not `temperature` — `right-now` already carries
+ * the current reading, same as the curated default above. Not `hourly-temperature` either,
  * for the same reason it was dropped from `DEFAULT_CARD_LAYOUT`: the hero's own hour strip already
  * covers the near-term view, and an onboarding-derived layout duplicating it would reintroduce the
  * exact overlap the curated default was changed to avoid. `daily-forecast` fills that role instead —
  * it is the anchor panel the curated default leads with, and it does not restate anything the hero
  * already shows.
  */
-const CORE_MODULES: WeatherCardId[] = ['daily-forecast'];
+const CORE_MODULES: WeatherCardId[] = ['right-now', 'daily-forecast'];
 
 /**
  * Builds a starting layout from the activities someone chose.

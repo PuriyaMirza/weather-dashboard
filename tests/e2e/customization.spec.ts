@@ -154,7 +154,7 @@ test('modules can be reordered by tapping a handle and then a slot', async ({ pa
   await page.getByRole('button', { name: /^reorder rain chance/i }).click();
   await expect(page.getByText(/placing rain chance/i)).toBeVisible();
 
-  await page.getByRole('button', { name: /move rain chance to position 5 of 6/i }).click();
+  await page.getByRole('button', { name: /move rain chance to position 8 of 9/i }).click();
 
   await expect(page.getByText(/placing rain chance/i)).toHaveCount(0);
   await expect.poll(() => headings.allTextContents()).not.toEqual(before);
@@ -163,6 +163,23 @@ test('modules can be reordered by tapping a handle and then a slot', async ({ pa
   await page.reload();
   await expect(headings.first()).toBeVisible();
   await expect.poll(() => headings.allTextContents()).not.toEqual(before);
+});
+
+test('Right Now can be moved like any module, but has no size to choose', async ({ page }) => {
+  await page.goto('/');
+  await enterArrangeMode(page);
+
+  const headings = page.getByLabel('Weather modules').getByRole('heading', { level: 2 });
+  await expect(headings.first()).toHaveText('Right Now');
+  // One fixed shape: the size picker every other module has is absent, not just disabled.
+  await expect(page.getByRole('radiogroup', { name: /size of right now/i })).toHaveCount(0);
+
+  await page.getByRole('button', { name: /^reorder right now/i }).click();
+  await page.getByRole('button', { name: /move right now to position 9 of 9/i }).click();
+  await expect.poll(() => headings.allTextContents().then((all) => all.at(-1))).toBe('Right Now');
+
+  await page.reload();
+  await expect.poll(() => headings.allTextContents().then((all) => all.at(-1))).toBe('Right Now');
 });
 
 test('a pending placement can be abandoned without moving anything', async ({ page }) => {

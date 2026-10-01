@@ -89,14 +89,14 @@ describe('putting it down', () => {
     const before = order();
 
     fireEvent.click(handleFor('Rain Chance'));
-    // Humidity sits at index 4 in the default layout (next-hours now leads it); Rain Chance should land there.
-    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 5 of 6/i }));
+    // Humidity sits at index 7 in the default layout (right-now, two smalls and next-hours lead it); Rain Chance should land there.
+    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 8 of 9/i }));
 
     const after = order();
     expect(after).not.toEqual(before);
-    expect(after.indexOf('precipitation-chance')).toBe(4);
+    expect(after.indexOf('precipitation-chance')).toBe(7);
     // And it reached the store, not just the DOM.
-    expect(useDashboardStore.getState().cards[4].id).toBe('precipitation-chance');
+    expect(useDashboardStore.getState().cards[7].id).toBe('precipitation-chance');
   });
 
   it('clears the placement state once placed', () => {
@@ -104,7 +104,7 @@ describe('putting it down', () => {
     enterArrangeMode();
 
     fireEvent.click(handleFor('Rain Chance'));
-    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 5 of 6/i }));
+    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 8 of 9/i }));
 
     expect(screen.queryByText(/placing/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^done$/i })).toBeInTheDocument();
@@ -117,8 +117,8 @@ describe('putting it down', () => {
     fireEvent.click(handleFor('Rain Chance'));
     expect(screen.getByText(/moving rain chance\. choose where it goes/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 5 of 6/i }));
-    expect(screen.getByText(/rain chance moved to position 5 of 6/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 8 of 9/i }));
+    expect(screen.getByText(/rain chance moved to position 8 of 9/i)).toBeInTheDocument();
   });
 });
 
