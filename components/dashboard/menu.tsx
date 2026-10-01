@@ -4,6 +4,8 @@ import { useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { weatherCardRegistry, type WeatherCardId } from '@/components/weather/card-registry';
+import { FavoriteMetricsPicker } from '@/components/weather/favorite-metrics-picker';
+import type { FavoriteMetricId } from '@/lib/weather/favorite-metrics';
 import { useDialogFocus } from '@/lib/hooks/use-dialog-focus';
 import { LAYOUT_PRESETS } from '@/lib/weather/card-layout';
 import { THEME_IDS, THEMES, type ThemeId } from '@/lib/theme';
@@ -23,6 +25,8 @@ interface MenuProps {
   onEditingChange: (isEditing: boolean) => void;
   onApplyPreset: (presetId: string) => void;
   onRestoreDefaults: () => void;
+  favoriteMetrics: FavoriteMetricId[];
+  onToggleFavoriteMetric: (id: FavoriteMetricId) => void;
   /** Built at click time so the link always carries the setup as it stands. */
   getShareUrl: () => string;
   onRestartOnboarding: () => void;
@@ -83,6 +87,8 @@ export function Menu({
   onEditingChange,
   onApplyPreset,
   onRestoreDefaults,
+  favoriteMetrics,
+  onToggleFavoriteMetric,
   getShareUrl,
   onRestartOnboarding,
   triggerRef: externalTriggerRef,
@@ -263,6 +269,19 @@ export function Menu({
                     <Icon name="restart" size={16} />
                     Restore defaults
                   </button>
+                </section>
+
+                <section aria-labelledby={`${panelId}-favorites`}>
+                  <h3 id={`${panelId}-favorites`} className={SECTION_HEADING}>
+                    Favorite readings
+                  </h3>
+                  <p className="mt-1 type-body-sm text-on-surface-variant">Pinned to the top card. Choose up to four.</p>
+                  <div className="mt-3">
+                    <FavoriteMetricsPicker
+                      selected={favoriteMetrics}
+                      onToggle={onToggleFavoriteMetric}
+                    />
+                  </div>
                 </section>
 
                 <section aria-labelledby={`${panelId}-setup`}>

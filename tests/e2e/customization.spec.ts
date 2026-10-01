@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { mockWeatherData } from '../../lib/weather/mock-data';
 import { markOnboarded } from './support';
 
 // These specs exercise the returning-visitor dashboard; the first-run flow would sit over it.
@@ -243,4 +244,26 @@ test('a module can be resized without dragging a corner handle', async ({ page }
   await expect(
     page.getByRole('radiogroup', { name: /size of humidity/i }).getByRole('radio', { name: /large humidity/i }),
   ).toBeChecked();
+});
+
+test('favorite readings can be changed from the menu and show in the hero', async ({ page }) => {
+  await page.route('**/api/weather*', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWeatherData) }),
+  );
+  await page.goto('/');
+
+  const hero = page.getByRole('region', { name: /current conditions/i });
+  await expect(hero.getByText('Dew point')).toHaveCount(1);
+
+  await page.getByRole('button', { name: /open menu/i }).click();
+  const menu = page.getByRole('dialog', { name: /dashboard settings/i });
+  await menu.getByRole('checkbox', { name: 'Pin Dew point' }).locator('xpath=ancestor::label[1]').click();
+  await menu.getByRole('checkbox', { name: 'Pin Air quality' }).locator('xpath=ancestor::label[1]').click();
+  await page.keyboard.press('Escape');
+
+  await expect(hero.getByText('Dew point')).toHaveCount(0);
+  await expect(hero.getByText('US AQI 38, Good')).toBeVisible();
+
+  await page.reload();
+  await expect(hero.getByText('US AQI 38, Good')).toBeVisible();
 });

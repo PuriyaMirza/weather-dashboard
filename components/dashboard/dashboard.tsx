@@ -49,6 +49,8 @@ export function Dashboard() {
   const applyPreset = useDashboardStore((state) => state.applyPreset);
   const restoreDefaults = useDashboardStore((state) => state.restoreDefaults);
   const activities = useDashboardStore((state) => state.activities);
+  const favoriteMetrics = useDashboardStore((state) => state.favoriteMetrics);
+  const toggleFavoriteMetric = useDashboardStore((state) => state.toggleFavoriteMetric);
   const hasOnboarded = useDashboardStore((state) => state.hasOnboarded);
   const completeOnboarding = useDashboardStore((state) => state.completeOnboarding);
   const skipOnboarding = useDashboardStore((state) => state.skipOnboarding);
@@ -91,9 +93,10 @@ export function Dashboard() {
         theme,
         cards,
         activities,
+        favoriteMetrics,
         hasOnboarded,
       }),
-    [location, savedLocations, unitSystem, theme, cards, activities, hasOnboarded],
+    [location, savedLocations, unitSystem, theme, cards, activities, favoriteMetrics, hasOnboarded],
   );
 
   // The inline script in layout.tsx sets the theme before paint; this keeps the attribute in step
@@ -215,6 +218,8 @@ export function Dashboard() {
             onEditingChange={setEditing}
             onApplyPreset={applyPreset}
             onRestoreDefaults={restoreDefaults}
+            favoriteMetrics={favoriteMetrics}
+            onToggleFavoriteMetric={toggleFavoriteMetric}
             getShareUrl={getShareUrl}
             onRestartOnboarding={restartOnboarding}
             triggerRef={menuTriggerRef}
@@ -243,6 +248,7 @@ export function Dashboard() {
           isLoading={isLoading && !data}
           errorMessage={isStale ? undefined : failed}
           unitSystem={unitSystem}
+          favoriteMetrics={favoriteMetrics}
           onRefresh={refresh}
           isRefreshing={isRefreshing}
           isStale={isStale}

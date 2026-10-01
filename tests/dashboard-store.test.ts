@@ -41,7 +41,7 @@ describe('dashboard store', () => {
     expect(persisted.state.location).toEqual(SEATTLE);
     // partialize should keep actions out of storage.
     expect(persisted.state.setLocation).toBeUndefined();
-    expect(persisted.version).toBe(10);
+    expect(persisted.version).toBe(11);
   });
 
   it('does not read persisted state until rehydrate is called (skipHydration)', async () => {
@@ -415,5 +415,39 @@ describe('dashboard store — unreadable persisted state', () => {
 
     expect(useDashboardStore.getState().location).toEqual(SEATTLE);
     expect(useDashboardStore.getState().unitSystem).toBe('metric');
+  });
+
+  describe('favorite readings', () => {
+    it('adds a reading while there is room, and refuses a fifth', () => {
+      useDashboardStore.setState({ favoriteMetrics: ['range', 'feels'] });
+      const { toggleFavoriteMetric } = useDashboardStore.getState();
+
+      toggleFavoriteMetric('uv');
+      toggleFavoriteMetric('wind');
+      toggleFavoriteMetric('humidity');
+
+      expect(useDashboardStore.getState().favoriteMetrics).toEqual(['range', 'feels', 'uv', 'wind']);
+    });
+
+    it('removes a reading, but never the last one', () => {
+      useDashboardStore.setState({ favoriteMetrics: ['range', 'feels'] });
+      const { toggleFavoriteMetric } = useDashboardStore.getState();
+
+      toggleFavoriteMetric('range');
+      toggleFavoriteMetric('feels');
+
+      expect(useDashboardStore.getState().favoriteMetrics).toEqual(['feels']);
+    });
+
+    it('gives a dashboard saved before favorites existed the original four', async () => {
+      window.localStorage.setItem(
+        DASHBOARD_STORAGE_KEY,
+        JSON.stringify({ state: { location: SEATTLE }, version: 10 }),
+      );
+
+      await useDashboardStore.persist.rehydrate();
+
+      expect(useDashboardStore.getState().favoriteMetrics).toEqual(['range', 'feels', 'dew', 'pressure']);
+    });
   });
 });

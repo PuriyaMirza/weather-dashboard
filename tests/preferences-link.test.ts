@@ -25,6 +25,7 @@ const PREFERENCES: PersistedPreferences = {
     { id: 'wind-speed', size: 'small' },
   ],
   activities: ['cycle', 'walk'],
+  favoriteMetrics: ['humidity', 'uv'],
   hasOnboarded: true,
 };
 
@@ -49,6 +50,19 @@ describe('validatePreferences', () => {
   it('drops activities it does not recognise instead of passing them to the finder', () => {
     const result = validatePreferences({ activities: ['walk', 'skydive', 7, null, 'cycle'] });
     expect(result.activities).toEqual(['walk', 'cycle']);
+  });
+
+  it('keeps only known, distinct favorite readings, at most four', () => {
+    const result = validatePreferences({
+      favoriteMetrics: ['uv', 'uv', 'nonsense', 7, 'wind', 'dew', 'humidity', 'pressure'],
+    });
+    expect(result.favoriteMetrics).toEqual(['uv', 'wind', 'dew', 'humidity']);
+  });
+
+  it('falls back to the original four readings when none were saved or none are valid', () => {
+    for (const favoriteMetrics of [undefined, [], 'uv', ['nonsense']]) {
+      expect(validatePreferences({ favoriteMetrics }).favoriteMetrics).toEqual(['range', 'feels', 'dew', 'pressure']);
+    }
   });
 
   it('de-duplicates activities, so one choice cannot be repeated into many rows', () => {
@@ -140,6 +154,7 @@ describe('the shareable setup link', () => {
     expect(decoded?.theme).toBe('forest');
     expect(decoded?.unitSystem).toBe('imperial');
     expect(decoded?.activities).toEqual(['walk']);
+    expect(decoded?.favoriteMetrics).toEqual(['range', 'feels', 'dew', 'pressure']);
     // The unknown id is dropped; the real one survives with a valid size.
     expect(decoded?.cards).toEqual([{ id: 'temperature', size: 'small' }]);
   });

@@ -3,10 +3,16 @@
 import { useId, useRef, useState } from 'react';
 import { LocationSearch } from '@/components/location/location-search';
 import { Icon, type IconName } from '@/components/ui/icon';
+import { FavoriteMetricsPicker } from '@/components/weather/favorite-metrics-picker';
 import { getCardDefinition, type WeatherCardId } from '@/components/weather/card-registry';
 import { useDialogFocus } from '@/lib/hooks/use-dialog-focus';
 import { ACTIVITIES, type ActivityId } from '@/lib/weather/activity-windows';
 import { composeLayoutForActivities, type CardLayoutEntry } from '@/lib/weather/card-layout';
+import {
+  DEFAULT_FAVORITE_METRICS,
+  MAX_FAVORITE_METRICS,
+  type FavoriteMetricId,
+} from '@/lib/weather/favorite-metrics';
 import { formatLocationLabel, type SelectedLocation } from '@/lib/weather/location';
 import type { OnboardingResult } from '@/store/dashboard-store';
 
@@ -17,12 +23,13 @@ interface OnboardingProps {
   onSkip: () => void;
 }
 
-const STEPS = ['location', 'activities', 'modules'] as const;
+const STEPS = ['location', 'activities', 'favorites', 'modules'] as const;
 type Step = (typeof STEPS)[number];
 
 const STEP_TITLE: Record<Step, string> = {
   location: 'Where are you?',
   activities: 'What do you do outside?',
+  favorites: 'Pick your four favorites',
   modules: 'Here is your dashboard',
 };
 
@@ -47,7 +54,7 @@ const QUIET =
   `underline-offset-4 hover:text-primary ${FOCUS_RING}`;
 
 /**
- * The first-run flow: three questions that compose a dashboard.
+ * The first-run flow: four questions that compose a dashboard.
  *
  * The dashboard has always been customizable and has always presented as a blank slate — every
  * module in the default layout was chosen by us, and changing that meant finding the menu. This
@@ -68,6 +75,7 @@ export function Onboarding({ initialLocation, onComplete, onSkip }: OnboardingPr
   const [stepIndex, setStepIndex] = useState(0);
   const [location, setLocation] = useState(initialLocation);
   const [activities, setActivities] = useState<ActivityId[]>([]);
+  const [favoriteMetrics, setFavoriteMetrics] = useState<FavoriteMetricId[]>(DEFAULT_FAVORITE_METRICS);
   /** Fixed when the last step opens, so unchecking a row does not make it vanish mid-decision. */
   const [proposed, setProposed] = useState<CardLayoutEntry[]>([]);
   const [excluded, setExcluded] = useState<Set<WeatherCardId>>(new Set());
@@ -81,6 +89,13 @@ export function Onboarding({ initialLocation, onComplete, onSkip }: OnboardingPr
     setActivities((current) =>
       current.includes(id) ? current.filter((value) => value !== id) : [...current, id],
     );
+  }
+
+  function toggleFavorite(id: FavoriteMetricId) {
+    setFavoriteMetrics((current) => {
+      if (current.includes(id)) return current.length > 1 ? current.filter((value) => value !== id) : current;
+      return current.length < MAX_FAVORITE_METRICS ? [...current, id] : current;
+    });
   }
 
   function toggleModule(id: WeatherCardId) {
@@ -180,6 +195,18 @@ export function Onboarding({ initialLocation, onComplete, onSkip }: OnboardingPr
             </>
           )}
 
+          {step === 'favorites' && (
+            <>
+              <p className="type-body-md text-on-surface-variant">
+                These sit at the top of your dashboard, always in view. Choose up to four — you can
+                change them any time from the menu.
+              </p>
+              <div className="mt-5">
+                <FavoriteMetricsPicker selected={favoriteMetrics} onToggle={toggleFavorite} />
+              </div>
+            </>
+          )}
+
           {step === 'modules' && (
             <>
               <p className="type-body-md text-on-surface-variant">
@@ -226,7 +253,7 @@ export function Onboarding({ initialLocation, onComplete, onSkip }: OnboardingPr
           {step === 'modules' ? (
             <button
               type="button"
-              onClick={() => onComplete({ location, activities, cards: chosen })}
+              onClick={() => onComplete({ location, activities, cards: chosen, favoriteMetrics })}
               disabled={chosen.length === 0}
               className={PRIMARY}
             >

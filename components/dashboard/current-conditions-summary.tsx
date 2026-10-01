@@ -1,17 +1,8 @@
-import { Icon, type IconName } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/icon';
 import { RingGauge } from '@/components/ui/ring-gauge';
 import { conditionIcon } from '@/lib/weather/condition-icon';
 import type { WeatherDashboardData } from '@/lib/weather/types';
-import {
-  describeTemperature,
-  formatPercent,
-  formatPressure,
-  formatTemperature,
-  type UnitSystem,
-} from '@/lib/weather/units';
-
-/** Stands in for any missing reading — a dash, never a fabricated number. */
-export const MISSING = '—';
+import { describeTemperature, formatPercent, formatTemperature, type UnitSystem } from '@/lib/weather/units';
 
 interface CurrentConditionsSummaryProps {
   data: WeatherDashboardData;
@@ -19,58 +10,18 @@ interface CurrentConditionsSummaryProps {
   unitSystem: UnitSystem;
 }
 
-interface QuickStat {
-  icon: IconName;
-  label: string;
-  value: string;
-  unit?: string;
-  /** Spoken form, where the visible abbreviation would read poorly. */
-  spokenLabel?: string;
-}
-
-/** "30.08 inHg" → { value: "30.08", unit: "inHg" }; a lone dash stays whole. */
-function splitUnit(formatted: string): Pick<QuickStat, 'value' | 'unit'> {
-  const space = formatted.lastIndexOf(' ');
-  return space < 0 ? { value: formatted } : { value: formatted.slice(0, space), unit: formatted.slice(space + 1) };
-}
-
-function temperatureOrMissing(fahrenheit: number | null | undefined, unitSystem: UnitSystem): string {
-  return fahrenheit == null ? MISSING : formatTemperature(fahrenheit, unitSystem);
-}
-
 /**
- * "Right now": the current temperature, the next hour's rain odds and four quick readings.
- *
- * Dew point and pressure come from the atmospheric block first and the comfort block second, the
- * same fields the grid's modules read, so the two never disagree on screen.
+ * "Right now": the current temperature and the next hour's rain odds. The quick readings that used
+ * to sit under them are the user's pinned favourites and live in the hero's card instead.
  */
 export function CurrentConditionsSummary({ data, isDay, unitSystem }: CurrentConditionsSummaryProps) {
   const current = data.current;
   if (!current) return null;
 
-  const dewPointF = data.atmospheric?.dewPointF ?? data.comfort?.dewPointF ?? null;
-  const pressureInHg = data.atmospheric?.pressureInHg ?? data.comfort?.pressureInHg ?? null;
   const rainChance = current.precipitationChance;
 
-  const stats: QuickStat[] = [
-    {
-      icon: 'thermostat',
-      label: 'Range',
-      spokenLabel: 'High and low',
-      value: `${temperatureOrMissing(current.highF, unitSystem)} / ${temperatureOrMissing(current.lowF, unitSystem)}`,
-    },
-    { icon: 'feels-like', label: 'Feels', spokenLabel: 'Feels like', value: temperatureOrMissing(current.feelsLikeF, unitSystem) },
-    { icon: 'dew-point', label: 'Dew', spokenLabel: 'Dew point', value: temperatureOrMissing(dewPointF, unitSystem) },
-    {
-      icon: 'pressure',
-      label: 'Barom.',
-      spokenLabel: 'Pressure',
-      ...splitUnit(pressureInHg == null ? MISSING : formatPressure(pressureInHg, unitSystem)),
-    },
-  ];
-
   return (
-    <div className="flex flex-col justify-between gap-5 rounded-2xl bg-surface-container-low p-5 shadow-card">
+    <div className="flex flex-col justify-center gap-5 rounded-2xl bg-surface-container-low p-5 shadow-card">
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col">
           <p className="type-label-sm uppercase text-secondary">Right now</p>
@@ -98,27 +49,6 @@ export function CurrentConditionsSummary({ data, isDay, unitSystem }: CurrentCon
         </div>
       </div>
 
-      <dl className="grid grid-cols-4 gap-2 rounded-xl bg-surface-container/60 p-3">
-        {stats.map((stat) => (
-          <div key={stat.label} className="flex min-w-0 flex-col items-center text-center">
-            <dt className="flex flex-col items-center gap-0.5 type-label-sm text-on-secondary-container">
-              <Icon name={stat.icon} size={18} className="text-secondary" />
-              <span aria-hidden={stat.spokenLabel ? true : undefined}>{stat.label}</span>
-              {stat.spokenLabel && <span className="sr-only">{stat.spokenLabel}</span>}
-            </dt>
-            <dd className="mt-0.5 type-label-md font-bold text-primary tabular-nums">
-              {stat.value}
-              {stat.unit && (
-                <>
-                  {' '}
-                  {/* Its own line: "30.08 inHg" doesn't fit a quarter of a phone-width strip. */}
-                  <span className="block type-label-sm font-normal text-on-secondary-container">{stat.unit}</span>
-                </>
-              )}
-            </dd>
-          </div>
-        ))}
-      </dl>
     </div>
   );
 }

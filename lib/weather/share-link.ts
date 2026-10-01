@@ -38,6 +38,7 @@ interface WirePreferences {
   t?: string;
   c?: [string, string][];
   a?: string[];
+  f?: string[];
 }
 
 function toBase64Url(text: string): string {
@@ -65,6 +66,7 @@ export function encodePreferences(preferences: PersistedPreferences): string {
     t: preferences.theme,
     c: preferences.cards.map((card) => [card.id, card.size]),
     a: preferences.activities,
+    f: preferences.favoriteMetrics,
   };
 
   return toBase64Url(JSON.stringify(wire));
@@ -98,6 +100,8 @@ export function decodePreferences(value: string | null | undefined): PersistedPr
         ? wire.c.filter(Array.isArray).map(([id, size]) => ({ id, size }))
         : [],
       activities: wire.a,
+      // Absent in links written before favourites existed; validation supplies the defaults.
+      favoriteMetrics: wire.f,
       hasOnboarded: true,
     });
   } catch {
