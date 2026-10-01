@@ -289,7 +289,15 @@ export function Menu({
                     Setup
                   </h3>
                   <ShareSetup getShareUrl={getShareUrl} />
-                  <button type="button" onClick={onRestartOnboarding} className={`${TEXT_ACTION} -ml-3 mt-2`}>
+                  {/* Closes the panel first: on a phone it is full width and would sit over the setup dialog. */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      close();
+                      onRestartOnboarding();
+                    }}
+                    className={`${TEXT_ACTION} -ml-3 mt-2`}
+                  >
                     <Icon name="refresh" size={16} />
                     Redo setup
                   </button>
