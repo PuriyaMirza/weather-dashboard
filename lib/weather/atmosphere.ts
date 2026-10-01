@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import type { WeatherCondition } from './types';
+import type { WeatherCondition, WeatherDashboardData } from './types';
 
 /**
  * Maps the weather onto the sky above the hero's tree line.
@@ -122,6 +122,16 @@ export function inferIsDay(observedAt: string, sunrise: string | null, sunset: s
   if (Number.isNaN(observed) || Number.isNaN(rise) || Number.isNaN(set)) return true;
 
   return observed >= rise && observed < set;
+}
+
+/**
+ * Whether the current reading is by day: the provider's own flag when it sent one, otherwise
+ * inferred from sunrise and sunset. Shared so the hero's art and the Right Now card never disagree.
+ */
+export function currentIsDay(data: WeatherDashboardData): boolean {
+  const current = data.current;
+  if (!current) return true;
+  return current.isDay ?? inferIsDay(current.observedAt, data.sun?.sunrise ?? null, data.sun?.sunset ?? null);
 }
 
 export type TimeOfDay = 'Morning' | 'Afternoon' | 'Evening' | 'Night' | 'Day';

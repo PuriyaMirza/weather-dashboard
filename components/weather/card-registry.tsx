@@ -12,6 +12,7 @@ import { DailyForecastCard } from './daily-forecast-card';
 import { HourlyTemperatureCard } from './hourly-temperature-card';
 import { NextHoursCard } from './next-hours-card';
 import { PrecipitationCard } from './precipitation-card';
+import { RightNowCard } from './right-now-card';
 import { createStatModule } from './stat-module';
 import { SunUvCard } from './sun-uv-card';
 import { WindCard } from './wind-card';
@@ -21,6 +22,7 @@ import { WindCard } from './wind-card';
  * readings below, which are generated from `METRIC_MODULES`.
  */
 export type CompositeCardId =
+  | 'right-now'
   | 'current-conditions'
   | 'comfort'
   | 'hourly-temperature'
@@ -63,6 +65,13 @@ export interface WeatherCardDefinition {
 }
 
 const compositeCards: WeatherCardDefinition[] = [
+  {
+    id: 'right-now',
+    title: 'Right Now',
+    description: 'The temperature and sky at this moment, and the chance of rain in the next hour.',
+    kind: 'panel',
+    Component: RightNowCard,
+  },
   {
     id: 'activity-windows',
     title: 'Best Time To Go Out',

@@ -3,19 +3,18 @@
 import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
 import { Surface } from '@/components/ui/surface';
-import { CurrentConditionsSummary, MISSING } from '@/components/dashboard/current-conditions-summary';
 import { HeroIllustration } from '@/components/dashboard/hero-illustration';
 import { WeatherEffect } from '@/components/dashboard/weather-effect';
 import {
   atmosphereStyle,
   getAtmosphere,
-  inferIsDay,
+  currentIsDay,
   NEUTRAL_ATMOSPHERE,
   skyHeadline,
 } from '@/lib/weather/atmosphere';
 import { formatRegionLabel, type SelectedLocation } from '@/lib/weather/location';
-import type { AirQualityMetrics, WeatherDashboardData } from '@/lib/weather/types';
-import { AQI_CATEGORY_LABEL } from '@/lib/weather/metrics';
+import { getFavoriteMetric, type FavoriteMetricId } from '@/lib/weather/favorite-metrics';
+import type { WeatherDashboardData } from '@/lib/weather/types';
 import { formatTemperature, formatTime, type UnitSystem } from '@/lib/weather/units';
 
 interface HeroProps {
@@ -24,6 +23,8 @@ interface HeroProps {
   isLoading: boolean;
   errorMessage?: string;
   unitSystem: UnitSystem;
+  /** The readings pinned under the heading, in the order the user chose. */
+  favoriteMetrics: FavoriteMetricId[];
   onRefresh: () => void;
   isRefreshing: boolean;
   /** True when the reading on screen is the last good one and the newest attempt failed. */
@@ -46,30 +47,57 @@ function daySummary(data: WeatherDashboardData, isDay: boolean, unitSystem: Unit
   return `${range} ${isDay ? 'Sunset' : 'Sunrise'} at ${formatTime(sunEvent, timeZone)}.`;
 }
 
-function AirQualityStrip({ airQuality }: { airQuality: AirQualityMetrics }) {
-  const { category, usAqi, pm2_5: pm25 } = airQuality;
-  // Nothing worth a row: better no strip than one reading "— • —".
-  if (category == null && usAqi == null && pm25 == null) return null;
-
+/**
+ * The user's pinned readings. A missing upstream value renders a dash — the tile stays so the row
+ * doesn't reshuffle — and each label has a spoken form where the visible one is abbreviated.
+ */
+function FavoriteMetricsStrip({
+  data,
+  ids,
+  unitSystem,
+}: {
+  data: WeatherDashboardData;
+  ids: FavoriteMetricId[];
+  unitSystem: UnitSystem;
+}) {
   return (
-    <div className="flex items-center gap-2.5 bg-surface-container-lowest/85 px-5 py-3 backdrop-blur-md">
-      <Icon name="air" size={20} className="shrink-0 text-secondary" />
-      <div className="flex min-w-0 flex-col">
-        <p className="type-label-md text-on-surface">
-          Air Quality: {category ? AQI_CATEGORY_LABEL[category] : MISSING}
-        </p>
-        <p className="type-label-sm text-on-secondary-container">
-          US AQI {usAqi == null ? MISSING : Math.round(usAqi)} • PM2.5{' '}
-          {pm25 == null ? MISSING : `${Math.round(pm25)} µg/m³`}
-        </p>
-      </div>
-    </div>
+    <dl
+      aria-label="Favorite readings"
+      className="grid auto-cols-fr grid-flow-col gap-2 bg-surface-container-lowest/85 px-4 py-3 backdrop-blur-md"
+    >
+      {ids.map((id) => {
+        const metric = getFavoriteMetric(id);
+        const reading = metric.read(data, unitSystem);
+        return (
+          <div key={id} className="flex min-w-0 flex-col items-center text-center">
+            <dt className="flex flex-col items-center gap-0.5 type-label-sm text-on-secondary-container">
+              <Icon name={metric.icon} size={18} className="text-secondary" />
+              <span aria-hidden="true">{metric.label}</span>
+              <span className="sr-only">{metric.title}</span>
+            </dt>
+            <dd className="mt-0.5 type-label-md font-bold text-primary tabular-nums">
+              {reading.spoken ? <span className="sr-only">{reading.spoken}</span> : null}
+              <span aria-hidden={reading.spoken ? true : undefined}>{reading.value}</span>
+              {reading.unit && (
+                <span
+                  aria-hidden={reading.spoken ? true : undefined}
+                  className="block type-label-sm font-normal text-on-secondary-container"
+                >
+                  {reading.unit}
+                </span>
+              )}
+            </dd>
+          </div>
+        );
+      })}
+    </dl>
   );
 }
 
 /**
- * The top of the page: an illustrated card naming the sky and the day ahead, the current reading,
- * and the next hours.
+ * The top of the page: an illustrated card naming the sky and the day ahead, with the user's
+ * favorite readings beneath it. The current reading (Right Now) and the next hours are grid
+ * modules, so they can be moved.
  *
  * Everything the dashboard knows about the request's health is said here, once — a stale banner
  * over an old reading, or an alert with a retry when there is no reading at all — rather than
@@ -84,6 +112,7 @@ export function Hero({
   isLoading,
   errorMessage,
   unitSystem,
+  favoriteMetrics,
   onRefresh,
   isRefreshing,
   isStale,
@@ -92,19 +121,15 @@ export function Hero({
   const current = data?.current ?? null;
   const timeZone = data?.location.timezone;
 
-  const isDay = current
-    ? (current.isDay ?? inferIsDay(current.observedAt, data?.sun?.sunrise ?? null, data?.sun?.sunset ?? null))
-    : true;
+  const isDay = data ? currentIsDay(data) : true;
 
   const atmosphere = current ? getAtmosphere(current.condition, isDay) : NEUTRAL_ATMOSPHERE;
   // The region of the reading on screen, not of the store's location: right after a location
   // change the old forecast is still showing, and its chip must not claim the new place.
   const region = formatRegionLabel(data?.location ?? location);
 
-  // Explicit minmax(0, 1fr) tracks (grid-cols-1): an implicit auto track grows to the hour strip's
-  // full scroll width, pushing the whole page wider than a phone.
   return (
-    <section aria-labelledby="hero-heading" className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <section aria-labelledby="hero-heading" className="grid grid-cols-1 gap-6">
       <h2 id="hero-heading" className="sr-only">
         Current conditions
       </h2>
@@ -117,7 +142,7 @@ export function Hero({
       {isStale && (
         <p
           role="status"
-          className="flex items-start gap-2.5 rounded-xl bg-surface-container-high px-4 py-3 type-body-sm text-on-surface lg:col-span-2"
+          className="flex items-start gap-2.5 rounded-xl bg-surface-container-high px-4 py-3 type-body-sm text-on-surface"
         >
           <Icon name="info" size={20} className="mt-px shrink-0 text-secondary" />
           <span>Showing the last reading that loaded. {failureMessage}</span>
@@ -128,8 +153,7 @@ export function Hero({
         tone="lowest"
         elevation="raised"
         radius="2xl"
-        // Alone on its row until a reading arrives, so a loading or failed hero isn't half-width.
-        className={`relative overflow-hidden ${current ? '' : 'lg:col-span-2'}`}
+        className="relative overflow-hidden"
       >
         <div className="relative flex h-56 flex-col justify-end overflow-hidden p-5" style={atmosphereStyle(atmosphere)}>
           <HeroIllustration palette={atmosphere} />
@@ -176,10 +200,9 @@ export function Hero({
           </div>
         </div>
 
-        {data?.airQuality && <AirQualityStrip airQuality={data.airQuality} />}
+        {data && current && <FavoriteMetricsStrip data={data} ids={favoriteMetrics} unitSystem={unitSystem} />}
       </Surface>
 
-      {data && current && <CurrentConditionsSummary data={data} isDay={isDay} unitSystem={unitSystem} />}
     </section>
   );
 }

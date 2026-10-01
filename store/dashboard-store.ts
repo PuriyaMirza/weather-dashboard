@@ -11,6 +11,12 @@ import {
   type CardSize,
 } from '@/lib/weather/card-layout';
 import { isActivityId, type ActivityId } from '@/lib/weather/activity-windows';
+import {
+  DEFAULT_FAVORITE_METRICS,
+  MAX_FAVORITE_METRICS,
+  normalizeFavoriteMetrics,
+  type FavoriteMetricId,
+} from '@/lib/weather/favorite-metrics';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
 import { DEFAULT_THEME, toThemeId, type ThemeId } from '@/lib/theme';
 import { defaultUnitSystem, type UnitSystem } from '@/lib/weather/units';
@@ -31,6 +37,8 @@ export interface PersistedPreferences {
   theme: ThemeId;
   cards: CardLayoutEntry[];
   activities: ActivityId[];
+  /** Up to four readings pinned to the hero, in display order. */
+  favoriteMetrics: FavoriteMetricId[];
   hasOnboarded: boolean;
 }
 
@@ -39,6 +47,7 @@ export interface OnboardingResult {
   location: SelectedLocation;
   activities: ActivityId[];
   cards: CardLayoutEntry[];
+  favoriteMetrics: FavoriteMetricId[];
 }
 
 export interface DashboardState extends PersistedPreferences {
@@ -67,6 +76,8 @@ export interface DashboardState extends PersistedPreferences {
   restoreDefaults: () => void;
 
   setActivities: (activities: ActivityId[]) => void;
+  /** Adds the reading if absent (while there is room), removes it if present — never below one. */
+  toggleFavoriteMetric: (id: FavoriteMetricId) => void;
   /** One atomic write, so a half-finished setup is never persisted. */
   completeOnboarding: (result: OnboardingResult) => void;
   skipOnboarding: () => void;
@@ -129,6 +140,8 @@ export function validatePreferences(raw: unknown): PersistedPreferences {
     activities: Array.isArray(saved.activities)
       ? [...new Set(saved.activities.filter(isActivityId))]
       : [],
+    // Saved before this existed → the readings the hero showed before it was a choice.
+    favoriteMetrics: normalizeFavoriteMetrics(saved.favoriteMetrics),
     hasOnboarded: saved.hasOnboarded === true,
   };
 }
@@ -196,6 +209,7 @@ export const useDashboardStore = create<DashboardState>()(
       theme: DEFAULT_THEME,
       cards: DEFAULT_CARD_LAYOUT,
       activities: [],
+      favoriteMetrics: DEFAULT_FAVORITE_METRICS,
       hasOnboarded: false,
       isEditing: false,
 
@@ -263,11 +277,24 @@ export const useDashboardStore = create<DashboardState>()(
 
       setActivities: (activities) => set({ activities: [...new Set(activities)] }),
 
-      completeOnboarding: ({ location, activities, cards }) =>
+      toggleFavoriteMetric: (id) =>
+        set((state) => {
+          if (state.favoriteMetrics.includes(id)) {
+            return state.favoriteMetrics.length > 1
+              ? { favoriteMetrics: state.favoriteMetrics.filter((metric) => metric !== id) }
+              : state;
+          }
+          return state.favoriteMetrics.length < MAX_FAVORITE_METRICS
+            ? { favoriteMetrics: [...state.favoriteMetrics, id] }
+            : state;
+        }),
+
+      completeOnboarding: ({ location, activities, cards, favoriteMetrics }) =>
         set({
           location,
           activities: [...new Set(activities)],
           cards: reconcileLayout(cards),
+          favoriteMetrics: normalizeFavoriteMetrics(favoriteMetrics),
           hasOnboarded: true,
         }),
 
@@ -288,7 +315,7 @@ export const useDashboardStore = create<DashboardState>()(
       },
       // Bump when the persisted shape changes so old saved state is never deserialized into a
       // shape the code no longer understands.
-      version: 10,
+      version: 12,
       // Without a migrate, zustand *discards* state saved under an older version — which would
       // throw away every existing dashboard on upgrade and make reconcileLayout's span-to-size
       // translation dead code. Older state is handed through instead, because `merge` below
@@ -297,10 +324,20 @@ export const useDashboardStore = create<DashboardState>()(
         // Anyone holding state from before onboarding existed has already arranged their dashboard
         // by hand. Defaulting them to "not yet onboarded" would greet a returning user with a
         // first-run wall over the dashboard they already built, so they are marked done.
-        if (version < 7 && typeof persisted === 'object' && persisted !== null) {
-          return { ...persisted, hasOnboarded: true } as DashboardState;
+        let state = persisted as DashboardState;
+        if (version < 7 && typeof state === 'object' && state !== null) {
+          state = { ...state, hasOnboarded: true };
         }
-        return persisted as DashboardState;
+        // Right Now was a fixed part of the hero before it joined the grid. A saved layout predates
+        // it and would otherwise make the current temperature silently vanish, so it goes back in
+        // at the top, where it always sat.
+        if (version < 12 && typeof state === 'object' && state !== null && Array.isArray(state.cards)) {
+          const cards = state.cards as CardLayoutEntry[];
+          if (!cards.some((card) => card?.id === 'right-now')) {
+            state = { ...state, cards: [{ id: 'right-now', size: 'medium' }, ...cards] };
+          }
+        }
+        return state;
       },
       // Persist preferences only. Actions are unserializable, and isEditing is transient.
       partialize: (state) => ({
@@ -310,6 +347,7 @@ export const useDashboardStore = create<DashboardState>()(
         theme: state.theme,
         cards: state.cards,
         activities: state.activities,
+        favoriteMetrics: state.favoriteMetrics,
         hasOnboarded: state.hasOnboarded,
       }),
       // Every persisted field is re-validated rather than trusted, because `migrate` above

@@ -246,7 +246,18 @@ test('a first-time visitor is offered setup, and the answers stick', async ({ pa
   await page.getByRole('checkbox', { name: 'Cycle' }).locator('xpath=ancestor::label[1]').click();
   await expect(page.getByRole('checkbox', { name: 'Cycle' })).toBeChecked();
   await page.getByRole('button', { name: /continue/i }).click();
+
+  // Four favorites are preselected; swap one, as a user who wants wind over dew point would.
+  await expect(page.getByRole('heading', { name: /pick your four favorites/i })).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Pin Dew point' }).locator('xpath=ancestor::label[1]').click();
+  await page.getByRole('checkbox', { name: 'Pin Wind speed' }).locator('xpath=ancestor::label[1]').click();
+  await page.getByRole('button', { name: /continue/i }).click();
   await page.getByRole('button', { name: /use this dashboard/i }).click();
+
+  // The favorites sit in the hero, where air quality used to.
+  const favorites = page.getByRole('term').filter({ hasText: 'Wind speed' });
+  await expect(favorites).toHaveCount(1);
+  await expect(page.getByRole('term').filter({ hasText: 'Dew point' })).toHaveCount(0);
 
   // The answer shaped the grid: a cyclist gets wind, which is not in the default layout.
   const grid = page.getByLabel('Weather modules');
@@ -257,6 +268,7 @@ test('a first-time visitor is offered setup, and the answers stick', async ({ pa
   await page.reload();
   await expect(page.getByRole('dialog', { name: /where are you/i })).toHaveCount(0);
   await expect(grid.getByRole('heading', { name: 'Wind Detail', exact: true })).toBeVisible();
+  await expect(page.getByRole('term').filter({ hasText: 'Wind speed' })).toHaveCount(1);
 });
 
 test('the setup flow can be skipped, and stays skipped', async ({ page }) => {
@@ -308,6 +320,7 @@ test('a place searched for during setup is the one the dashboard opens on', asyn
   await expect(dialog.getByText(/using/i)).toContainText('New York');
 
   // The dialog is named by its step title, so after this point it is found by role alone.
+  await page.getByRole('button', { name: /continue/i }).click();
   await page.getByRole('button', { name: /continue/i }).click();
   await page.getByRole('button', { name: /continue/i }).click();
   await page.getByRole('button', { name: /use this dashboard/i }).click();

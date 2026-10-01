@@ -73,6 +73,20 @@ test('the open menu has no serious accessibility violations', async ({ page }) =
   expect(violations, describe(violations)).toEqual([]);
 });
 
+test('the setup flow\'s favorites step has no serious accessibility violations', async ({ page }) => {
+  await stubWeather(page);
+  await page.goto('/');
+
+  await page.getByRole('button', { name: /open menu/i }).click();
+  await page.getByRole('button', { name: /redo setup/i }).click();
+  await page.getByRole('button', { name: /continue/i }).click();
+  await page.getByRole('button', { name: /continue/i }).click();
+  await expect(page.getByRole('heading', { name: /pick your four favorites/i })).toBeVisible();
+
+  const violations = await scan(page);
+  expect(violations, describe(violations)).toEqual([]);
+});
+
 test('the open location dialog has no serious accessibility violations', async ({ page }) => {
   await stubWeather(page);
   await page.goto('/');

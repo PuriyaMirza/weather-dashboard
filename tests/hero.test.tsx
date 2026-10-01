@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { Dashboard } from '@/components/dashboard/dashboard';
 import { Hero } from '@/components/dashboard/hero';
+import { DEFAULT_FAVORITE_METRICS, type FavoriteMetricId } from '@/lib/weather/favorite-metrics';
 import { DEFAULT_CARD_LAYOUT } from '@/lib/weather/card-layout';
 import { DEFAULT_LOCATION, coordinatesToLocation } from '@/lib/weather/location';
 import { mockWeatherData } from '@/lib/weather/mock-data';
@@ -13,13 +14,16 @@ function ok(body: unknown) {
   return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
 }
 
-function renderHero(data: WeatherDashboardData | undefined = mockWeatherData, unitSystem: UnitSystem = 'imperial') {
+function renderHero(data: WeatherDashboardData | undefined = mockWeatherData, unitSystem: UnitSystem = 'imperial',
+  favoriteMetrics: FavoriteMetricId[] = DEFAULT_FAVORITE_METRICS,
+) {
   return render(
     <Hero
       location={DEFAULT_LOCATION}
       data={data}
       isLoading={false}
       unitSystem={unitSystem}
+      favoriteMetrics={favoriteMetrics}
       onRefresh={() => {}}
       isRefreshing={false}
       isStale={false}
@@ -85,13 +89,13 @@ describe('hero region chip', () => {
   });
 
   it('is omitted, not guessed, for a place with no names', () => {
-    // Air quality is dropped too: its strip also uses "•", and this asserts on the separator.
     render(
       <Hero
         location={coordinatesToLocation(45, -122)}
-        data={{ ...mockWeatherData, airQuality: null, location: { ...mockWeatherData.location, region: '', country: '' } }}
+        data={{ ...mockWeatherData, location: { ...mockWeatherData.location, region: '', country: '' } }}
         isLoading={false}
         unitSystem="imperial"
+        favoriteMetrics={DEFAULT_FAVORITE_METRICS}
         onRefresh={() => {}}
         isRefreshing={false}
         isStale={false}
@@ -101,50 +105,49 @@ describe('hero region chip', () => {
   });
 });
 
-describe('hero air quality strip', () => {
-  it('states the category, the US AQI and PM2.5', () => {
+describe('hero layout', () => {
+  it('no longer carries the Right Now reading, which is a movable module now', () => {
     renderHero();
-    expect(screen.getByText('Air Quality: Good')).toBeInTheDocument();
-    expect(screen.getByText('US AQI 38 • PM2.5 8 µg/m³')).toBeInTheDocument();
-  });
-
-  it('is hidden entirely when air quality is unavailable', () => {
-    renderHero({ ...mockWeatherData, airQuality: null });
-    expect(screen.queryByText(/air quality/i)).toBeNull();
-  });
-
-  it('dashes a single missing reading instead of hiding the others', () => {
-    renderHero({ ...mockWeatherData, airQuality: { ...mockWeatherData.airQuality!, pm2_5: null } });
-    expect(screen.getByText('US AQI 38 • PM2.5 —')).toBeInTheDocument();
+    expect(screen.queryByText('Next hour')).toBeNull();
   });
 });
 
-describe('right now card', () => {
-  it('shows the temperature, rain odds and quick readings', () => {
+describe('hero favorite readings', () => {
+  function readings() {
+    const strip = screen.getByText('High and low').closest('dl') as HTMLElement;
+    return within(strip).getAllByRole('definition').map((node) => node.textContent);
+  }
+
+  it('shows the default four where air quality used to be', () => {
     renderHero();
-
-    expect(screen.getByText('72 degrees Fahrenheit')).toBeInTheDocument();
-    expect(screen.getByText('12%')).toBeInTheDocument();
-    expect(screen.getByText('Next hour')).toBeInTheDocument();
-
-    const stats = screen.getByText('High and low').closest('dl') as HTMLElement;
-    const values = within(stats).getAllByRole('definition').map((node) => node.textContent);
-    expect(values).toEqual(['79° / 58°', '74°', '55°', '30.08 inHg']);
+    expect(readings()).toEqual(['79° / 58°', '74 degrees Fahrenheit74°', '55°', '30.08inHg']);
+    expect(screen.queryByText(/air quality:/i)).toBeNull();
   });
 
-  it('dashes missing dew point and pressure rather than inventing them', () => {
-    renderHero({ ...mockWeatherData, atmospheric: null, comfort: null });
+  it('shows exactly the readings chosen, in the order chosen', () => {
+    renderHero(mockWeatherData, 'imperial', ['air-quality', 'humidity']);
+    const strip = screen.getByText('Air quality').closest('dl') as HTMLElement;
+    const terms = within(strip).getAllByRole('term').map((node) => node.textContent);
+    expect(terms).toEqual(['AirAir quality', 'HumidityHumidity']);
+    // The category is spoken with the number, so severity is never a number alone.
+    expect(within(strip).getByText('US AQI 38, Good')).toBeInTheDocument();
+    expect(within(strip).getByText('54%')).toBeInTheDocument();
+  });
 
-    const stats = screen.getByText('Dew point').closest('dl') as HTMLElement;
-    const values = within(stats).getAllByRole('definition').map((node) => node.textContent);
-    expect(values.slice(2)).toEqual(['—', '—']);
+  it('dashes missing readings rather than inventing them', () => {
+    renderHero({ ...mockWeatherData, atmospheric: null, comfort: null, airQuality: null }, 'imperial', [
+      'dew',
+      'pressure',
+      'air-quality',
+    ]);
+    const strip = screen.getByText('Dew point').closest('dl') as HTMLElement;
+    expect(within(strip).getAllByRole('definition').map((node) => node.textContent)).toEqual(['—', '—', '—']);
   });
 
   it('follows the unit setting', () => {
     renderHero(mockWeatherData, 'metric');
-    expect(screen.getByText('22 degrees Celsius')).toBeInTheDocument();
-    const stats = screen.getByText('Pressure').closest('dl') as HTMLElement;
-    expect(within(stats).getAllByRole('definition').at(-1)).toHaveTextContent('1019 hPa');
+    const strip = screen.getByText('Pressure').closest('dl') as HTMLElement;
+    expect(within(strip).getAllByRole('definition').at(-1)).toHaveTextContent('1019hPa');
   });
 });
 
@@ -156,6 +159,7 @@ describe('hero failure states', () => {
         data={mockWeatherData}
         isLoading={false}
         unitSystem="imperial"
+        favoriteMetrics={DEFAULT_FAVORITE_METRICS}
         onRefresh={() => {}}
         isRefreshing={false}
         isStale
@@ -163,7 +167,7 @@ describe('hero failure states', () => {
       />,
     );
     expect(screen.getByRole('status')).toHaveTextContent(/showing the last reading that loaded/i);
-    expect(screen.getByText('Partly cloudy')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: 'Partly Cloudy Afternoon' })).toBeInTheDocument();
   });
 
   it('offers a retry when there is no reading at all', () => {
@@ -174,6 +178,7 @@ describe('hero failure states', () => {
         isLoading={false}
         errorMessage="The weather service is having trouble."
         unitSystem="imperial"
+        favoriteMetrics={DEFAULT_FAVORITE_METRICS}
         onRefresh={onRefresh}
         isRefreshing={false}
         isStale={false}

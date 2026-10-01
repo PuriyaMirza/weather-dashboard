@@ -12,7 +12,7 @@ interface CardControlsProps {
   isLifted: boolean;
   onToggleLift: () => void;
   onSetSize: (size: CardSize) => void;
-  /** False for a module with exactly one shape (Next Hours): nothing to choose, so nothing to show. */
+  /** False for a module with exactly one shape (Next Hours, Right Now): nothing to choose, so nothing to show. */
   sizable?: boolean;
   /** Props from useSortable that turn the handle into a drag/keyboard-drag affordance. */
   dragHandleProps: React.HTMLAttributes<HTMLButtonElement>;

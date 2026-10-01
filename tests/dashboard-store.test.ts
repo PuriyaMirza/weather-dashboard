@@ -41,7 +41,7 @@ describe('dashboard store', () => {
     expect(persisted.state.location).toEqual(SEATTLE);
     // partialize should keep actions out of storage.
     expect(persisted.state.setLocation).toBeUndefined();
-    expect(persisted.version).toBe(10);
+    expect(persisted.version).toBe(12);
   });
 
   it('does not read persisted state until rehydrate is called (skipHydration)', async () => {
@@ -234,8 +234,12 @@ describe('dashboard store — card layout', () => {
     );
 
     await useDashboardStore.persist.rehydrate();
-    // The persisted entry predates modular sizing, so it is migrated rather than dropped.
-    expect(useDashboardStore.getState().cards).toEqual([{ id: 'wind', size: 'medium' }]);
+    // The persisted entry predates modular sizing, so it is migrated rather than dropped; and the
+    // layout predates Right Now joining the grid, so it is put back at the top.
+    expect(useDashboardStore.getState().cards).toEqual([
+      { id: 'right-now', size: 'medium' },
+      { id: 'wind', size: 'medium' },
+    ]);
   });
 });
 
@@ -415,5 +419,63 @@ describe('dashboard store — unreadable persisted state', () => {
 
     expect(useDashboardStore.getState().location).toEqual(SEATTLE);
     expect(useDashboardStore.getState().unitSystem).toBe('metric');
+  });
+
+  describe('favorite readings', () => {
+    it('adds a reading while there is room, and refuses a fifth', () => {
+      useDashboardStore.setState({ favoriteMetrics: ['range', 'feels'] });
+      const { toggleFavoriteMetric } = useDashboardStore.getState();
+
+      toggleFavoriteMetric('uv');
+      toggleFavoriteMetric('wind');
+      toggleFavoriteMetric('humidity');
+
+      expect(useDashboardStore.getState().favoriteMetrics).toEqual(['range', 'feels', 'uv', 'wind']);
+    });
+
+    it('removes a reading, but never the last one', () => {
+      useDashboardStore.setState({ favoriteMetrics: ['range', 'feels'] });
+      const { toggleFavoriteMetric } = useDashboardStore.getState();
+
+      toggleFavoriteMetric('range');
+      toggleFavoriteMetric('feels');
+
+      expect(useDashboardStore.getState().favoriteMetrics).toEqual(['feels']);
+    });
+
+    it('gives a dashboard saved before favorites existed the original four', async () => {
+      window.localStorage.setItem(
+        DASHBOARD_STORAGE_KEY,
+        JSON.stringify({ state: { location: SEATTLE }, version: 10 }),
+      );
+
+      await useDashboardStore.persist.rehydrate();
+
+      expect(useDashboardStore.getState().favoriteMetrics).toEqual(['range', 'feels', 'dew', 'pressure']);
+    });
+  });
+
+  describe('Right Now joining the grid', () => {
+    it('puts it back at the top of a layout saved before it was a module', async () => {
+      window.localStorage.setItem(
+        DASHBOARD_STORAGE_KEY,
+        JSON.stringify({ state: { cards: [{ id: 'humidity', size: 'small' }] }, version: 11 }),
+      );
+
+      await useDashboardStore.persist.rehydrate();
+
+      expect(useDashboardStore.getState().cards.map((card) => card.id)).toEqual(['right-now', 'humidity']);
+    });
+
+    it('leaves a current layout alone, including one where it was removed on purpose', async () => {
+      window.localStorage.setItem(
+        DASHBOARD_STORAGE_KEY,
+        JSON.stringify({ state: { cards: [{ id: 'humidity', size: 'small' }] }, version: 12 }),
+      );
+
+      await useDashboardStore.persist.rehydrate();
+
+      expect(useDashboardStore.getState().cards.map((card) => card.id)).toEqual(['humidity']);
+    });
   });
 });

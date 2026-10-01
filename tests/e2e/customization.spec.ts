@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { mockWeatherData } from '../../lib/weather/mock-data';
 import { markOnboarded } from './support';
 
 // These specs exercise the returning-visitor dashboard; the first-run flow would sit over it.
@@ -153,7 +154,7 @@ test('modules can be reordered by tapping a handle and then a slot', async ({ pa
   await page.getByRole('button', { name: /^reorder rain chance/i }).click();
   await expect(page.getByText(/placing rain chance/i)).toBeVisible();
 
-  await page.getByRole('button', { name: /move rain chance to position 5 of 6/i }).click();
+  await page.getByRole('button', { name: /move rain chance to position 8 of 9/i }).click();
 
   await expect(page.getByText(/placing rain chance/i)).toHaveCount(0);
   await expect.poll(() => headings.allTextContents()).not.toEqual(before);
@@ -162,6 +163,23 @@ test('modules can be reordered by tapping a handle and then a slot', async ({ pa
   await page.reload();
   await expect(headings.first()).toBeVisible();
   await expect.poll(() => headings.allTextContents()).not.toEqual(before);
+});
+
+test('Right Now can be moved like any module, but has no size to choose', async ({ page }) => {
+  await page.goto('/');
+  await enterArrangeMode(page);
+
+  const headings = page.getByLabel('Weather modules').getByRole('heading', { level: 2 });
+  await expect(headings.first()).toHaveText('Right Now');
+  // One fixed shape: the size picker every other module has is absent, not just disabled.
+  await expect(page.getByRole('radiogroup', { name: /size of right now/i })).toHaveCount(0);
+
+  await page.getByRole('button', { name: /^reorder right now/i }).click();
+  await page.getByRole('button', { name: /move right now to position 9 of 9/i }).click();
+  await expect.poll(() => headings.allTextContents().then((all) => all.at(-1))).toBe('Right Now');
+
+  await page.reload();
+  await expect.poll(() => headings.allTextContents().then((all) => all.at(-1))).toBe('Right Now');
 });
 
 test('a pending placement can be abandoned without moving anything', async ({ page }) => {
@@ -243,4 +261,26 @@ test('a module can be resized without dragging a corner handle', async ({ page }
   await expect(
     page.getByRole('radiogroup', { name: /size of humidity/i }).getByRole('radio', { name: /large humidity/i }),
   ).toBeChecked();
+});
+
+test('favorite readings can be changed from the menu and show in the hero', async ({ page }) => {
+  await page.route('**/api/weather*', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWeatherData) }),
+  );
+  await page.goto('/');
+
+  const hero = page.getByRole('region', { name: /current conditions/i });
+  await expect(hero.getByText('Dew point')).toHaveCount(1);
+
+  await page.getByRole('button', { name: /open menu/i }).click();
+  const menu = page.getByRole('dialog', { name: /dashboard settings/i });
+  await menu.getByRole('checkbox', { name: 'Pin Dew point' }).locator('xpath=ancestor::label[1]').click();
+  await menu.getByRole('checkbox', { name: 'Pin Air quality' }).locator('xpath=ancestor::label[1]').click();
+  await page.keyboard.press('Escape');
+
+  await expect(hero.getByText('Dew point')).toHaveCount(0);
+  await expect(hero.getByText('US AQI 38, Good')).toBeVisible();
+
+  await page.reload();
+  await expect(hero.getByText('US AQI 38, Good')).toBeVisible();
 });

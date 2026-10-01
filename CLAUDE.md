@@ -135,6 +135,8 @@ npx playwright test tests/e2e/home.spec.ts  # one e2e spec
   — `next dev`'s upsert logic does a naive string search for them, and a stray earlier mention gets
   mistaken for the real marker, silently deleting everything between the two on the next dev-server
   restart. Describe the mechanism in words instead, as this bullet does.
+- **Fixed-shape cards** (`FIXED_SHAPE_CLASS` in `lib/weather/card-layout.ts`: Next Hours full width, Right Now medium) are movable but get no size picker. A card that leaves the hero for the grid also needs a persist `migrate` step putting it into saved layouts, or it vanishes for existing users.
+- **Hero favorites** (`lib/weather/favorite-metrics.ts`) are the up-to-four readings a user pins to the hero card, chosen in onboarding and the menu. Adding a pickable reading = one `FAVORITE_METRICS` entry + its id in `FAVORITE_METRIC_IDS`; no persist bump needed (ids are re-validated on load).
 - **The internal weather model is always imperial** (`temperatureF`, `windMph`, …); unit choice
   (`lib/weather/units.ts`) is purely presentational and never triggers a re-fetch.
 - Historical/past weather is an explicit **non-goal** (PRD §3) — don't build backward-looking views.

@@ -40,7 +40,7 @@ describe('the onboarding flow', () => {
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     // Position in the flow is spoken, not carried by a row of marks alone.
-    expect(within(dialog).getByText('Step 1 of 3')).toBeInTheDocument();
+    expect(within(dialog).getByText('Step 1 of 4')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /where are you/i })).toBeInTheDocument();
   });
 
@@ -49,6 +49,7 @@ describe('the onboarding flow', () => {
 
     next();
     fireEvent.click(screen.getByRole('checkbox', { name: 'Cycle' }));
+    next();
     next();
 
     expect(screen.getByRole('heading', { name: /here is your dashboard/i })).toBeInTheDocument();
@@ -73,6 +74,7 @@ describe('the onboarding flow', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Cycle' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Garden' }));
     next();
+    next();
 
     fireEvent.click(screen.getByRole('button', { name: /use this dashboard/i }));
     const ids = onComplete.mock.calls[0][0].cards.map((card) => card.id);
@@ -80,11 +82,41 @@ describe('the onboarding flow', () => {
     expect(ids).not.toContain('wind-speed');
   });
 
+  it('hands back the four default favorites when the step is left alone', () => {
+    const { onComplete } = renderFlow();
+
+    next();
+    next();
+    expect(screen.getByRole('heading', { name: /pick your four favorites/i })).toBeInTheDocument();
+    next();
+    fireEvent.click(screen.getByRole('button', { name: /use this dashboard/i }));
+
+    expect(onComplete.mock.calls[0][0].favoriteMetrics).toEqual(['range', 'feels', 'dew', 'pressure']);
+  });
+
+  it('lets a favorite be swapped, and stops at four', () => {
+    const { onComplete } = renderFlow();
+
+    next();
+    next();
+    // Four are preselected, so everything else is locked until one is turned off.
+    expect(screen.getByRole('checkbox', { name: 'Pin Humidity' })).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent('4 of 4 chosen');
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Pin Dew point' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Pin Air quality' }));
+    next();
+    fireEvent.click(screen.getByRole('button', { name: /use this dashboard/i }));
+
+    expect(onComplete.mock.calls[0][0].favoriteMetrics).toEqual(['range', 'feels', 'pressure', 'air-quality']);
+  });
+
   it('refuses to finish with an empty dashboard, and says why', () => {
     renderFlow();
 
     next();
     fireEvent.click(screen.getByRole('checkbox', { name: 'Walk' }));
+    next();
     next();
 
     for (const box of screen.getAllByRole('checkbox')) {
@@ -132,6 +164,7 @@ describe('choosing a place during the flow', () => {
   }
 
   function finish() {
+    next();
     next();
     next();
     fireEvent.click(screen.getByRole('button', { name: /use this dashboard/i }));
