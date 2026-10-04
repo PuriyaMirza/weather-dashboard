@@ -1,11 +1,13 @@
 import type { ComponentType } from 'react';
 import type { ActivityId } from '@/lib/weather/activity-windows';
+import type { ForecastDayOption } from '@/lib/weather/forecast-day';
 import { METRIC_MODULES, type MetricModuleId } from '@/lib/weather/metrics';
 import type { WeatherDashboardData } from '@/lib/weather/types';
 import type { UnitSystem } from '@/lib/weather/units';
 import { ActivityWindowsCard } from './activity-windows-card';
 import { AirQualityCard } from './air-quality-card';
 import { AtmosphericDetailsCard } from './atmospheric-details-card';
+import { BriefingCard } from './briefing-card';
 import { ComfortCard } from './comfort-card';
 import { CurrentConditionsCard } from './current-conditions-card';
 import { DailyForecastCard } from './daily-forecast-card';
@@ -21,6 +23,7 @@ import { WindCard } from './wind-card';
  * readings below, which are generated from `METRIC_MODULES`.
  */
 export type CompositeCardId =
+  | 'briefing'
   | 'current-conditions'
   | 'comfort'
   | 'hourly-temperature'
@@ -46,6 +49,14 @@ export interface WeatherCardProps {
    * never reach for the store or a request of their own.
    */
   activities?: ActivityId[];
+  /**
+   * The day the day picker has chosen, for modules whose definition sets `followsDay`; `data` is
+   * then already scoped to it (see `scopeToDay`). Null or absent means the default view — the
+   * rolling next 24 hours — so every other module, and every caller that predates the picker, sees
+   * exactly what it always did. A presentation choice like `unitSystem`: the dashboard owns it and
+   * modules still never reach for the store.
+   */
+  forecastDay?: ForecastDayOption | null;
   /** Arrange mode: turns each card's header icon into its own remove button. See card-frame.tsx. */
   isEditing?: boolean;
   onRemove?: () => void;
@@ -59,15 +70,31 @@ export interface WeatherCardDefinition {
   title: string;
   description: string;
   kind: CardKind;
+  /**
+   * True for modules that describe a span of time — an hourly series, a total, a best window — and
+   * so can be pointed at a later day by the day picker. Readings about *now* (current conditions,
+   * a single humidity figure, air quality) never set it: "Saturday's humidity right now" has no
+   * meaning, and re-labelling a current reading with a future day would be inventing data.
+   */
+  followsDay?: boolean;
   Component: ComponentType<WeatherCardProps>;
 }
 
 const compositeCards: WeatherCardDefinition[] = [
   {
+    id: 'briefing',
+    title: 'Briefing',
+    description: 'The day ahead in a few plain sentences: rain, temperature, wind, and how it compares.',
+    kind: 'panel',
+    followsDay: true,
+    Component: BriefingCard,
+  },
+  {
     id: 'activity-windows',
     title: 'Best Time To Go Out',
     description: 'The best stretch of the next day for walking, running, cycling, and gardening.',
     kind: 'panel',
+    followsDay: true,
     Component: ActivityWindowsCard,
   },
   {
@@ -89,6 +116,7 @@ const compositeCards: WeatherCardDefinition[] = [
     title: 'Hourly Temperature',
     description: 'Temperature trend for the next several hours.',
     kind: 'panel',
+    followsDay: true,
     Component: HourlyTemperatureCard,
   },
   {
@@ -103,6 +131,7 @@ const compositeCards: WeatherCardDefinition[] = [
     title: 'Precipitation',
     description: 'Chance and amount of rain or snow over the coming hours.',
     kind: 'panel',
+    followsDay: true,
     Component: PrecipitationCard,
   },
   {

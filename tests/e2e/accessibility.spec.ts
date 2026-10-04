@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { mockWeatherData } from '../../lib/weather/mock-data';
-import { markOnboarded, openLocationPanel } from './support';
+import { mockWeatherData, mockWeekWeatherData } from '../../lib/weather/mock-data';
+import { DAY_FOLLOWING_LAYOUT, markOnboarded, openLocationPanel, seedPreferences } from './support';
 
 // These specs exercise the returning-visitor dashboard; the first-run flow would sit over it.
 test.beforeEach(async ({ page }) => {
@@ -57,6 +57,9 @@ test('the dashboard has no serious accessibility violations', async ({ page }) =
   await stubWeather(page);
   await page.goto('/');
   await expect(page.getByLabel('Weather modules')).toBeVisible();
+  // The briefing leads the default layout; waiting for its sentences means the scan covers its
+  // ready state rather than a loading placeholder.
+  await expect(page.getByRole('article', { name: 'Briefing' }).getByRole('listitem').first()).toBeVisible();
 
   const violations = await scan(page);
   expect(violations, describe(violations)).toEqual([]);
@@ -149,6 +152,40 @@ test('a stormy hero has no serious accessibility violations', async ({ page }) =
   );
   await page.goto('/');
   await expect(page.getByLabel('Weather modules')).toBeVisible();
+
+  const violations = await scan(page);
+  expect(violations, describe(violations)).toEqual([]);
+});
+
+test('a later day picked for planning has no serious accessibility violations', async ({ page }) => {
+  await seedPreferences(page, { cards: DAY_FOLLOWING_LAYOUT });
+  await page.route('**/api/weather*', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWeekWeatherData) }),
+  );
+  await page.goto('/');
+
+  const picker = page.getByRole('group', { name: 'Plan for' });
+  await picker.getByRole('radio', { name: 'Tomorrow' }).locator('xpath=ancestor::label[1]').click();
+
+  // The chips' selected state and each module's day label are new surfaces for contrast and
+  // naming, and only exist once a later day is chosen.
+  await expect(page.getByRole('article', { name: 'Hourly Temperature Sunday' })).toBeVisible();
+
+  const violations = await scan(page);
+  expect(violations, describe(violations)).toEqual([]);
+});
+
+test('the default dashboard planning a later day has no serious accessibility violations', async ({ page }) => {
+  // No seeded layout: the briefing on the default grid is what brings the day picker out, so this
+  // is the planning state a new visitor actually reaches.
+  await page.route('**/api/weather*', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWeekWeatherData) }),
+  );
+  await page.goto('/');
+
+  const picker = page.getByRole('group', { name: 'Plan for' });
+  await picker.getByRole('radio', { name: 'Tomorrow' }).locator('xpath=ancestor::label[1]').click();
+  await expect(page.getByRole('article', { name: 'Briefing Sunday' })).toContainText('Dry all day.');
 
   const violations = await scan(page);
   expect(violations, describe(violations)).toEqual([]);

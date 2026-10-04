@@ -1,14 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { ACTIVITIES, findActivityWindows, type ActivityId } from '@/lib/weather/activity-windows';
+import {
+  ACTIVITIES,
+  WAKING_HOURS,
+  findActivityWindows,
+  findNextWindow,
+  type ActivityId,
+} from '@/lib/weather/activity-windows';
 import { mockWeatherData } from '@/lib/weather/mock-data';
-import type { HourlyPoint, WeatherDashboardData } from '@/lib/weather/types';
+import type { DailyForecastDay, HourlyPoint, WeatherDashboardData } from '@/lib/weather/types';
 
 const OFFSET = '-07:00';
 
-/** A pleasant hour. Individual tests spoil exactly the field they care about. */
-function hour(hourOfDay: number, overrides: Partial<HourlyPoint> = {}): HourlyPoint {
+/** A pleasant hour on a given local date. Individual tests spoil exactly the field they care about. */
+function hourOn(date: string, hourOfDay: number, overrides: Partial<HourlyPoint> = {}): HourlyPoint {
   return {
-    time: `2026-07-18T${String(hourOfDay).padStart(2, '0')}:00:00${OFFSET}`,
+    time: `${date}T${String(hourOfDay).padStart(2, '0')}:00:00${OFFSET}`,
     temperatureF: 70,
     feelsLikeF: 70,
     precipitationChance: 0,
@@ -24,11 +30,20 @@ function hour(hourOfDay: number, overrides: Partial<HourlyPoint> = {}): HourlyPo
   };
 }
 
-function forecast(hours: HourlyPoint[], sunset = `2026-07-18T20:00:00${OFFSET}`): WeatherDashboardData {
+function hour(hourOfDay: number, overrides: Partial<HourlyPoint> = {}): HourlyPoint {
+  return hourOn('2026-07-18', hourOfDay, overrides);
+}
+
+function forecast(
+  hours: HourlyPoint[],
+  sunset = `2026-07-18T20:00:00${OFFSET}`,
+  sunrise: string | null = `2026-07-18T05:35:00${OFFSET}`,
+): WeatherDashboardData {
   return {
     ...mockWeatherData,
     hourly: hours,
-    sun: { ...mockWeatherData.sun!, sunset },
+    forecastHours: hours,
+    sun: { ...mockWeatherData.sun!, sunrise, sunset },
   };
 }
 
@@ -174,5 +189,253 @@ describe('findActivityWindows', () => {
     const data = { ...forecast([hour(12), hour(13), hour(14)]), sun: null };
     // A missing sunset must not silently make daylight activities impossible.
     expect(outlook(data, 'garden').window?.hours).toBe(3);
+  });
+});
+
+describe('findActivityWindows — daylight starts at sunrise', () => {
+  it('keeps gardening from opening before sunrise', () => {
+    const morning = [6, 7, 8, 9].map((h) => hour(h));
+    const data = forecast(morning, `2026-07-18T20:00:00${OFFSET}`, `2026-07-18T07:30:00${OFFSET}`);
+
+    // The 7 AM hour starts in the dark (sunrise 7:30), so gardening opens at 8 AM, not 6 or 7.
+    const garden = outlook(data, 'garden').window;
+    expect(garden?.start).toBe(`2026-07-18T08:00:00${OFFSET}`);
+    expect(garden?.hours).toBe(2);
+
+    // Walking has no daylight requirement, so the same morning is fine from 6 AM.
+    expect(outlook(data, 'walk').window?.start).toBe(`2026-07-18T06:00:00${OFFSET}`);
+  });
+
+  it('counts the hour that starts exactly at sunrise as daylight', () => {
+    const data = forecast([7, 8].map((h) => hour(h)), `2026-07-18T20:00:00${OFFSET}`, `2026-07-18T07:00:00${OFFSET}`);
+    expect(outlook(data, 'garden').window?.start).toBe(`2026-07-18T07:00:00${OFFSET}`);
+  });
+
+  it('finds no garden window when the only good hours are before sunrise', () => {
+    const data = forecast([6, 7].map((h) => hour(h)), `2026-07-18T20:00:00${OFFSET}`, `2026-07-18T08:10:00${OFFSET}`);
+    expect(outlook(data, 'garden').window).toBeNull();
+  });
+
+  it('does not bound by sunrise when sunrise is unknown', () => {
+    const data = forecast([6, 7].map((h) => hour(h)), `2026-07-18T20:00:00${OFFSET}`, null);
+    expect(outlook(data, 'garden').window?.start).toBe(`2026-07-18T06:00:00${OFFSET}`);
+  });
+});
+
+/**
+ * The small hours are often the calmest and driest of the day. Weather-wise a 1–5 AM walk is
+ * perfect; as advice it is useless, so it must never be the answer.
+ */
+describe('findActivityWindows — waking hours', () => {
+  it('declares the bound as 6 AM up to, not including, 10 PM', () => {
+    expect(WAKING_HOURS).toEqual({ start: 6, end: 22 });
+  });
+
+  it('offers no window for a perfect stretch in the small hours', () => {
+    // A null sun keeps daylight out of it: this is purely the waking-hours bound.
+    const smallHours = { ...forecast([1, 2, 3, 4, 5].map((h) => hour(h))), sun: null };
+
+    for (const activity of ACTIVITIES) {
+      expect(outlook(smallHours, activity.id).window, `${activity.id} suggested the small hours`).toBeNull();
+    }
+  });
+
+  it('runs a perfect day from the 6 AM hour through the 9 PM hour', () => {
+    const allDay = { ...forecast(Array.from({ length: 24 }, (_, h) => hour(h))), sun: null };
+
+    const walk = outlook(allDay, 'walk').window;
+    expect(walk?.start).toBe(`2026-07-18T06:00:00${OFFSET}`);
+    expect(walk?.end).toBe(`2026-07-18T22:00:00${OFFSET}`);
+    expect(walk?.hours).toBe(16);
+  });
+
+  it('reads the hour from the location’s own clock, not the viewer’s', () => {
+    // 3 AM at UTC-7 is 7 PM in Tokyo. Read through Date in the viewer's zone these would look like
+    // waking hours; read off the timestamp, they are the middle of the night.
+    const originalTimeZone = process.env.TZ;
+    process.env.TZ = 'Asia/Tokyo';
+    try {
+      const data = { ...forecast([3, 4].map((h) => hour(h))), sun: null };
+      expect(outlook(data, 'walk').window).toBeNull();
+    } finally {
+      if (originalTimeZone === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTimeZone;
+    }
+  });
+
+  it('never joins the evening to the next morning across the excluded night', () => {
+    const overnight = [
+      ...[20, 21, 22, 23].map((h) => hourOn('2026-07-18', h)),
+      ...[0, 1, 2, 3, 4, 5, 6, 7].map((h) => hourOn('2026-07-19', h)),
+    ];
+    const data = { ...forecast(overnight), sun: null };
+
+    // Two separate two-hour runs (8–10 PM, then 6–8 AM). Filtering the night out first would have
+    // made them look like one four-hour window; the earlier of two equal runs wins.
+    const walk = outlook(data, 'walk').window;
+    expect(walk?.start).toBe(`2026-07-18T20:00:00${OFFSET}`);
+    expect(walk?.end).toBe(`2026-07-18T22:00:00${OFFSET}`);
+    expect(walk?.hours).toBe(2);
+  });
+
+  it('never joins a run across an hour missing from the series', () => {
+    // The normalizer drops an hour it can't fully read; that hour is unknown, not suitable.
+    const withGap = [hour(12), hour(13), hour(15), hour(16), hour(17)];
+    const walk = outlook({ ...forecast(withGap), sun: null }, 'walk').window;
+
+    expect(walk?.start).toBe(`2026-07-18T15:00:00${OFFSET}`);
+    expect(walk?.hours).toBe(3);
+  });
+});
+
+/**
+ * Today's view is the rolling next 24 hours, so from mid-afternoon on it reaches into tomorrow
+ * morning. Those hours belong to tomorrow's sun: measured against today's sunset, every one of
+ * them looked like night.
+ */
+describe('findActivityWindows — the rolling window crosses midnight', () => {
+  const TODAY = '2026-07-18';
+  const TOMORROW = '2026-07-19';
+
+  function dayRow(date: string, overrides: Partial<DailyForecastDay> = {}): DailyForecastDay {
+    return {
+      ...mockWeatherData.daily[0],
+      date,
+      sunrise: `${date}T05:35:00${OFFSET}`,
+      sunset: `${date}T20:52:00${OFFSET}`,
+      ...overrides,
+    };
+  }
+
+  /** 3 PM today through 2 PM tomorrow — rain all evening, then a pleasant morning from 8 to noon. */
+  function afternoonView(daily = [dayRow(TODAY), dayRow(TOMORROW)]): WeatherDashboardData {
+    const hours = [
+      ...[15, 16, 17, 18, 19, 20, 21, 22, 23].map((h) => hourOn(TODAY, h, { precipitationChance: 95 })),
+      ...Array.from({ length: 15 }, (_, h) =>
+        h >= 8 && h < 12 ? hourOn(TOMORROW, h) : hourOn(TOMORROW, h, { precipitationChance: 95 }),
+      ),
+    ];
+    return {
+      ...mockWeatherData,
+      hourly: hours,
+      forecastHours: hours,
+      daily,
+      sun: { ...mockWeatherData.sun!, sunrise: daily[0].sunrise, sunset: daily[0].sunset },
+    };
+  }
+
+  it('does not call a run in tomorrow’s daylight "after sunset"', () => {
+    const walk = outlook(afternoonView(), 'walk').window;
+
+    expect(walk?.start).toBe(`${TOMORROW}T08:00:00${OFFSET}`);
+    expect(walk?.end).toBe(`${TOMORROW}T12:00:00${OFFSET}`);
+    expect(walk?.darkFrom).toBeNull();
+    expect(walk?.extendsUntil).toBeNull();
+  });
+
+  it('lets a daylight-only activity use tomorrow morning', () => {
+    // Bounded by today's sunset, gardening had no candidate hours tomorrow at all.
+    const garden = outlook(afternoonView(), 'garden').window;
+    expect(garden?.start).toBe(`${TOMORROW}T08:00:00${OFFSET}`);
+    expect(garden?.hours).toBe(4);
+  });
+
+  it('still bounds tomorrow by tomorrow’s own sunrise', () => {
+    const lateSunrise = afternoonView([dayRow(TODAY), dayRow(TOMORROW, { sunrise: `${TOMORROW}T09:15:00${OFFSET}` })]);
+    expect(outlook(lateSunrise, 'garden').window?.start).toBe(`${TOMORROW}T10:00:00${OFFSET}`);
+  });
+
+  it('judges nothing about dark when tomorrow’s sun times are missing, rather than borrowing today’s', () => {
+    const unknown = afternoonView([dayRow(TODAY), dayRow(TOMORROW, { sunrise: null, sunset: null })]);
+
+    const walk = outlook(unknown, 'walk').window;
+    expect(walk?.darkFrom).toBeNull();
+    expect(walk?.extendsUntil).toBeNull();
+    // Unknown is not "dark": the daylight bound only applies where it is known.
+    expect(outlook(unknown, 'garden').window?.start).toBe(`${TOMORROW}T08:00:00${OFFSET}`);
+  });
+});
+
+describe('findNextWindow', () => {
+  const DAYS = ['2026-07-18', '2026-07-19', '2026-07-20', '2026-07-21'];
+
+  function dailyRow(date: string, overrides: Partial<DailyForecastDay> = {}): DailyForecastDay {
+    return {
+      ...mockWeatherData.daily[0],
+      date,
+      sunrise: `${date}T05:40:00${OFFSET}`,
+      sunset: `${date}T20:45:00${OFFSET}`,
+      ...overrides,
+    };
+  }
+
+  /**
+   * A week whose every hour is a downpour unless `good` names its date, in which case that date's
+   * hours listed there are pleasant. `hourly` is the first 24 hours, as the normalizer builds it.
+   */
+  function week(good: Record<string, number[]>, daily = DAYS.map((date) => dailyRow(date))): WeatherDashboardData {
+    const forecastHours = DAYS.flatMap((date) =>
+      Array.from({ length: 24 }, (_, h) =>
+        good[date]?.includes(h) ? hourOn(date, h) : hourOn(date, h, { precipitationChance: 95 }),
+      ),
+    );
+    return {
+      ...mockWeatherData,
+      hourly: forecastHours.slice(0, 24),
+      forecastHours,
+      daily,
+      sun: { ...mockWeatherData.sun!, sunrise: daily[0].sunrise, sunset: daily[0].sunset },
+    };
+  }
+
+  it('returns the first later day that has a window, with that window', () => {
+    const data = week({ '2026-07-20': [9, 10, 11], '2026-07-21': [9, 10, 11, 12, 13] });
+
+    const next = findNextWindow(data, 'walk');
+    expect(next?.date).toBe('2026-07-20');
+    expect(next?.window.start).toBe(`2026-07-20T09:00:00${OFFSET}`);
+    expect(next?.window.end).toBe(`2026-07-20T12:00:00${OFFSET}`);
+    expect(next?.window.hours).toBe(3);
+  });
+
+  it('looks only after today, even when today has a window', () => {
+    const data = week({ '2026-07-18': [9, 10, 11] });
+    expect(outlook(data, 'walk').window).not.toBeNull();
+    expect(findNextWindow(data, 'walk')).toBeNull();
+  });
+
+  it('returns null rather than the least-bad hour when no later day clears the bar', () => {
+    const data = week({});
+    for (const activity of ACTIVITIES) {
+      expect(findNextWindow(data, activity.id), `${activity.id} invented a window`).toBeNull();
+    }
+  });
+
+  it('skips a day whose only good stretch is outside waking hours', () => {
+    const data = week({ '2026-07-19': [1, 2, 3, 4], '2026-07-20': [14, 15] });
+    expect(findNextWindow(data, 'walk')?.date).toBe('2026-07-20');
+  });
+
+  it('judges each day against its own sunrise and sunset, not today’s', () => {
+    // An improbably short day on the 19th makes the point: if today's sun (05:40–20:45 on the
+    // 18th) were used, every hour on the 19th would count as after dark and gardening would find
+    // nothing; ignoring the sun entirely would open at 6 AM.
+    const daily = DAYS.map((date) =>
+      date === '2026-07-19'
+        ? dailyRow(date, { sunrise: `${date}T09:30:00${OFFSET}`, sunset: `${date}T12:00:00${OFFSET}` })
+        : dailyRow(date),
+    );
+    const data = week({ '2026-07-19': Array.from({ length: 24 }, (_, h) => h) }, daily);
+
+    const garden = findNextWindow(data, 'garden');
+    expect(garden?.date).toBe('2026-07-19');
+    expect(garden?.window.start).toBe(`2026-07-19T10:00:00${OFFSET}`);
+    expect(garden?.window.end).toBe(`2026-07-19T12:00:00${OFFSET}`);
+
+    // An activity without the daylight rule is split at that day's sunset, not today's.
+    const walk = findNextWindow(data, 'walk');
+    expect(walk?.window.start).toBe(`2026-07-19T06:00:00${OFFSET}`);
+    expect(walk?.window.end).toBe(`2026-07-19T12:00:00${OFFSET}`);
+    expect(walk?.window.extendsUntil).toBe(`2026-07-19T22:00:00${OFFSET}`);
   });
 });

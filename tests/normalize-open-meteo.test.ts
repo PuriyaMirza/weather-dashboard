@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { openMeteoForecastResponseSchema } from '@/lib/weather/schemas';
+import { openMeteoForecastResponseSchema, type OpenMeteoHourly } from '@/lib/weather/schemas';
 import { normalizeOpenMeteoForecast } from '@/lib/weather/normalize-open-meteo';
 import validResponse from './fixtures/open-meteo/valid-response.json';
 import partialResponse from './fixtures/open-meteo/partial-response.json';
@@ -272,5 +272,70 @@ describe('normalizeOpenMeteoForecast — the hourly window is anchored to now', 
 
     // An empty series must produce an empty window, not a crash or a negative slice index.
     expect(normalizeOpenMeteoForecast(response, PLACE).hourly).toEqual([]);
+  });
+});
+
+/**
+ * `forecastHours` carries the rest of the fetched week for day scoping. The guarantee that matters
+ * is that adding it changed nothing about `hourly`, which every existing hourly card reads.
+ */
+describe('normalizeOpenMeteoForecast — forecastHours', () => {
+  /** Three full days of hourly data from local midnight, as the real (longer) upstream array starts. */
+  function multiDayResponse() {
+    const response = parse(validResponse);
+    const pad = (value: number) => String(value).padStart(2, '0');
+    const times = Array.from({ length: 72 }, (_, index) => `2026-07-${18 + Math.floor(index / 24)}T${pad(index % 24)}:00`);
+    const source = response.hourly;
+    const hourly: OpenMeteoHourly = { ...source, time: times };
+    for (const key of Object.keys(source) as (keyof OpenMeteoHourly)[]) {
+      if (key === 'time') continue;
+      hourly[key] = times.map((_, index) => source[key][index % source[key].length]);
+    }
+    response.hourly = hourly;
+    return response;
+  }
+
+  /** The hours from 15:00 on the first day onward, as offset-qualified timestamps. */
+  function expectedTimes(count: number, skip: string[] = []): string[] {
+    const times: string[] = [];
+    for (let index = 15; times.length < count && index < 72; index += 1) {
+      const time = `2026-07-${18 + Math.floor(index / 24)}T${String(index % 24).padStart(2, '0')}:00:00-07:00`;
+      if (!skip.includes(time)) times.push(time);
+    }
+    return times;
+  }
+
+  it('spans from the current hour to the end of the fetched range', () => {
+    const data = normalizeOpenMeteoForecast(multiDayResponse(), PLACE);
+
+    // current.time is 15:15 on the first day, so 15 of the 72 hours are already past.
+    expect(data.forecastHours).toHaveLength(57);
+    expect(data.forecastHours[0].time).toBe('2026-07-18T15:00:00-07:00');
+    expect(data.forecastHours.at(-1)?.time).toBe('2026-07-20T23:00:00-07:00');
+  });
+
+  it('keeps hourly as exactly the first 24 forecast hours, unchanged in meaning', () => {
+    const data = normalizeOpenMeteoForecast(multiDayResponse(), PLACE);
+
+    expect(data.hourly).toEqual(data.forecastHours.slice(0, 24));
+    expect(data.hourly.map((point) => point.time)).toEqual(expectedTimes(24));
+  });
+
+  it('drops an incomplete hour from both series, and hourly still fills 24 complete hours', () => {
+    const response = multiDayResponse();
+    response.hourly.temperature_2m[20] = null; // 2026-07-18T20:00, inside the 24-hour window
+    response.hourly.weather_code[60] = null; // 2026-07-20T12:00, beyond it
+
+    const data = normalizeOpenMeteoForecast(response, PLACE);
+    const dropped = ['2026-07-18T20:00:00-07:00', '2026-07-20T12:00:00-07:00'];
+
+    expect(data.forecastHours.map((point) => point.time)).toEqual(expectedTimes(57, dropped));
+    expect(data.hourly.map((point) => point.time)).toEqual(expectedTimes(24, dropped));
+    expect(data.hourly.at(-1)?.time).toBe('2026-07-19T15:00:00-07:00');
+  });
+
+  it('matches hourly exactly when the fetched range is shorter than the window', () => {
+    const data = normalizeOpenMeteoForecast(parse(validResponse), PLACE);
+    expect(data.forecastHours).toEqual(data.hourly);
   });
 });

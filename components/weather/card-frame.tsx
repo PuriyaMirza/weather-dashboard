@@ -14,6 +14,7 @@ import { Icon, type IconName } from '@/components/ui/icon';
 export function CardFrame({
   title,
   description,
+  subtitle,
   icon,
   isEditing,
   onRemove,
@@ -21,6 +22,12 @@ export function CardFrame({
 }: {
   title: string;
   description: string;
+  /**
+   * Printed under the title and folded into the module's accessible name, for a module showing
+   * something other than its default view — a day-following module on a later day says "Saturday"
+   * here, so the tile can never be mistaken for today's.
+   */
+  subtitle?: string;
   /** Decorative glyph beside the title; the title carries the meaning. */
   icon?: IconName;
   /** While arranging, the icon above stands in for the old separate Remove button — its own slot,
@@ -29,13 +36,15 @@ export function CardFrame({
   onRemove?: () => void;
   children: ReactNode;
 }) {
-  const titleId = `${title.toLowerCase().replaceAll(' ', '-')}-title`;
+  const slug = title.toLowerCase().replaceAll(' ', '-');
+  const titleId = `${slug}-title`;
+  const subtitleId = `${slug}-subtitle`;
   const showRemove = isEditing && onRemove;
 
   return (
     <article
       className="@container flex h-full min-w-0 flex-col rounded-xl bg-surface-container-high p-4 shadow-card"
-      aria-labelledby={titleId}
+      aria-labelledby={subtitle ? `${titleId} ${subtitleId}` : titleId}
     >
       <div className="flex items-center justify-between gap-2">
         <h2 id={titleId} className="min-w-0 type-label-sm text-secondary uppercase">
@@ -57,6 +66,15 @@ export function CardFrame({
           icon && <Icon name={icon} size={20} className="shrink-0 text-secondary-fixed" />
         )}
       </div>
+      {subtitle && (
+        <p
+          id={subtitleId}
+          className="mt-1.5 inline-flex items-center gap-1 self-start rounded-full bg-secondary-container px-2.5 py-0.5 type-label-md text-secondary-fixed"
+        >
+          <Icon name="calendar" size={14} className="shrink-0" />
+          {subtitle}
+        </p>
+      )}
       {/* The description is useful context but must not compete with the reading, so it is
           available to assistive tech and to the menu rather than printed on every module. */}
       <span className="sr-only">{description}</span>
@@ -81,6 +99,8 @@ export function CardState({ label, tone = 'neutral' }: { label: string; tone?: '
 interface CardBoundaryProps {
   title: string;
   description: string;
+  /** See `CardFrame`. */
+  subtitle?: string;
   icon?: IconName;
   isEditing?: boolean;
   onRemove?: () => void;
@@ -101,6 +121,7 @@ interface CardBoundaryProps {
 export function CardBoundary({
   title,
   description,
+  subtitle,
   icon,
   isEditing,
   onRemove,
@@ -118,7 +139,14 @@ export function CardBoundary({
   else if (isUnavailable) content = <CardState label={unavailableLabel} />;
 
   return (
-    <CardFrame title={title} description={description} icon={icon} isEditing={isEditing} onRemove={onRemove}>
+    <CardFrame
+      title={title}
+      description={description}
+      subtitle={subtitle}
+      icon={icon}
+      isEditing={isEditing}
+      onRemove={onRemove}
+    >
       {content}
     </CardFrame>
   );

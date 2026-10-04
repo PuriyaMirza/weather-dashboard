@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 export const STORAGE_KEY = 'weather-dashboard';
 
 /** Matches the persist `version` in store/dashboard-store.ts. */
-export const STORAGE_VERSION = 10;
+export const STORAGE_VERSION = 11;
 
 /**
  * Marks the browser as having already been through the first-run flow.
@@ -65,3 +65,33 @@ export function markOnboarded(page: Page, state: Record<string, unknown> = {}) {
     [STORAGE_KEY, JSON.stringify({ state: { hasOnboarded: true, ...state }, version: STORAGE_VERSION })] as const,
   );
 }
+
+/**
+ * Replaces stored preferences with `state` (plus `hasOnboarded`), for a spec whose `beforeEach`
+ * already ran `markOnboarded` — that one seeds only an empty store, so a second call would be a
+ * no-op. First navigation only, like `markFirstVisit`, so a reload keeps what the test changed.
+ */
+export function seedPreferences(page: Page, state: Record<string, unknown>) {
+  return page.addInitScript(
+    ([key, value]) => {
+      if (window.sessionStorage.getItem('e2e-seeded') === null) {
+        window.sessionStorage.setItem('e2e-seeded', '1');
+        window.localStorage.setItem(key as string, value as string);
+      }
+    },
+    [STORAGE_KEY, JSON.stringify({ state: { hasOnboarded: true, ...state }, version: STORAGE_VERSION })] as const,
+  );
+}
+
+/**
+ * The modules the day picker drives, beside a reading about now that must never follow it. The
+ * default layout carries only the briefing, so specs about the other day-following modules seed
+ * this instead.
+ */
+export const DAY_FOLLOWING_LAYOUT = [
+  { id: 'hourly-temperature', size: 'large' },
+  { id: 'precipitation', size: 'medium' },
+  { id: 'activity-windows', size: 'medium' },
+  { id: 'humidity', size: 'small' },
+  { id: 'uv-index', size: 'small' },
+];

@@ -188,6 +188,8 @@ Other standing constraints (see PRD §5.3):
 
 **To add a card:** add its definition to `weatherCardRegistry`, add its id to `ALL_CARD_IDS` in `lib/weather/card-layout.ts`, and bump the persist `version` in `store/dashboard-store.ts`.
 
+A card describing a span of time (an hourly series, a total, a best window) sets `followsDay: true` in the registry; it then receives `data` scoped to the day picker's choice (`scopeToDay`) plus `forecastDay`, and must name the day (`subtitle`) when it isn't today. Readings about *now* never set it.
+
 ### Client state and hydration
 
 `store/dashboard-store.ts` is a Zustand store with `persist` and `skipHydration: true`. It holds location, saved locations, unit system, theme, and card layout; `isEditing` is transient and deliberately not persisted.

@@ -12,10 +12,12 @@ import {
   formatPressure,
   formatSpeed,
   formatTemperature,
+  formatTemperatureDifference,
   formatTemperatureWithUnit,
   formatTime,
   formatWeekday,
   toCelsius,
+  toTemperatureDifference,
   toHectopascals,
   toKilometres,
   toKilometresPerHour,
@@ -96,6 +98,38 @@ describe('describeTemperature', () => {
   });
 });
 
+/**
+ * A difference is not a reading: "9° cooler" in Celsius is 5°, not the −13° that running the gap
+ * through the absolute °F→°C formula would give.
+ */
+describe('temperature differences', () => {
+  it('converts a difference by the scale factor alone, keeping its sign', () => {
+    expect(toTemperatureDifference(9, 'imperial')).toBe(9);
+    expect(toTemperatureDifference(9, 'metric')).toBeCloseTo(5, 6);
+    expect(toTemperatureDifference(-18, 'metric')).toBeCloseTo(-10, 6);
+    expect(toTemperatureDifference(0, 'metric')).toBe(0);
+  });
+
+  it('formats the magnitude only, so the sentence around it carries the direction', () => {
+    expect(formatTemperatureDifference(9, 'imperial')).toBe('9°');
+    expect(formatTemperatureDifference(9, 'metric')).toBe('5°');
+    expect(formatTemperatureDifference(-9, 'imperial')).toBe('9°');
+    expect(formatTemperatureDifference(-9, 'metric')).toBe('5°');
+  });
+
+  it('rounds in the chosen unit, not before converting', () => {
+    // 12°F is 6.67°C and 4°F is 2.22°C: each rounds as the Celsius figure it is.
+    expect(formatTemperatureDifference(12, 'metric')).toBe('7°');
+    expect(formatTemperatureDifference(4, 'metric')).toBe('2°');
+    expect(formatTemperatureDifference(0.4, 'imperial')).toBe('0°');
+  });
+
+  it('reports unavailable rather than a fabricated zero for a missing difference', () => {
+    expect(formatTemperatureDifference(null, 'imperial')).toBe(UNAVAILABLE);
+    expect(formatTemperatureDifference(undefined, 'metric')).toBe(UNAVAILABLE);
+  });
+});
+
 describe('formatDuration', () => {
   it('renders hours and minutes', () => {
     expect(formatDuration(55020)).toBe('15h 17m');
@@ -107,6 +141,10 @@ describe('formatWeekday', () => {
   it('renders a short weekday from a date-only string without slipping a day', () => {
     // Parsed as local midday, so a negative UTC offset can't roll it back to the previous day.
     expect(formatWeekday('2026-07-18')).toBe('Sat');
+  });
+
+  it('spells the weekday out in full when asked, for prose', () => {
+    expect(formatWeekday('2026-07-18', 'long')).toBe('Saturday');
   });
 
   it('reports unavailable for unparseable input', () => {

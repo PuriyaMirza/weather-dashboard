@@ -156,16 +156,18 @@ test('the hourly strip opens at the current hour, not at the start of the day', 
   // 12am-7am at half past one in the afternoon, because the upstream array starts at local
   // midnight and the window was anchored to its first entry rather than to "now".
   const observedAt = '2026-09-09T13:30:00-04:00';
+  // What the fixed normalizer produces: the window already begins at the current hour.
+  const hourly = Array.from({ length: 8 }, (_, offset) => ({
+    ...mockWeatherData.hourly[0],
+    time: `2026-09-09T${String(13 + offset).padStart(2, '0')}:00:00-04:00`,
+  }));
   const payload = {
     ...mockWeatherData,
     location: { ...mockWeatherData.location, timezone: 'America/New_York' },
     current: { ...mockWeatherData.current!, observedAt },
     updatedAt: observedAt,
-    // What the fixed normalizer produces: the window already begins at the current hour.
-    hourly: Array.from({ length: 8 }, (_, offset) => ({
-      ...mockWeatherData.hourly[0],
-      time: `2026-09-09T${String(13 + offset).padStart(2, '0')}:00:00-04:00`,
-    })),
+    hourly,
+    forecastHours: hourly,
   };
 
   await page.route('**/api/weather*', (route) =>
@@ -187,21 +189,23 @@ test('the activity module states a real window, in words', async ({ page }) => {
   // that answers a question is only useful if the answer is right, so this asserts the actual
   // window rather than merely that the tile appeared.
   const observedAt = '2026-07-18T12:00:00-07:00';
+  // Four calm, dry, mild hours from noon: every activity should find this acceptable.
+  const hourly = Array.from({ length: 4 }, (_, offset) => ({
+    ...mockWeatherData.hourly[0],
+    time: `2026-07-18T${String(12 + offset).padStart(2, '0')}:00:00-07:00`,
+    feelsLikeF: 68,
+    precipitationChance: 0,
+    windMph: 5,
+    windGustMph: 8,
+    uvIndex: 3,
+  }));
   const payload = {
     ...mockWeatherData,
     current: { ...mockWeatherData.current!, observedAt },
     updatedAt: observedAt,
     sun: { ...mockWeatherData.sun!, sunset: '2026-07-18T20:00:00-07:00' },
-    // Four calm, dry, mild hours from noon: every activity should find this acceptable.
-    hourly: Array.from({ length: 4 }, (_, offset) => ({
-      ...mockWeatherData.hourly[0],
-      time: `2026-07-18T${String(12 + offset).padStart(2, '0')}:00:00-07:00`,
-      feelsLikeF: 68,
-      precipitationChance: 0,
-      windMph: 5,
-      windGustMph: 8,
-      uvIndex: 3,
-    })),
+    hourly,
+    forecastHours: hourly,
   };
 
   await page.addInitScript(() => {

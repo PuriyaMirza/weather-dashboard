@@ -122,7 +122,15 @@ export interface WeatherDashboardData {
    * allowed to fail without taking the forecast down with it.
    */
   airQuality: AirQualityMetrics | null;
+  /** The next 24 hours from the current hour — the window the hourly cards read. */
   hourly: HourlyPoint[];
+  /**
+   * Every forecast hour from the current hour to the end of the fetched range (about a week).
+   * `hourly` is its first 24 entries. Carried separately so a later day can be scoped out of the
+   * same single request (see `scopeToDay` in `forecast-day.ts`) without re-fetching, and without
+   * changing what `hourly` means to the cards that already read it.
+   */
+  forecastHours: HourlyPoint[];
   daily: DailyForecastDay[];
   updatedAt: string;
   source: 'mock' | 'open-meteo';

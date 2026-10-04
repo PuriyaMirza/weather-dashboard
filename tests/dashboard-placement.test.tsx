@@ -89,14 +89,15 @@ describe('putting it down', () => {
     const before = order();
 
     fireEvent.click(handleFor('Rain Chance'));
-    // Humidity sits at index 4 in the default layout (next-hours now leads it); Rain Chance should land there.
-    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 5 of 6/i }));
+    // Humidity sits at index 5 in the default layout (behind the briefing, two smalls, next-hours
+    // and the daily forecast); Rain Chance should land there.
+    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 6 of 7/i }));
 
     const after = order();
     expect(after).not.toEqual(before);
-    expect(after.indexOf('precipitation-chance')).toBe(4);
+    expect(after.indexOf('precipitation-chance')).toBe(5);
     // And it reached the store, not just the DOM.
-    expect(useDashboardStore.getState().cards[4].id).toBe('precipitation-chance');
+    expect(useDashboardStore.getState().cards[5].id).toBe('precipitation-chance');
   });
 
   it('clears the placement state once placed', () => {
@@ -104,7 +105,7 @@ describe('putting it down', () => {
     enterArrangeMode();
 
     fireEvent.click(handleFor('Rain Chance'));
-    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 5 of 6/i }));
+    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 6 of 7/i }));
 
     expect(screen.queryByText(/placing/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^done$/i })).toBeInTheDocument();
@@ -117,8 +118,8 @@ describe('putting it down', () => {
     fireEvent.click(handleFor('Rain Chance'));
     expect(screen.getByText(/moving rain chance\. choose where it goes/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 5 of 6/i }));
-    expect(screen.getByText(/rain chance moved to position 5 of 6/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /move rain chance to position 6 of 7/i }));
+    expect(screen.getByText(/rain chance moved to position 6 of 7/i)).toBeInTheDocument();
   });
 });
 

@@ -164,3 +164,17 @@ starting with **Forest** (from the approved Figma design). Every customization f
   the axe scans now run on Forest in every state.
 - **Next themes** (Alpine, Seaside — explored in Figma) need only a `THEMES` entry and a token block.
 
+
+## v6 — Week planner and briefing — done
+
+- **Plan any day of the week.** The forecast already fetched 7 days of hourly data but kept only
+  24 hours; `forecastHours` now carries the rest, and `scopeToDay` (`lib/weather/forecast-day.ts`)
+  narrows the model to a chosen day with no extra request. A "Plan for" picker points the modules
+  marked `followsDay` (Hourly Temperature, Precipitation, Best Time To Go Out, Briefing) at that
+  day; readings about *now* never follow it. Transient — never persisted or shared.
+- **Activity windows** gain a sunrise bound, a 6 AM–10 PM waking-hours bound (no more overnight
+  suggestions), per-day sun times, and "Next good window" when today has none.
+- **Briefing.** A few plain sentences per day — rain timing, temperature arc, wind, comparison with
+  the neighbouring day — from `lib/weather/briefing.ts`. First in the default layout (persist v11).
+- **CI audit narrowed to `--omit=dev`** while GHSA-vfj7-8cjw-p6xm (`braces`, dev tooling only) has
+  no fix — see CLAUDE.md.

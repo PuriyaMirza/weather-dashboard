@@ -41,7 +41,7 @@ describe('dashboard store', () => {
     expect(persisted.state.location).toEqual(SEATTLE);
     // partialize should keep actions out of storage.
     expect(persisted.state.setLocation).toBeUndefined();
-    expect(persisted.version).toBe(10);
+    expect(persisted.version).toBe(11);
   });
 
   it('does not read persisted state until rehydrate is called (skipHydration)', async () => {
@@ -236,6 +236,40 @@ describe('dashboard store — card layout', () => {
     await useDashboardStore.persist.rehydrate();
     // The persisted entry predates modular sizing, so it is migrated rather than dropped.
     expect(useDashboardStore.getState().cards).toEqual([{ id: 'wind', size: 'medium' }]);
+  });
+
+  /**
+   * Version 11 added the briefing to the default layout. Someone who already arranged their
+   * dashboard chose what is on it; the upgrade keeps that exactly, rather than slipping the new
+   * module in at the top. The menu is where they find it.
+   */
+  it('keeps a layout saved under version 10 exactly as it was, without adding the briefing', async () => {
+    const saved = [
+      { id: 'daily-forecast', size: 'large' },
+      { id: 'humidity', size: 'small' },
+      { id: 'precipitation', size: 'medium' },
+    ];
+    window.localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      JSON.stringify({ state: { location: SEATTLE, cards: saved, hasOnboarded: true }, version: 10 }),
+    );
+
+    await useDashboardStore.persist.rehydrate();
+    expect(useDashboardStore.getState().cards).toEqual(saved);
+    expect(useDashboardStore.getState().hasOnboarded).toBe(true);
+    expect(useDashboardStore.getState().location).toEqual(SEATTLE);
+
+    // The next write records the new version, so this is a one-time pass-through.
+    useDashboardStore.getState().setUnitSystem('metric');
+    const persisted = JSON.parse(window.localStorage.getItem(DASHBOARD_STORAGE_KEY) as string);
+    expect(persisted.version).toBe(11);
+    expect(persisted.state.cards).toEqual(saved);
+  });
+
+  it('gives a browser with nothing saved the default layout, briefing first', async () => {
+    useDashboardStore.setState({ cards: DEFAULT_CARD_LAYOUT });
+    await useDashboardStore.persist.rehydrate();
+    expect(useDashboardStore.getState().cards[0]).toEqual({ id: 'briefing', size: 'medium' });
   });
 });
 
