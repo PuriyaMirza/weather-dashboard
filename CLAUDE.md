@@ -100,8 +100,9 @@ npm run qa          # lint + typecheck + test + build + full playwright run — 
 
 Node >= 22 is required. CI (`.github/workflows/ci.yml`) has two jobs on every PR and push to `main`:
 `build-and-test` (audit → lint → typecheck → test → build → e2e) and `qa` (build → `qa-smoke.spec.ts`
-+ `accessibility.spec.ts` against the production build). `npm audit --audit-level=high` blocks on
-high/critical advisories only.
++ `accessibility.spec.ts` against the production build). `npm audit --omit=dev --audit-level=high`
+blocks on high/critical advisories in shipped (runtime) dependencies only — dev tooling is checked
+by hand, see the open advisory below.
 
 Running a single test:
 
@@ -113,6 +114,14 @@ npx playwright test tests/e2e/home.spec.ts  # one e2e spec
 
 ## Known gotchas / in-progress decisions
 
+- **Open security advisory — report its status to the user at the start of every session until it
+  is resolved.** GHSA-vfj7-8cjw-p6xm (high, stack-exhaustion DoS) affects every version of `braces`,
+  reached only through dev tooling (`eslint-config-next` → `@next/eslint-plugin-next` → `fast-glob`
+  → `micromatch` → `braces`); it never ships to users. CI's audit was narrowed to `--omit=dev` because
+  of it (Oct 2026). Check with `npm audit --audit-level=high` (full, dev included) and
+  `npm view braces version`. Once a patched version exists: update the lockfile, restore
+  `npm audit --audit-level=high` in `.github/workflows/ci.yml` and the CI description above, tell
+  the user it's resolved, and delete this bullet.
 - **E2E `baseURL` must be `http://localhost:3000`, not `127.0.0.1`** — Next blocks cross-origin dev
   resources, so a mismatched host silently prevents the client bundle from loading and tests then
   only assert server HTML.
