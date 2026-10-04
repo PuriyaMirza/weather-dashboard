@@ -20,9 +20,9 @@ const COMPASS_POINTS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', '
 const METERS_PER_MILE = 1609.344;
 const INCHES_OF_MERCURY_PER_HECTOPASCAL = 0.0295299830714;
 
-/** Hours shown in the hourly series, counted forward from the current hour (not from local
- *  midnight — see buildHourlyPoints). A week of data is fetched for the daily card; the hourly
- *  cards only ever show the near-term window. */
+/** Hours in `hourly`, counted forward from the current hour (not from local midnight — see
+ *  buildForecastHours). A week of data is fetched for the daily card; the hourly cards read only
+ *  this near-term window, while `forecastHours` keeps the rest of the week for day scoping. */
 const HOURLY_WINDOW = 24;
 
 /** Pressure change (inHg) below which the trend is reported as steady rather than rising/falling. */
@@ -174,7 +174,7 @@ function buildAtmosphericMetrics(response: OpenMeteoForecastResponse): Atmospher
   const visibilityMeters = hourlyIndex >= 0 ? hourly.visibility[hourlyIndex] : null;
   const dewPointF = hourlyIndex >= 0 ? hourly.dew_point_2m[hourlyIndex] : null;
 
-  // Same fix as buildHourlyPoints: slicing from index 0 measured the change from local midnight
+  // Same fix as buildForecastHours: slicing from index 0 measured the change from local midnight
   // to a fixed later point, not the trend from now — a stale reading blended past and future
   // hours into one number no matter when the request ran. Window forward from "now" instead.
   const pressureWindowStart = Math.max(0, hourlyIndex);
@@ -221,14 +221,18 @@ function buildSunMetrics(response: OpenMeteoForecastResponse): SunMetrics | null
  * unconditionally showed the overnight hours regardless of the actual time: at 1:30pm the "next
  * hours" strip and the hourly chart both opened at 12am and ran only to 7am, already ten hours in
  * the past. `closestHourlyIndex` (already used to align dew point, visibility, etc. to "now") finds
- * where the current reading actually sits in that array, and the window is built forward from there.
+ * where the current reading actually sits in that array, and the series is built forward from there.
+ *
+ * Runs to the end of the fetched range rather than stopping at HOURLY_WINDOW, so `hourly` (the
+ * first HOURLY_WINDOW points) and `forecastHours` (all of them) come from one pass and can never
+ * disagree about which hours were dropped.
  */
-function buildHourlyPoints(response: OpenMeteoForecastResponse): HourlyPoint[] {
+function buildForecastHours(response: OpenMeteoForecastResponse): HourlyPoint[] {
   const { current, hourly, utc_offset_seconds: utcOffsetSeconds } = response;
   const startIndex = Math.max(0, closestHourlyIndex(hourly.time, current.time));
   const points: HourlyPoint[] = [];
 
-  for (let index = startIndex; index < hourly.time.length && points.length < HOURLY_WINDOW; index += 1) {
+  for (let index = startIndex; index < hourly.time.length; index += 1) {
     const time = hourly.time[index];
     const temperatureF = hourly.temperature_2m[index];
     const feelsLikeF = hourly.apparent_temperature[index];
@@ -345,6 +349,7 @@ export function normalizeOpenMeteoForecast(
   };
 
   const comfort = buildComfortMetrics(response);
+  const forecastHours = buildForecastHours(response);
 
   return {
     location,
@@ -356,7 +361,8 @@ export function normalizeOpenMeteoForecast(
     atmospheric: buildAtmosphericMetrics(response),
     sun: buildSunMetrics(response),
     airQuality,
-    hourly: buildHourlyPoints(response),
+    hourly: forecastHours.slice(0, HOURLY_WINDOW),
+    forecastHours,
     daily: buildDailyForecast(response),
     updatedAt: toIsoWithOffset(response.current.time, response.utc_offset_seconds),
     source: 'open-meteo',

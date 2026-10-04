@@ -44,6 +44,7 @@ describe.each(weatherCardRegistry.map((card) => [card.title, card] as const))('%
       sun: null,
       airQuality: null,
       hourly: [],
+      forecastHours: [],
       daily: [],
     };
     render(<Component data={emptied} unitSystem="imperial" />);

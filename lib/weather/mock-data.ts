@@ -25,6 +25,19 @@ function hour(
   };
 }
 
+/** Shared by `hourly` and `forecastHours`: the fixture's whole forecast fits inside the 24-hour
+ *  window, and the real normalizer guarantees `hourly` is a prefix of `forecastHours`. */
+const mockHourly: HourlyPoint[] = [
+  hour('2026-07-18T09:00:00-07:00', 62, 62, 8, 'partly-cloudy'),
+  hour('2026-07-18T10:00:00-07:00', 65, 65, 6, 'partly-cloudy'),
+  hour('2026-07-18T11:00:00-07:00', 68, 69, 8, 'sunny'),
+  hour('2026-07-18T12:00:00-07:00', 70, 71, 10, 'sunny'),
+  hour('2026-07-18T13:00:00-07:00', 72, 74, 12, 'partly-cloudy'),
+  hour('2026-07-18T14:00:00-07:00', 75, 76, 14, 'partly-cloudy'),
+  hour('2026-07-18T15:00:00-07:00', 77, 78, 15, 'cloudy'),
+  hour('2026-07-18T16:00:00-07:00', 76, 77, 18, 'cloudy'),
+];
+
 export const mockWeatherData: WeatherDashboardData = {
   location: {
     name: 'Portland',
@@ -87,16 +100,8 @@ export const mockWeatherData: WeatherDashboardData = {
     uvIndexMax: 7,
     uvIndexNow: 6,
   },
-  hourly: [
-    hour('2026-07-18T09:00:00-07:00', 62, 62, 8, 'partly-cloudy'),
-    hour('2026-07-18T10:00:00-07:00', 65, 65, 6, 'partly-cloudy'),
-    hour('2026-07-18T11:00:00-07:00', 68, 69, 8, 'sunny'),
-    hour('2026-07-18T12:00:00-07:00', 70, 71, 10, 'sunny'),
-    hour('2026-07-18T13:00:00-07:00', 72, 74, 12, 'partly-cloudy'),
-    hour('2026-07-18T14:00:00-07:00', 75, 76, 14, 'partly-cloudy'),
-    hour('2026-07-18T15:00:00-07:00', 77, 78, 15, 'cloudy'),
-    hour('2026-07-18T16:00:00-07:00', 76, 77, 18, 'cloudy'),
-  ],
+  hourly: mockHourly,
+  forecastHours: mockHourly,
   daily: [
     {
       date: '2026-07-18',

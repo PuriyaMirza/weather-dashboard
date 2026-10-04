@@ -14,6 +14,7 @@ const EMPTY: WeatherDashboardData = {
   sun: null,
   airQuality: null,
   hourly: [],
+  forecastHours: [],
   daily: [],
 };
 
