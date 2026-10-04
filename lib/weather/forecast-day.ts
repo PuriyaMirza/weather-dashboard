@@ -104,3 +104,16 @@ export function scopeToDay(data: WeatherDashboardData, date: string | null): Wea
     sun: sunForDay(data.daily[index]),
   };
 }
+
+/**
+ * The full weekday name of a later day ("Saturday"), or null for today and for no selection.
+ *
+ * This is the one switch a day-following module needs: null keeps its default "next 24 hours"
+ * copy, a name replaces it. Spelled out rather than the picker's own label because it lands in
+ * prose ("Range 58° to 71° on Saturday"), and a weekday rather than "Tomorrow" so the module and
+ * the daily forecast row for that day name it the same way.
+ */
+export function laterDayName(day: ForecastDayOption | null | undefined): string | null {
+  if (!day || day.isToday) return null;
+  return formatWeekday(day.date, 'long');
+}

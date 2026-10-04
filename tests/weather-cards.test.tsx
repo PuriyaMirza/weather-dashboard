@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { weatherCardRegistry } from '@/components/weather/card-registry';
-import { mockWeatherData } from '@/lib/weather/mock-data';
+import { listForecastDays, scopeToDay, type ForecastDayOption } from '@/lib/weather/forecast-day';
+import { mockWeatherData, mockWeekWeatherData } from '@/lib/weather/mock-data';
 import type { WeatherDashboardData } from '@/lib/weather/types';
 
 /**
@@ -219,5 +220,131 @@ describe('times use the location timezone', () => {
 
     // mock sunrise is 05:35 local to Portland.
     expect(screen.getByText('5:35 AM')).toBeInTheDocument();
+  });
+});
+
+/**
+ * The modules the day picker can point at a later day. Each must say which day it is showing —
+ * visibly and in its accessible name — and must not keep "next 24 hours" copy that would then be
+ * false.
+ */
+describe('day-following modules on a later day', () => {
+  const [today, sunday, monday] = listForecastDays(mockWeekWeatherData) as [
+    ForecastDayOption,
+    ForecastDayOption,
+    ForecastDayOption,
+  ];
+  const on = (day: ForecastDayOption) => ({
+    data: scopeToDay(mockWeekWeatherData, day.date),
+    forecastDay: day,
+    unitSystem: 'imperial' as const,
+  });
+
+  it('are exactly the ones describing a span of time, never a reading about now', () => {
+    const following = weatherCardRegistry.filter((card) => card.followsDay).map((card) => card.id);
+    expect(following.sort()).toEqual(['activity-windows', 'hourly-temperature', 'precipitation']);
+  });
+
+  it('names the day in the hourly temperature summary, title area and table caption', () => {
+    const HourlyTemperature = cardComponent('hourly-temperature');
+    render(<HourlyTemperature {...on(sunday)} />);
+
+    // Sunday runs 60° to 83° in the fixture.
+    expect(screen.getByText('Range 60° to 83° on Sunday.')).toBeInTheDocument();
+    expect(screen.queryByText(/over the next/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Hourly Temperature Sunday' })).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Hourly temperatures, Sunday' })).toBeInTheDocument();
+  });
+
+  it('keeps the default copy, and no day label, for today or no selection', () => {
+    const HourlyTemperature = cardComponent('hourly-temperature');
+    const { rerender } = render(<HourlyTemperature data={mockWeekWeatherData} unitSystem="imperial" />);
+    expect(screen.getByText(/over the next 24 hours\./)).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Hourly Temperature' })).toBeInTheDocument();
+
+    rerender(<HourlyTemperature data={mockWeekWeatherData} forecastDay={today} unitSystem="imperial" />);
+    expect(screen.getByText(/over the next 24 hours\./)).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Hourly Temperature' })).toBeInTheDocument();
+  });
+
+  it('totals precipitation over the whole later day, not the first twelve hours of it', () => {
+    const Precipitation = cardComponent('precipitation');
+    render(<Precipitation {...on(monday)} />);
+
+    expect(screen.getByText('Total, Monday')).toBeInTheDocument();
+    // 24 hours at 0.02 in.
+    expect(screen.getByText('0.48 in')).toBeInTheDocument();
+    const table = screen.getByRole('table', { name: /monday/i });
+    expect(within(table).getAllByRole('row')).toHaveLength(24 + 1);
+    expect(screen.getByRole('article', { name: 'Precipitation Monday' })).toBeInTheDocument();
+  });
+
+  it('keeps the next-12-hours total on the default view', () => {
+    const Precipitation = cardComponent('precipitation');
+    render(<Precipitation data={mockWeekWeatherData} unitSystem="imperial" />);
+
+    expect(screen.getByText('Total, next 12h')).toBeInTheDocument();
+    expect(within(screen.getByRole('table')).getAllByRole('row')).toHaveLength(12 + 1);
+  });
+
+  it('says there is no good window on that day, by name, without pointing elsewhere', () => {
+    const ActivityWindows = cardComponent('activity-windows');
+    render(<ActivityWindows {...on(monday)} activities={['walk']} />);
+
+    expect(screen.getByText('No good window on Monday.')).toBeInTheDocument();
+    expect(screen.queryByText(/next good window/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Best Time To Go Out Monday' })).toBeInTheDocument();
+  });
+
+  it('shows the later day’s own window', () => {
+    const ActivityWindows = cardComponent('activity-windows');
+    render(<ActivityWindows {...on(sunday)} activities={['run']} />);
+
+    // Sunday warms past a runner's limit after noon.
+    expect(screen.getByText('6 AM – 12 PM')).toBeInTheDocument();
+  });
+});
+
+describe('activity windows — when, if not today', () => {
+  /** Today's whole rolling 24 hours rained off; the rest of the week as the fixture has it. */
+  function washedOutToday(): WeatherDashboardData {
+    const rainedOff = new Set(mockWeekWeatherData.hourly.map((hour) => hour.time));
+    const forecastHours = mockWeekWeatherData.forecastHours.map((hour) =>
+      rainedOff.has(hour.time) ? { ...hour, precipitationChance: 95 } : hour,
+    );
+    return { ...mockWeekWeatherData, forecastHours, hourly: forecastHours.slice(0, 24) };
+  }
+
+  it('points to the next day with a window when today has none', () => {
+    const ActivityWindows = cardComponent('activity-windows');
+    render(<ActivityWindows data={washedOutToday()} activities={['walk']} unitSystem="imperial" />);
+
+    expect(screen.getByText('No good window in the next day.')).toBeInTheDocument();
+    // Sunday from 9 AM (the morning before it is inside today's washed-out 24 hours), split at
+    // that day's sunset.
+    expect(screen.getByText('Next good window: Sun 9 AM – 9 PM')).toBeInTheDocument();
+  });
+
+  it('says nothing more when no later day has a window either — never a least-bad hour', () => {
+    const ActivityWindows = cardComponent('activity-windows');
+    const soaked = mockWeekWeatherData.forecastHours.map((hour) => ({ ...hour, precipitationChance: 95 }));
+    render(
+      <ActivityWindows
+        data={{ ...mockWeekWeatherData, forecastHours: soaked, hourly: soaked.slice(0, 24) }}
+        activities={['walk']}
+        unitSystem="imperial"
+      />,
+    );
+
+    expect(screen.getByText('No good window in the next day.')).toBeInTheDocument();
+    expect(screen.queryByText(/next good window/i)).not.toBeInTheDocument();
+    // The description of what was looked for still explains the blank.
+    expect(screen.getByText(/mild, dry, and not too windy/i)).toBeInTheDocument();
+  });
+
+  it('adds no pointer when today already has a window', () => {
+    const ActivityWindows = cardComponent('activity-windows');
+    render(<ActivityWindows data={mockWeekWeatherData} activities={['walk']} unitSystem="imperial" />);
+    expect(screen.queryByText(/next good window/i)).not.toBeInTheDocument();
   });
 });

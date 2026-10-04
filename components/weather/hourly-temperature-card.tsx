@@ -1,5 +1,10 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
 import { Icon } from '@/components/ui/icon';
+import { WAKING_HOURS } from '@/lib/weather/activity-windows';
 import { conditionIcon } from '@/lib/weather/condition-icon';
+import { laterDayName } from '@/lib/weather/forecast-day';
 import type { DailyForecastDay } from '@/lib/weather/types';
 import type { WeatherCardProps } from './card-registry';
 import { CardBoundary } from './card-frame';
@@ -25,17 +30,41 @@ export function HourlyTemperatureCard({
   isLoading,
   errorMessage,
   unitSystem,
+  forecastDay,
   isEditing,
   onRemove,
 }: WeatherCardProps) {
   const timeZone = data?.location.timezone;
   const hourly = data?.hourly ?? [];
   const daily = data?.daily ?? [];
+  const dayName = laterDayName(forecastDay);
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  // A later day is a whole midnight-to-midnight day, and opening its strip on six moons is opening
+  // it on the hours nobody is planning. It opens at the start of the waking day instead — scrolled
+  // there, not cut, so the small hours stay one swipe back and the table and range still cover
+  // them. Today's view always opens on now.
+  const openingTime = dayName
+    ? (hourly.find((point) => Number(point.time.slice(11, 13)) >= WAKING_HOURS.start)?.time ?? null)
+    : null;
+
+  useEffect(() => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    const pill = openingTime ? strip.querySelector<HTMLElement>(`[data-time="${openingTime}"]`) : null;
+    if (!pill) {
+      strip.scrollLeft = 0;
+      return;
+    }
+    const inset = Number.parseFloat(getComputedStyle(strip).paddingLeft) || 0;
+    strip.scrollLeft += pill.getBoundingClientRect().left - strip.getBoundingClientRect().left - inset;
+  }, [openingTime]);
 
   return (
     <CardBoundary
       title={TITLE}
       description={DESCRIPTION}
+      subtitle={dayName ?? undefined}
       icon="schedule"
       isEditing={isEditing}
       onRemove={onRemove}
@@ -50,10 +79,15 @@ export function HourlyTemperatureCard({
           {/* Hour pills, scrolling horizontally past the width the card affords rather than
               compressing below legibility. aria-hidden because the table below carries the same
               series to assistive tech — announcing both would be double. */}
-          <div aria-hidden="true" className="-mx-4 flex flex-1 items-stretch gap-2 overflow-x-auto px-4 scrollbar-none">
+          <div
+            ref={stripRef}
+            aria-hidden="true"
+            className="-mx-4 flex flex-1 items-stretch gap-2 overflow-x-auto px-4 scrollbar-none"
+          >
             {hourly.map((point) => (
               <div
                 key={point.time}
+                data-time={point.time}
                 className="flex min-w-[4.25rem] flex-col items-center justify-center gap-1 rounded-xl bg-surface-container-highest px-2 py-3 text-center"
               >
                 <span className="type-label-sm whitespace-nowrap text-on-surface-variant">
@@ -75,33 +109,38 @@ export function HourlyTemperatureCard({
           </div>
 
           {/* The strip's text equivalent. Not decorative: this is how the data is conveyed to
-              screen-reader users, so it carries the full series rather than a summary. */}
-          <table className="sr-only">
-            <caption>Hourly temperatures</caption>
-            <thead>
-              <tr>
-                <th scope="col">Time</th>
-                <th scope="col">Temperature</th>
-                <th scope="col">Feels like</th>
-                <th scope="col">Rain chance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {hourly.map((point) => (
-                <tr key={point.time}>
-                  <th scope="row">{formatHour(point.time, timeZone)}</th>
-                  <td>{describeTemperature(point.temperatureF, unitSystem)}</td>
-                  <td>{describeTemperature(point.feelsLikeF, unitSystem)}</td>
-                  <td>{point.precipitationChance}%</td>
+              screen-reader users, so it carries the full series rather than a summary.
+              The wrapper, not the table, is what is visually hidden: a table cannot shrink to
+              sr-only's 1px (its nowrap text sets its minimum width), and clip-path leaves its
+              full width in the page's scrollable area — a sideways scroll on a phone. */}
+          <div className="sr-only">
+            <table>
+              <caption>{dayName ? `Hourly temperatures, ${dayName}` : 'Hourly temperatures'}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Time</th>
+                  <th scope="col">Temperature</th>
+                  <th scope="col">Feels like</th>
+                  <th scope="col">Rain chance</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {hourly.map((point) => (
+                  <tr key={point.time}>
+                    <th scope="row">{formatHour(point.time, timeZone)}</th>
+                    <td>{describeTemperature(point.temperatureF, unitSystem)}</td>
+                    <td>{describeTemperature(point.feelsLikeF, unitSystem)}</td>
+                    <td>{point.precipitationChance}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <p className="mt-3 type-body-sm text-on-surface-variant">
             Range {formatTemperature(Math.min(...hourly.map((p) => p.temperatureF)), unitSystem)} to{' '}
-            {formatTemperature(Math.max(...hourly.map((p) => p.temperatureF)), unitSystem)} over the next{' '}
-            {hourly.length} hours.
+            {formatTemperature(Math.max(...hourly.map((p) => p.temperatureF)), unitSystem)}{' '}
+            {dayName ? `on ${dayName}.` : `over the next ${hourly.length} hours.`}
           </p>
         </>
       )}

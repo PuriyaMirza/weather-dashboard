@@ -210,20 +210,54 @@ function toEpochMs(iso: string | null | undefined): number | null {
   return Number.isNaN(ms) ? null : ms;
 }
 
+interface SunBounds {
+  sunriseMs: number | null;
+  sunsetMs: number | null;
+  sunset: string | null;
+}
+
+/**
+ * Sunrise and sunset for each local date an hour can fall on, keyed on the first ten characters of
+ * its timestamp (the location's own date, as `scopeToDay` matches them).
+ *
+ * Today's view is the rolling next 24 hours, so it routinely reaches past midnight — and tomorrow
+ * morning measured against today's sunset reads as night. `data.sun` speaks for the model's own day
+ * (today, or the day `scopeToDay` narrowed to), nulls included: an unknown sun there means unknown,
+ * not "go and look elsewhere". Every other date takes its own `data.daily` row. A date with neither
+ * gets no bounds at all rather than another day's, which is the very mistake this exists to stop.
+ */
+function sunBoundsByDate(data: WeatherDashboardData): (date: string) => SunBounds {
+  const own = data.sun;
+  const ownDate = (own?.sunset ?? own?.sunrise)?.slice(0, 10) ?? data.daily[0]?.date;
+
+  return (date) => {
+    const source = date === ownDate ? own : data.daily.find((day) => day.date === date);
+    const sunset = source?.sunset ?? null;
+    return { sunriseMs: toEpochMs(source?.sunrise), sunsetMs: toEpochMs(sunset), sunset };
+  };
+}
+
+function localDate(hour: HourlyPoint): string {
+  return hour.time.slice(0, 10);
+}
+
 /**
  * Which hours may be part of a window at all, before the weather is looked at.
  *
  * For daylight-required activities an hour counts as daylight when it *starts* in daylight: at or
- * after sunrise, before sunset. The opening hour is the one someone acts on, so it has to be light
- * already. Each bound applies only when known — a missing sunrise or sunset must not silently make
- * daylight activities impossible.
+ * after its own day's sunrise, before its own day's sunset. The opening hour is the one someone
+ * acts on, so it has to be light already. Each bound applies only when known — a missing sunrise or
+ * sunset must not silently make daylight activities impossible.
  */
-function candidateFilter(data: WeatherDashboardData, activity: ActivityDefinition): (hour: HourlyPoint) => boolean {
-  const sunriseMs = activity.requiresDaylight ? toEpochMs(data.sun?.sunrise) : null;
-  const sunsetMs = activity.requiresDaylight ? toEpochMs(data.sun?.sunset) : null;
-
+function candidateFilter(
+  activity: ActivityDefinition,
+  sunOn: (date: string) => SunBounds,
+): (hour: HourlyPoint) => boolean {
   return (hour) => {
     if (!isWakingHour(hour)) return false;
+    if (!activity.requiresDaylight) return true;
+
+    const { sunriseMs, sunsetMs } = sunOn(localDate(hour));
     const startMs = Date.parse(hour.time);
     if (sunriseMs != null && startMs < sunriseMs) return false;
     if (sunsetMs != null && startMs >= sunsetMs) return false;
@@ -309,6 +343,11 @@ function finalizeWindow(
 /**
  * Turns a run of suitable hours into the window actually reported.
  *
+ * Each hour is judged dark against its own day's sunset, never the model's: a run tomorrow
+ * morning in today's rolling view is daylight, whatever time the sun set today. (A run never spans
+ * midnight — the waking-hours bound breaks it every night — so in practice that is one sunset per
+ * run, but asking per hour keeps that from being a hidden assumption.)
+ *
  * A run entirely on one side of sunset is reported as-is. A run that straddles it is trimmed to
  * the daylight portion when that portion alone already meets the activity's own minimum — "until
  * 8 PM, and also fine after dark" is more actionable than one span silently covering both, and
@@ -319,33 +358,42 @@ function finalizeWindow(
  * Daylight-required activities never reach a straddling run here, since `candidateFilter`
  * already bounds their candidate hours to between sunrise and sunset.
  */
-function buildWindow(run: HourlyPoint[], activity: ActivityDefinition, sunsetIso: string | null): ActivityWindow {
-  const sunsetMs = sunsetIso ? Date.parse(sunsetIso) : NaN;
-  if (sunsetIso == null || Number.isNaN(sunsetMs)) return finalizeWindow(run, activity, null, null);
+function buildWindow(
+  run: HourlyPoint[],
+  activity: ActivityDefinition,
+  sunOn: (date: string) => SunBounds,
+): ActivityWindow {
+  const isAfterSunset = (hour: HourlyPoint) => {
+    const { sunsetMs } = sunOn(localDate(hour));
+    return sunsetMs != null && Date.parse(hour.time) >= sunsetMs;
+  };
 
-  const daylightPortion = run.filter((hour) => new Date(hour.time).getTime() < sunsetMs);
+  const firstDark = run.find(isAfterSunset);
+  if (!firstDark) return finalizeWindow(run, activity, null, null);
 
-  if (daylightPortion.length === run.length) return finalizeWindow(run, activity, null, null);
-  if (daylightPortion.length === 0) return finalizeWindow(run, activity, sunsetIso, null);
+  const sunset = sunOn(localDate(firstDark)).sunset;
+  const daylightPortion = run.filter((hour) => !isAfterSunset(hour));
+
+  if (daylightPortion.length === 0) return finalizeWindow(run, activity, sunset, null);
 
   if (daylightPortion.length >= activity.minimumHours) {
     return finalizeWindow(daylightPortion, activity, null, hourEnd(run[run.length - 1].time));
   }
 
-  return finalizeWindow(run, activity, sunsetIso, null);
+  return finalizeWindow(run, activity, sunset, null);
 }
 
 /**
  * The best window for one activity within `data.hourly`, or null when nothing clears the bar.
  *
- * `data.sun` supplies the sunrise and sunset that bound activities needing light, and the sunset
- * that splits a run at dark. Reading them as plain timestamps off the model keeps this pure and
- * trivially testable — no clock, no timezone library, no I/O — and lets a day scoped by
- * `scopeToDay` bring its own sun times with it.
+ * Sunrise and sunset come off the model as plain timestamps — `data.sun` for its own day and
+ * `data.daily` for any other the hours reach — which keeps this pure and trivially testable: no
+ * clock, no timezone library, no I/O. A day scoped by `scopeToDay` brings its own sun times with it.
  */
 function windowFor(data: WeatherDashboardData, definition: ActivityDefinition): ActivityWindow | null {
-  const run = longestRun(data.hourly ?? [], definition, candidateFilter(data, definition));
-  return run === null ? null : buildWindow(run, definition, data.sun?.sunset ?? null);
+  const sunOn = sunBoundsByDate(data);
+  const run = longestRun(data.hourly ?? [], definition, candidateFilter(definition, sunOn));
+  return run === null ? null : buildWindow(run, definition, sunOn);
 }
 
 /**

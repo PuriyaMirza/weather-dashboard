@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { listForecastDays, scopeToDay } from '@/lib/weather/forecast-day';
+import { laterDayName, listForecastDays, scopeToDay } from '@/lib/weather/forecast-day';
 import { mockWeatherData } from '@/lib/weather/mock-data';
 import type { DailyForecastDay, HourlyPoint, WeatherDashboardData } from '@/lib/weather/types';
 
@@ -159,5 +159,18 @@ describe('scopeToDay', () => {
   it('survives a payload cached from before forecastHours existed', () => {
     const legacy = { ...weekOf(), forecastHours: undefined } as unknown as WeatherDashboardData;
     expect(scopeToDay(legacy, '2026-07-19').hourly).toEqual([]);
+  });
+});
+
+describe('laterDayName', () => {
+  it('spells out a later day’s weekday, tomorrow included', () => {
+    expect(laterDayName({ date: '2026-07-19', label: 'Tomorrow', isToday: false })).toBe('Sunday');
+    expect(laterDayName({ date: '2026-07-20', label: 'Mon', isToday: false })).toBe('Monday');
+  });
+
+  it('is null for today and for no selection, so modules keep their default copy', () => {
+    expect(laterDayName({ date: '2026-07-18', label: 'Today', isToday: true })).toBeNull();
+    expect(laterDayName(null)).toBeNull();
+    expect(laterDayName(undefined)).toBeNull();
   });
 });

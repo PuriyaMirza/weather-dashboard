@@ -1,6 +1,8 @@
 import { Icon, type IconName } from '@/components/ui/icon';
-import { findActivityWindows, type ActivityId } from '@/lib/weather/activity-windows';
-import { formatHour } from '@/lib/weather/units';
+import { findActivityWindows, findNextWindow, type ActivityId } from '@/lib/weather/activity-windows';
+import { laterDayName } from '@/lib/weather/forecast-day';
+import type { WeatherDashboardData } from '@/lib/weather/types';
+import { formatHour, formatWeekday } from '@/lib/weather/units';
 import type { WeatherCardProps } from './card-registry';
 import { CardBoundary } from './card-frame';
 
@@ -15,6 +17,17 @@ const ACTIVITY_ICON: Record<ActivityId, IconName> = {
 };
 
 /**
+ * "Thu 9 AM – 1 PM": when this activity next has a window after today, or null when no later day
+ * in the forecast has one — in which case nothing is said, rather than a least-bad hour offered.
+ */
+function nextWindowLabel(data: WeatherDashboardData, activity: ActivityId): string | null {
+  const next = findNextWindow(data, activity);
+  if (!next) return null;
+  const timeZone = data.location.timezone;
+  return `${formatWeekday(next.date)} ${formatHour(next.window.start, timeZone)} – ${formatHour(next.window.end, timeZone)}`;
+}
+
+/**
  * The one module that answers a question rather than reporting a reading.
  *
  * Everything here is derived from the hourly series already on screen — no extra request. Where an
@@ -26,10 +39,12 @@ export function ActivityWindowsCard({
   isLoading,
   errorMessage,
   activities,
+  forecastDay,
   isEditing,
   onRemove,
 }: WeatherCardProps) {
   const timeZone = data?.location.timezone;
+  const dayName = laterDayName(forecastDay);
   // An empty selection means "unspecified", not "none" — see findActivityWindows.
   const outlooks = data ? findActivityWindows(data, activities) : [];
   // Nothing to reason about without an hourly series; that is "unavailable", not "no window".
@@ -39,6 +54,7 @@ export function ActivityWindowsCard({
     <CardBoundary
       title={TITLE}
       description={DESCRIPTION}
+      subtitle={dayName ?? undefined}
       icon="forest"
       isEditing={isEditing}
       onRemove={onRemove}
@@ -50,41 +66,52 @@ export function ActivityWindowsCard({
     >
       {!isUnavailable && (
         <ul className="flex flex-col gap-2">
-          {outlooks.map(({ definition, window }) => (
-            <li
-              key={definition.id}
-              className="flex items-start gap-3 rounded-lg bg-surface-container-highest/60 px-3 py-2.5"
-            >
-              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-container text-secondary-fixed">
-                <Icon name={ACTIVITY_ICON[definition.id]} size={18} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                  <p className="type-label-lg text-primary">{definition.label}</p>
-                  {window && (
-                    <p className="type-label-lg text-secondary-fixed">
-                      {formatHour(window.start, timeZone)} – {formatHour(window.end, timeZone)}
+          {outlooks.map(({ definition, window }) => {
+            // Only on today's view: a later day is already the answer to "when, then?", and
+            // pointing from Saturday to Tuesday would be a different question.
+            const nextWindow = !window && !dayName && data ? nextWindowLabel(data, definition.id) : null;
+
+            return (
+              <li
+                key={definition.id}
+                className="flex items-start gap-3 rounded-lg bg-surface-container-highest/60 px-3 py-2.5"
+              >
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-container text-secondary-fixed">
+                  <Icon name={ACTIVITY_ICON[definition.id]} size={18} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                    <p className="type-label-lg text-primary">{definition.label}</p>
+                    {window && (
+                      <p className="type-label-lg text-secondary-fixed">
+                        {formatHour(window.start, timeZone)} – {formatHour(window.end, timeZone)}
+                      </p>
+                    )}
+                  </div>
+                  {window ? (
+                    <p className="mt-0.5 type-body-sm text-on-surface-variant">
+                      {window.reasons.join(' · ')}
+                      {/* Stated rather than implied: a window can be perfectly good and still dark. */}
+                      {window.darkFrom && ' · After sunset'}
+                      {/* The daylight portion alone was enough to report on its own, but the
+                          suitable stretch keeps going after dark — said, not dropped. */}
+                      {window.extendsUntil && ` · Also fine until ${formatHour(window.extendsUntil, timeZone)} after dark`}
                     </p>
+                  ) : (
+                    <>
+                      <p className="mt-0.5 type-body-sm text-on-surface">
+                        {dayName ? `No good window on ${dayName}.` : 'No good window in the next day.'}
+                      </p>
+                      {nextWindow && (
+                        <p className="type-body-sm text-on-surface">Next good window: {nextWindow}</p>
+                      )}
+                      <p className="type-body-sm text-on-surface-variant">{definition.description}</p>
+                    </>
                   )}
                 </div>
-                {window ? (
-                  <p className="mt-0.5 type-body-sm text-on-surface-variant">
-                    {window.reasons.join(' · ')}
-                    {/* Stated rather than implied: a window can be perfectly good and still dark. */}
-                    {window.darkFrom && ' · After sunset'}
-                    {/* The daylight portion alone was enough to report on its own, but the
-                        suitable stretch keeps going after dark — said, not dropped. */}
-                    {window.extendsUntil && ` · Also fine until ${formatHour(window.extendsUntil, timeZone)} after dark`}
-                  </p>
-                ) : (
-                  <>
-                    <p className="mt-0.5 type-body-sm text-on-surface">No good window in the next day.</p>
-                    <p className="type-body-sm text-on-surface-variant">{definition.description}</p>
-                  </>
-                )}
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </CardBoundary>

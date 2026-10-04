@@ -30,6 +30,12 @@ interface CardGridProps {
    *  either the default layout (which would flash) or an "empty dashboard" message (which is wrong). */
   isHydrated: boolean;
   cardProps: WeatherCardProps;
+  /**
+   * What modules whose definition sets `followsDay` receive instead: `data` scoped to the day
+   * picker's choice, plus that choice as `forecastDay`. Every other module keeps `cardProps`, so a
+   * reading about now can never be relabelled as a later day.
+   */
+  dayCardProps: WeatherCardProps;
   isEditing: boolean;
   onReorder: (orderedIds: WeatherCardId[]) => void;
   onSetSize: (id: WeatherCardId, size: CardSize) => void;
@@ -54,6 +60,7 @@ export function CardGrid({
   cards,
   isHydrated,
   cardProps,
+  dayCardProps,
   isEditing,
   onReorder,
   onSetSize,
@@ -185,7 +192,7 @@ export function CardGrid({
                   key={entry.id}
                   definition={definition}
                   entry={entry}
-                  cardProps={cardProps}
+                  cardProps={definition.followsDay ? dayCardProps : cardProps}
                   isEditing={isEditing}
                   position={index + 1}
                   total={cards.length}

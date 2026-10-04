@@ -151,13 +151,16 @@ export function formatHour(isoTimestamp: string, timeZone?: string): string {
   }
 }
 
-/** Formats a date as a short weekday, e.g. "Mon". */
-export function formatWeekday(isoDate: string | null | undefined): string {
+/**
+ * Formats a date as a weekday: short ("Mon") for tight rows and chips, long ("Monday") for prose,
+ * where "Range 58° to 71° on Sat" reads like a typo.
+ */
+export function formatWeekday(isoDate: string | null | undefined, width: 'short' | 'long' = 'short'): string {
   if (!isoDate) return UNAVAILABLE;
   // Date-only strings parse as UTC; append a midday time so the weekday can't slip a day either way.
   const date = new Date(isoDate.length === 10 ? `${isoDate}T12:00:00` : isoDate);
   if (Number.isNaN(date.getTime())) return UNAVAILABLE;
-  return new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(date);
+  return new Intl.DateTimeFormat('en-US', { weekday: width }).format(date);
 }
 
 export function formatDuration(seconds: number | null | undefined): string {

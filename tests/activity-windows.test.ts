@@ -288,6 +288,74 @@ describe('findActivityWindows — waking hours', () => {
   });
 });
 
+/**
+ * Today's view is the rolling next 24 hours, so from mid-afternoon on it reaches into tomorrow
+ * morning. Those hours belong to tomorrow's sun: measured against today's sunset, every one of
+ * them looked like night.
+ */
+describe('findActivityWindows — the rolling window crosses midnight', () => {
+  const TODAY = '2026-07-18';
+  const TOMORROW = '2026-07-19';
+
+  function dayRow(date: string, overrides: Partial<DailyForecastDay> = {}): DailyForecastDay {
+    return {
+      ...mockWeatherData.daily[0],
+      date,
+      sunrise: `${date}T05:35:00${OFFSET}`,
+      sunset: `${date}T20:52:00${OFFSET}`,
+      ...overrides,
+    };
+  }
+
+  /** 3 PM today through 2 PM tomorrow — rain all evening, then a pleasant morning from 8 to noon. */
+  function afternoonView(daily = [dayRow(TODAY), dayRow(TOMORROW)]): WeatherDashboardData {
+    const hours = [
+      ...[15, 16, 17, 18, 19, 20, 21, 22, 23].map((h) => hourOn(TODAY, h, { precipitationChance: 95 })),
+      ...Array.from({ length: 15 }, (_, h) =>
+        h >= 8 && h < 12 ? hourOn(TOMORROW, h) : hourOn(TOMORROW, h, { precipitationChance: 95 }),
+      ),
+    ];
+    return {
+      ...mockWeatherData,
+      hourly: hours,
+      forecastHours: hours,
+      daily,
+      sun: { ...mockWeatherData.sun!, sunrise: daily[0].sunrise, sunset: daily[0].sunset },
+    };
+  }
+
+  it('does not call a run in tomorrow’s daylight "after sunset"', () => {
+    const walk = outlook(afternoonView(), 'walk').window;
+
+    expect(walk?.start).toBe(`${TOMORROW}T08:00:00${OFFSET}`);
+    expect(walk?.end).toBe(`${TOMORROW}T12:00:00${OFFSET}`);
+    expect(walk?.darkFrom).toBeNull();
+    expect(walk?.extendsUntil).toBeNull();
+  });
+
+  it('lets a daylight-only activity use tomorrow morning', () => {
+    // Bounded by today's sunset, gardening had no candidate hours tomorrow at all.
+    const garden = outlook(afternoonView(), 'garden').window;
+    expect(garden?.start).toBe(`${TOMORROW}T08:00:00${OFFSET}`);
+    expect(garden?.hours).toBe(4);
+  });
+
+  it('still bounds tomorrow by tomorrow’s own sunrise', () => {
+    const lateSunrise = afternoonView([dayRow(TODAY), dayRow(TOMORROW, { sunrise: `${TOMORROW}T09:15:00${OFFSET}` })]);
+    expect(outlook(lateSunrise, 'garden').window?.start).toBe(`${TOMORROW}T10:00:00${OFFSET}`);
+  });
+
+  it('judges nothing about dark when tomorrow’s sun times are missing, rather than borrowing today’s', () => {
+    const unknown = afternoonView([dayRow(TODAY), dayRow(TOMORROW, { sunrise: null, sunset: null })]);
+
+    const walk = outlook(unknown, 'walk').window;
+    expect(walk?.darkFrom).toBeNull();
+    expect(walk?.extendsUntil).toBeNull();
+    // Unknown is not "dark": the daylight bound only applies where it is known.
+    expect(outlook(unknown, 'garden').window?.start).toBe(`${TOMORROW}T08:00:00${OFFSET}`);
+  });
+});
+
 describe('findNextWindow', () => {
   const DAYS = ['2026-07-18', '2026-07-19', '2026-07-20', '2026-07-21'];
 

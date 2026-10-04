@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
 import { ArrangeToolbar } from '@/components/dashboard/arrange-toolbar';
 import { CardGrid } from '@/components/dashboard/card-grid';
+import { DayPicker } from '@/components/dashboard/day-picker';
 import { Hero } from '@/components/dashboard/hero';
 import { Menu } from '@/components/dashboard/menu';
 import { SiteHeader } from '@/components/dashboard/site-header';
@@ -14,6 +15,7 @@ import { useEscapeKey } from '@/lib/hooks/use-escape-key';
 import { useHasHydrated } from '@/lib/hooks/use-has-hydrated';
 import { useWeatherData } from '@/lib/hooks/use-weather-data';
 import { applyTheme } from '@/lib/theme';
+import { listForecastDays, scopeToDay } from '@/lib/weather/forecast-day';
 import { buildShareUrl, decodePreferences, SHARE_PARAM } from '@/lib/weather/share-link';
 import { useDashboardStore } from '@/store/dashboard-store';
 
@@ -56,6 +58,20 @@ export function Dashboard() {
   const applyPreferences = useDashboardStore((state) => state.applyPreferences);
 
   const hasReadShareLink = useRef(false);
+
+  // The day the day-following modules describe; null is today. Plain component state on purpose:
+  // it is a question being asked of this forecast, not a preference — persisted or put in a share
+  // link it would reopen days later on a date that has already passed.
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  // A different place is a different question, so a pick never carries over to it. Adjusted while
+  // rendering (React's "storing information from previous renders") rather than in an effect, so
+  // the new location's first render is already back on today instead of flashing the old pick.
+  const locationKey = `${location.latitude}|${location.longitude}|${location.name}`;
+  const [dayLocationKey, setDayLocationKey] = useState(locationKey);
+  if (dayLocationKey !== locationKey) {
+    setDayLocationKey(locationKey);
+    setSelectedDay(null);
+  }
 
   /**
    * Applies a shared setup link, once, after rehydration — running earlier would have the restored
@@ -114,6 +130,16 @@ export function Dashboard() {
   // the failure — so the page says "this is old" once, instead of shouting it from every tile.
   const data = state.status === 'ready' ? state.data : staleData;
   const isStale = Boolean(failed && staleData);
+
+  const dayOptions = useMemo(() => (data ? listForecastDays(data) : []), [data]);
+  // A pick the forecast no longer covers (it rolled forward on a refresh) is today, not a blank:
+  // the picker shows Today checked and the modules go back to their default view together.
+  const forecastDay = dayOptions.find((option) => !option.isToday && option.date === selectedDay) ?? null;
+  const forecastDate = forecastDay?.date ?? null;
+  const dayData = useMemo(() => data && scopeToDay(data, forecastDate), [data, forecastDate]);
+  // Only offered when something on the grid would answer it — a picker that changes nothing on
+  // screen reads as broken.
+  const hasDayFollowingCard = cards.some((card) => getCardDefinition(card.id)?.followsDay);
 
   // Modules never render the shared failure themselves. There is exactly one request behind the
   // whole dashboard, so repeating its error in every tile produced seven identical role="alert"
@@ -249,6 +275,10 @@ export function Dashboard() {
           failureMessage={failed}
         />
 
+        {data && hasDayFollowingCard && (
+          <DayPicker options={dayOptions} selected={forecastDate} onChange={setSelectedDay} />
+        )}
+
         {isEditing && (
           <ArrangeToolbar
             onDone={exitArranging}
@@ -263,6 +293,7 @@ export function Dashboard() {
           cards={cards}
           isHydrated={hasHydrated}
           cardProps={{ data, isLoading: isLoading && !data, unitSystem, activities }}
+          dayCardProps={{ data: dayData, isLoading: isLoading && !data, unitSystem, activities, forecastDay }}
           isEditing={isEditing}
           onReorder={reorderCards}
           onSetSize={setCardSize}

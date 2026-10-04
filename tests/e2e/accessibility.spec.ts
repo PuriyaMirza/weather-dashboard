@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { mockWeatherData } from '../../lib/weather/mock-data';
-import { markOnboarded, openLocationPanel } from './support';
+import { mockWeatherData, mockWeekWeatherData } from '../../lib/weather/mock-data';
+import { DAY_FOLLOWING_LAYOUT, markOnboarded, openLocationPanel, seedPreferences } from './support';
 
 // These specs exercise the returning-visitor dashboard; the first-run flow would sit over it.
 test.beforeEach(async ({ page }) => {
@@ -149,6 +149,24 @@ test('a stormy hero has no serious accessibility violations', async ({ page }) =
   );
   await page.goto('/');
   await expect(page.getByLabel('Weather modules')).toBeVisible();
+
+  const violations = await scan(page);
+  expect(violations, describe(violations)).toEqual([]);
+});
+
+test('a later day picked for planning has no serious accessibility violations', async ({ page }) => {
+  await seedPreferences(page, { cards: DAY_FOLLOWING_LAYOUT });
+  await page.route('**/api/weather*', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWeekWeatherData) }),
+  );
+  await page.goto('/');
+
+  const picker = page.getByRole('group', { name: 'Plan for' });
+  await picker.getByRole('radio', { name: 'Tomorrow' }).locator('xpath=ancestor::label[1]').click();
+
+  // The chips' selected state and each module's day label are new surfaces for contrast and
+  // naming, and only exist once a later day is chosen.
+  await expect(page.getByRole('article', { name: 'Hourly Temperature Sunday' })).toBeVisible();
 
   const violations = await scan(page);
   expect(violations, describe(violations)).toEqual([]);

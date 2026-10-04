@@ -151,3 +151,57 @@ export const mockWeatherState: WeatherDataState = {
   status: 'ready',
   data: mockWeatherData,
 };
+
+/** How far through its low-to-high swing each local hour of a day sits — coolest near dawn, warmest mid-afternoon. */
+const DIURNAL = [
+  0.1, 0.06, 0.03, 0.01, 0, 0, 0.04, 0.12, 0.25, 0.4, 0.55, 0.68, 0.79, 0.88, 0.95, 1, 0.98, 0.9, 0.78, 0.62, 0.47,
+  0.34, 0.24, 0.16,
+];
+
+function dayOfHours(
+  date: string,
+  fromHour: number,
+  { lowF, highF, uvMax, ...shape }: { lowF: number; highF: number; uvMax: number } & Partial<HourlyPoint>,
+): HourlyPoint[] {
+  return Array.from({ length: 24 - fromHour }, (_, index) => {
+    const hourOfDay = fromHour + index;
+    const temperatureF = Math.round(lowF + (highF - lowF) * DIURNAL[hourOfDay]);
+    const uvIndex = hourOfDay < 7 || hourOfDay > 19 ? 0 : Math.round(uvMax * Math.sin(((hourOfDay - 6) / 14) * Math.PI));
+    return hour(
+      `${date}T${String(hourOfDay).padStart(2, '0')}:00:00-07:00`,
+      temperatureF,
+      temperatureF,
+      shape.precipitationChance ?? 5,
+      shape.condition ?? 'sunny',
+      { uvIndex, ...shape },
+    );
+  });
+}
+
+/**
+ * The same reading as `mockWeatherData`, but with hours running to the end of its last daily row,
+ * as the real normalizer delivers them — so a later day can be scoped out (see `scopeToDay`).
+ * Saturday's opening hours are `mockWeatherData.hourly` itself; Sunday is clear and warm; Monday
+ * rains, so a day-following module visibly changes between the two.
+ */
+const mockWeekHours: HourlyPoint[] = [
+  ...mockHourly,
+  ...dayOfHours('2026-07-18', 17, { lowF: 58, highF: 79, uvMax: 7, condition: 'partly-cloudy', precipitationChance: 12 }),
+  ...dayOfHours('2026-07-19', 0, { lowF: 60, highF: 83, uvMax: 8, condition: 'sunny', precipitationChance: 3, windMph: 6 }),
+  ...dayOfHours('2026-07-20', 0, {
+    lowF: 57,
+    highF: 71,
+    uvMax: 4,
+    condition: 'rain',
+    precipitationChance: 65,
+    precipitationInches: 0.02,
+    windMph: 14,
+    windGustMph: 24,
+  }),
+];
+
+export const mockWeekWeatherData: WeatherDashboardData = {
+  ...mockWeatherData,
+  hourly: mockWeekHours.slice(0, 24),
+  forecastHours: mockWeekHours,
+};

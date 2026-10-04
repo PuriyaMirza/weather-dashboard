@@ -109,6 +109,10 @@ describe('formatWeekday', () => {
     expect(formatWeekday('2026-07-18')).toBe('Sat');
   });
 
+  it('spells the weekday out in full when asked, for prose', () => {
+    expect(formatWeekday('2026-07-18', 'long')).toBe('Saturday');
+  });
+
   it('reports unavailable for unparseable input', () => {
     expect(formatWeekday(null)).toBe(UNAVAILABLE);
     expect(formatWeekday('not-a-date')).toBe(UNAVAILABLE);
