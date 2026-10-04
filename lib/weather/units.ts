@@ -80,6 +80,27 @@ export function formatTemperatureWithUnit(fahrenheit: number | null | undefined,
   return `${round(value)}°${system === 'metric' ? 'C' : 'F'}`;
 }
 
+/**
+ * A temperature *difference* in the chosen unit, keeping its sign.
+ *
+ * Differences convert by the scale factor alone (×5/9). The −32 in `toCelsius` places a reading on
+ * the Celsius scale; applied to a gap it would turn a 9°F rise into a 13° fall instead of a 5° rise.
+ */
+export function toTemperatureDifference(deltaF: number, system: UnitSystem): number {
+  return system === 'metric' ? (deltaF * 5) / 9 : deltaF;
+}
+
+/**
+ * The size of a temperature change, e.g. "8°" in "8° cooler" — always the magnitude, so the
+ * sentence around it carries the direction. Rounded with `Math.round` on the magnitude so a caller
+ * deciding "same" versus "warmer" from `toTemperatureDifference` can round the same way and never
+ * print "0° warmer".
+ */
+export function formatTemperatureDifference(deltaF: number | null | undefined, system: UnitSystem): string {
+  if (deltaF == null) return UNAVAILABLE;
+  return `${Math.round(Math.abs(toTemperatureDifference(deltaF, system)))}°`;
+}
+
 /** Spoken form for screen readers, where "°" alone reads poorly. */
 export function describeTemperature(fahrenheit: number | null | undefined, system: UnitSystem): string {
   if (fahrenheit == null) return UNAVAILABLE;

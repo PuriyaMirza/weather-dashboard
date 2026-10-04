@@ -287,8 +287,9 @@ export const useDashboardStore = create<DashboardState>()(
         if (error) console.error('[dashboard] could not restore saved preferences:', error);
       },
       // Bump when the persisted shape changes so old saved state is never deserialized into a
-      // shape the code no longer understands.
-      version: 10,
+      // shape the code no longer understands. 11 added the `briefing` module id; a saved layout
+      // is kept exactly as it was, not handed the new module — the menu offers it instead.
+      version: 11,
       // Without a migrate, zustand *discards* state saved under an older version — which would
       // throw away every existing dashboard on upgrade and make reconcileLayout's span-to-size
       // translation dead code. Older state is handed through instead, because `merge` below

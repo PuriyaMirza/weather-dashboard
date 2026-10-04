@@ -53,17 +53,25 @@ export interface CardLayoutEntry {
  * and restating the same hours one scroll down read as duplication rather than more detail. Anyone
  * who wants the full 24-hour chart can switch it on from the menu.
  *
- * `next-hours` goes first, full width, since it was always shown above everything else back when
- * it lived fixed inside the hero rather than in this grid. `daily-forecast` follows and claims
- * columns 1-2 across both rows of the four-column desktop grid; the four smalls that follow then
- * fill columns 3-4 top and bottom with no leftover cells. `next-hours`'s own `size` is unused —
- * see `FULL_WIDTH_CARD_IDS` — kept as `'large'` only because `CardLayoutEntry` requires one.
+ * `briefing` leads, and is here at all for a second reason besides being the plainest summary: the
+ * day picker only appears when a module on the grid follows it, and without one a new visitor would
+ * never discover that the dashboard can plan the rest of the week. Leading also puts the module the
+ * picker changes most visibly directly beneath it.
+ *
+ * The briefing is a medium, which leaves half a row on the four-column desktop grid; two smalls sit
+ * beside it rather than leaving that half empty at the top of the page. `next-hours` comes next,
+ * full width (its own `size` is unused — see `FULL_WIDTH_CARD_IDS` — and `'large'` only because
+ * `CardLayoutEntry` requires one), then `daily-forecast` across columns 1-2 of two rows with the
+ * remaining smalls beside it. These shapes add up to fourteen cells, which four columns can't tile
+ * exactly; the spare half row lands last, under those smalls, where a grid running out reads as
+ * natural rather than as a gap. On a phone's two columns everything tiles.
  */
 export const DEFAULT_CARD_LAYOUT: CardLayoutEntry[] = [
-  { id: 'next-hours', size: 'large' },
-  { id: 'daily-forecast', size: 'large' },
+  { id: 'briefing', size: 'medium' },
   { id: 'precipitation-chance', size: 'small' },
   { id: 'wind-speed', size: 'small' },
+  { id: 'next-hours', size: 'large' },
+  { id: 'daily-forecast', size: 'large' },
   { id: 'humidity', size: 'small' },
   { id: 'uv-index', size: 'small' },
 ];
@@ -87,6 +95,7 @@ export const ALL_CARD_IDS: WeatherCardId[] = [
   'cloud-cover',
   'air-quality-index',
   'sunrise-sunset',
+  'briefing',
   'activity-windows',
   'next-hours',
   'hourly-temperature',
@@ -119,6 +128,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     description: 'Will I get rained on in the next few hours?',
     layout: [
       { id: 'temperature', size: 'medium' },
+      { id: 'briefing', size: 'medium' },
       { id: 'precipitation-chance', size: 'small' },
       { id: 'feels-like', size: 'small' },
       { id: 'precipitation', size: 'large' },
@@ -169,7 +179,7 @@ function defaultSizeFor(id: WeatherCardId): CardSize {
   // the stored value sensible if it were ever read directly, e.g. by the "Everything" preset.
   if (id === 'next-hours') return 'large';
   if (id === 'hourly-temperature' || id === 'precipitation' || id === 'daily-forecast') return 'large';
-  if (id === 'activity-windows') return 'medium';
+  if (id === 'briefing' || id === 'activity-windows') return 'medium';
   if (id === 'current-conditions' || id === 'comfort' || id === 'wind' || id === 'sun-uv') return 'medium';
   if (id === 'atmospheric-details' || id === 'air-quality') return 'medium';
   return 'small';
@@ -199,9 +209,11 @@ export const ACTIVITY_MODULES: Record<ActivityId, WeatherCardId[]> = {
  * covers the near-term view, and an onboarding-derived layout duplicating it would reintroduce the
  * exact overlap the curated default was changed to avoid. `daily-forecast` fills that role instead —
  * it is the anchor panel the curated default leads with, and it does not restate anything the hero
- * already shows.
+ * already shows. `briefing` joins it for the same reasons it leads the curated default: it is the
+ * day ahead in words, and it is what makes the day picker appear on a dashboard whose answers
+ * brought no other day-following module with them.
  */
-const CORE_MODULES: WeatherCardId[] = ['daily-forecast'];
+const CORE_MODULES: WeatherCardId[] = ['briefing', 'daily-forecast'];
 
 /**
  * Builds a starting layout from the activities someone chose.

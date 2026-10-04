@@ -81,6 +81,30 @@ describe('metric modules', () => {
     expect(reading?.detail).toMatch(/warmer|cooler|same as/i);
   });
 
+  /**
+   * The gap between two temperatures is a difference, not a reading. It used to print the raw
+   * Fahrenheit gap whatever the unit, so a Celsius dashboard showing 23° beside 22° claimed "2°
+   * warmer".
+   */
+  it('states the feels-like gap in the chosen unit', () => {
+    const feelsLike = getMetricModule('feels-like')!;
+    const withGap = (temperatureF: number, feelsLikeF: number): WeatherDashboardData => ({
+      ...mockWeatherData,
+      current: { ...mockWeatherData.current!, temperatureF, feelsLikeF },
+    });
+
+    // mockWeatherData: 72°F, feels like 74°F.
+    expect(feelsLike.read(mockWeatherData, 'imperial')?.detail).toBe('2° warmer than the actual temperature');
+    expect(feelsLike.read(mockWeatherData, 'metric')?.detail).toBe('1° warmer than the actual temperature');
+
+    expect(feelsLike.read(withGap(72, 63), 'imperial')?.detail).toBe('9° cooler than the actual temperature');
+    expect(feelsLike.read(withGap(72, 63), 'metric')?.detail).toBe('5° cooler than the actual temperature');
+
+    // Under half a degree Celsius is the same, as far as the screen is concerned.
+    expect(feelsLike.read(withGap(72, 72.8), 'metric')?.detail).toBe('Same as the actual temperature');
+    expect(feelsLike.read(withGap(72, 72), 'imperial')?.detail).toBe('Same as the actual temperature');
+  });
+
   it('gives every reading a header icon', () => {
     for (const metric of METRIC_MODULES) {
       expect(metric.icon, `${metric.id} has no icon`).toBeTruthy();

@@ -7,6 +7,7 @@ import type { UnitSystem } from '@/lib/weather/units';
 import { ActivityWindowsCard } from './activity-windows-card';
 import { AirQualityCard } from './air-quality-card';
 import { AtmosphericDetailsCard } from './atmospheric-details-card';
+import { BriefingCard } from './briefing-card';
 import { ComfortCard } from './comfort-card';
 import { CurrentConditionsCard } from './current-conditions-card';
 import { DailyForecastCard } from './daily-forecast-card';
@@ -22,6 +23,7 @@ import { WindCard } from './wind-card';
  * readings below, which are generated from `METRIC_MODULES`.
  */
 export type CompositeCardId =
+  | 'briefing'
   | 'current-conditions'
   | 'comfort'
   | 'hourly-temperature'
@@ -79,6 +81,14 @@ export interface WeatherCardDefinition {
 }
 
 const compositeCards: WeatherCardDefinition[] = [
+  {
+    id: 'briefing',
+    title: 'Briefing',
+    description: 'The day ahead in a few plain sentences: rain, temperature, wind, and how it compares.',
+    kind: 'panel',
+    followsDay: true,
+    Component: BriefingCard,
+  },
   {
     id: 'activity-windows',
     title: 'Best Time To Go Out',

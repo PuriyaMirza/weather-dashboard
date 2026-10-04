@@ -197,6 +197,15 @@ describe('composeLayoutForActivities', () => {
     const ids = composeLayoutForActivities([]).map((entry) => entry.id);
     expect(ids).toContain('daily-forecast');
   });
+
+  it('always includes the briefing, so the day picker has a module to drive whatever the answers', () => {
+    const cases: ActivityId[][] = [[], ['walk'], ['garden'], ['walk', 'run', 'cycle', 'garden']];
+    for (const activities of cases) {
+      const layout = composeLayoutForActivities(activities);
+      expect(layout.map((entry) => entry.id)).toContain('briefing');
+      expect(layout.find((entry) => entry.id === 'briefing')?.size).toBe('medium');
+    }
+  });
 });
 
 describe('activity selection and the activity panel', () => {

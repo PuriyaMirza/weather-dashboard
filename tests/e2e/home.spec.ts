@@ -19,7 +19,7 @@ test('renders the default dashboard layout with location and menu controls', asy
 
   // The default layout is deliberately curated rather than showing everything available.
   // Temperature is not among them — the hero already carries the current reading.
-  for (const name of ['Rain Chance', 'Wind', 'Humidity', 'UV Index', 'Daily Forecast']) {
+  for (const name of ['Briefing', 'Rain Chance', 'Wind', 'Humidity', 'UV Index', 'Daily Forecast']) {
     await expect(grid.getByRole('heading', { name, exact: true })).toBeVisible();
   }
   await expect(grid.getByRole('heading', { name: 'Temperature', exact: true })).toHaveCount(0);
@@ -109,6 +109,36 @@ test('picking a later day re-scopes the day-following modules, by pointer and by
   await expect(page.getByRole('article', { name: 'Best Time To Go Out Monday' })).toContainText(
     'No good window on Monday.',
   );
+});
+
+test('the default briefing summarises the day ahead, and follows a later day when one is picked', async ({ page }) => {
+  // No seeded layout: the briefing is on the default grid, and it alone brings the picker out.
+  await page.route('**/api/weather*', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWeekWeatherData) }),
+  );
+  await page.goto('/');
+
+  // Queried by role: the module header carries a decorative icon beside its title.
+  const today = page.getByRole('article', { name: 'Briefing', exact: true });
+  await expect(today).toContainText('Dry for the next 24 hours.');
+  await expect(today).toContainText('Tomorrow: 4° warmer.');
+
+  const picker = page.getByRole('group', { name: 'Plan for' });
+  await picker.getByRole('radio', { name: 'Monday' }).locator('xpath=ancestor::label[1]').click();
+
+  const monday = page.getByRole('article', { name: 'Briefing Monday' });
+  await expect(monday).toContainText('Rain likely all day.');
+  await expect(monday).toContainText('12° cooler than tomorrow.');
+  await expect(monday).not.toContainText('next 24 hours');
+
+  // Units only change how it is printed: the same Monday, in Celsius.
+  await page.getByRole('button', { name: /open menu/i }).click();
+  const menu = page.getByRole('dialog', { name: /dashboard settings/i });
+  // The radio is visually hidden inside its segment, so click the segment, as a person would.
+  await menu.getByRole('radio', { name: /celsius/i }).locator('xpath=ancestor::label[1]').click();
+  await expect(menu.getByRole('radio', { name: /celsius/i })).toBeChecked();
+  await page.keyboard.press('Escape');
+  await expect(monday).toContainText('7° cooler than tomorrow.');
 });
 
 test('the day picker scrolls within itself on a narrow phone, never the page', async ({ page }) => {

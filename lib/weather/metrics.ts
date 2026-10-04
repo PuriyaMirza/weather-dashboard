@@ -9,8 +9,10 @@ import {
   formatPressure,
   formatSpeed,
   formatTemperature,
+  formatTemperatureDifference,
   formatTemperatureWithUnit,
   formatTime,
+  toTemperatureDifference,
   type UnitSystem,
 } from './units';
 
@@ -151,14 +153,17 @@ export const METRIC_MODULES: MetricModuleDefinition[] = [
     read: (data, units) => {
       const current = data.current;
       if (!current) return null;
-      const difference = Math.round(current.feelsLikeF - current.temperatureF);
+      const differenceF = current.feelsLikeF - current.temperatureF;
+      // Judged in the unit on screen: a 1°F gap is "same" in Celsius, and the printed size must
+      // be a converted difference, not the raw Fahrenheit one.
+      const shown = toTemperatureDifference(differenceF, units);
       return {
         value: formatTemperature(current.feelsLikeF, units),
         spoken: describeTemperature(current.feelsLikeF, units),
         detail:
-          difference === 0
+          Math.round(Math.abs(shown)) === 0
             ? 'Same as the actual temperature'
-            : `${Math.abs(difference)}° ${difference > 0 ? 'warmer' : 'cooler'} than the actual temperature`,
+            : `${formatTemperatureDifference(differenceF, units)} ${shown > 0 ? 'warmer' : 'cooler'} than the actual temperature`,
       };
     },
   },

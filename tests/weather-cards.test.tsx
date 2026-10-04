@@ -242,7 +242,7 @@ describe('day-following modules on a later day', () => {
 
   it('are exactly the ones describing a span of time, never a reading about now', () => {
     const following = weatherCardRegistry.filter((card) => card.followsDay).map((card) => card.id);
-    expect(following.sort()).toEqual(['activity-windows', 'hourly-temperature', 'precipitation']);
+    expect(following.sort()).toEqual(['activity-windows', 'briefing', 'hourly-temperature', 'precipitation']);
   });
 
   it('names the day in the hourly temperature summary, title area and table caption', () => {
@@ -294,6 +294,32 @@ describe('day-following modules on a later day', () => {
     expect(screen.getByText('No good window on Monday.')).toBeInTheDocument();
     expect(screen.queryByText(/next good window/i)).not.toBeInTheDocument();
     expect(screen.getByRole('article', { name: 'Best Time To Go Out Monday' })).toBeInTheDocument();
+  });
+
+  it('turns the briefing to the later day, in its sentences and its label', () => {
+    const Briefing = cardComponent('briefing');
+    const { rerender } = render(<Briefing data={mockWeekWeatherData} unitSystem="imperial" />);
+
+    const todayCard = screen.getByRole('article', { name: 'Briefing' });
+    expect(within(todayCard).getAllByRole('listitem').length).toBeGreaterThan(0);
+    expect(todayCard).toHaveTextContent('Dry for the next 24 hours.');
+    expect(todayCard).toHaveTextContent('Tomorrow: 4° warmer.');
+
+    rerender(<Briefing {...on(monday)} />);
+    const mondayCard = screen.getByRole('article', { name: 'Briefing Monday' });
+    expect(mondayCard).toHaveTextContent('Rain likely all day.');
+    expect(mondayCard).toHaveTextContent('High of 71° around 3 PM, low of 57°.');
+    expect(mondayCard).toHaveTextContent('12° cooler than tomorrow.');
+    // Today's framing would be false on Monday.
+    expect(mondayCard).not.toHaveTextContent(/next 24 hours|Tomorrow:/);
+  });
+
+  it('shows the briefing as unavailable for a later day with no hours, not a lone comparison', () => {
+    const Briefing = cardComponent('briefing');
+    render(<Briefing data={{ ...scopeToDay(mockWeekWeatherData, monday.date), hourly: [] }} forecastDay={monday} unitSystem="imperial" />);
+
+    expect(screen.getByRole('status')).toHaveTextContent(/not enough forecast data/i);
+    expect(screen.queryByText(/than tomorrow/)).not.toBeInTheDocument();
   });
 
   it('shows the later day’s own window', () => {

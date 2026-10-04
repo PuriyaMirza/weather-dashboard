@@ -153,7 +153,7 @@ test('modules can be reordered by tapping a handle and then a slot', async ({ pa
   await page.getByRole('button', { name: /^reorder rain chance/i }).click();
   await expect(page.getByText(/placing rain chance/i)).toBeVisible();
 
-  await page.getByRole('button', { name: /move rain chance to position 5 of 6/i }).click();
+  await page.getByRole('button', { name: /move rain chance to position 6 of 7/i }).click();
 
   await expect(page.getByText(/placing rain chance/i)).toHaveCount(0);
   await expect.poll(() => headings.allTextContents()).not.toEqual(before);

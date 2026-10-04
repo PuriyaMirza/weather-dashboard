@@ -62,11 +62,24 @@ describe('the day picker on the dashboard', () => {
 
   it('is not offered when nothing on the grid would follow it', async () => {
     stubForecast(mockWeekWeatherData);
-    useDashboardStore.setState({ cards: DEFAULT_CARD_LAYOUT });
+    useDashboardStore.setState({ cards: DEFAULT_CARD_LAYOUT.filter((card) => card.id !== 'briefing') });
     render(<Dashboard />);
 
     await screen.findByText('High of 79°, low of 58°. Sunset at 8:52 PM.');
     expect(screen.queryByRole('group', { name: 'Plan for' })).not.toBeInTheDocument();
+  });
+
+  it('is offered on the default layout, which the briefing makes day-following', async () => {
+    // The reason the briefing is a default at all: without one day-following module on a new
+    // visitor's grid, the week planner never appears for them.
+    stubForecast(mockWeekWeatherData);
+    useDashboardStore.setState({ cards: DEFAULT_CARD_LAYOUT });
+    await renderLoaded();
+
+    fireEvent.click(radio('Monday'));
+    expect(screen.getByRole('article', { name: 'Briefing Monday' })).toHaveTextContent('Rain likely all day.');
+    // The rest of the default grid describes now or the week, and stays put.
+    expect(screen.getByRole('article', { name: 'Next Hours' })).toBeInTheDocument();
   });
 
   it('re-scopes only the day-following modules when a later day is chosen', async () => {

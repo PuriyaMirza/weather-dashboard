@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 export const STORAGE_KEY = 'weather-dashboard';
 
 /** Matches the persist `version` in store/dashboard-store.ts. */
-export const STORAGE_VERSION = 10;
+export const STORAGE_VERSION = 11;
 
 /**
  * Marks the browser as having already been through the first-run flow.
@@ -85,7 +85,8 @@ export function seedPreferences(page: Page, state: Record<string, unknown>) {
 
 /**
  * The modules the day picker drives, beside a reading about now that must never follow it. The
- * default layout has no day-following module, and the picker only appears when one is on the grid.
+ * default layout carries only the briefing, so specs about the other day-following modules seed
+ * this instead.
  */
 export const DAY_FOLLOWING_LAYOUT = [
   { id: 'hourly-temperature', size: 'large' },
