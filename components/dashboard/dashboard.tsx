@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
+import { CompareLocationPicker } from '@/components/compare/compare-location-picker';
+import { CompareView } from '@/components/compare/compare-view';
 import { ArrangeToolbar } from '@/components/dashboard/arrange-toolbar';
 import { CardGrid } from '@/components/dashboard/card-grid';
 import { DayPicker } from '@/components/dashboard/day-picker';
@@ -25,6 +27,10 @@ export function Dashboard() {
   const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
   const locationButtonRef = useRef<HTMLButtonElement>(null);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const compareButtonRef = useRef<HTMLButtonElement>(null);
+  const [isComparePickerOpen, setIsComparePickerOpen] = useState(false);
+  // Whichever control opened the picker: the empty prompt's button, a card's Change, or nothing.
+  const comparePickerTriggerRef = useRef<HTMLElement | null>(null);
   // A ref, not state: a drag starting and stopping should not re-render the whole dashboard.
   const isDraggingCardRef = useRef(false);
   // The module picked up by tapping its handle, waiting for a destination. Owned here rather than
@@ -56,6 +62,13 @@ export function Dashboard() {
   const skipOnboarding = useDashboardStore((state) => state.skipOnboarding);
   const restartOnboarding = useDashboardStore((state) => state.restartOnboarding);
   const applyPreferences = useDashboardStore((state) => state.applyPreferences);
+  const isComparing = useDashboardStore((state) => state.isComparing);
+  const setComparing = useDashboardStore((state) => state.setComparing);
+  const compareLocation = useDashboardStore((state) => state.compareLocation);
+  const setCompareLocation = useDashboardStore((state) => state.setCompareLocation);
+  const compareLayout = useDashboardStore((state) => state.compareLayout);
+  const setCompareLayout = useDashboardStore((state) => state.setCompareLayout);
+  const swapCompareLocations = useDashboardStore((state) => state.swapCompareLocations);
 
   const hasReadShareLink = useRef(false);
 
@@ -108,8 +121,10 @@ export function Dashboard() {
         cards,
         activities,
         hasOnboarded,
+        compareLocation,
+        compareLayout,
       }),
-    [location, savedLocations, unitSystem, theme, cards, activities, hasOnboarded],
+    [location, savedLocations, unitSystem, theme, cards, activities, hasOnboarded, compareLocation, compareLayout],
   );
 
   // The inline script in layout.tsx sets the theme before paint; this keeps the attribute in step
@@ -120,7 +135,11 @@ export function Dashboard() {
 
   // Until saved preferences have loaded we don't know which location to request, so no fetch is
   // started and every module shows its loading state.
-  const { state, refresh, isRefreshing, staleData } = useWeatherData(hasHydrated ? location : null);
+  const mainWeather = useWeatherData(hasHydrated ? location : null);
+  const { state, refresh, isRefreshing, staleData } = mainWeather;
+  // The second place is requested only while Compare is open: a remembered pair costs nothing on
+  // an ordinary visit to the dashboard.
+  const compareWeather = useWeatherData(isComparing && hasHydrated ? compareLocation : null);
 
   const isLoading = !hasHydrated || state.status === 'loading';
   const failed = state.status === 'error' ? (state.errorMessage ?? 'Unable to load weather data.') : undefined;
@@ -189,7 +208,24 @@ export function Dashboard() {
 
   // Whichever dialog is open owns Escape, so this stands down entirely rather than trying to
   // out-order its handler.
-  const isModalOpen = isMenuOpen || isLocationPanelOpen || (hasHydrated && !hasOnboarded);
+  const isModalOpen =
+    isMenuOpen || isLocationPanelOpen || isComparePickerOpen || (hasHydrated && !hasOnboarded);
+
+  const exitComparing = useCallback(() => {
+    setComparing(false);
+    setIsComparePickerOpen(false);
+    // The view is opened from the header, so that is where leaving it puts a keyboard user back.
+    compareButtonRef.current?.focus();
+  }, [setComparing]);
+
+  const openComparePicker = useCallback((trigger: HTMLElement) => {
+    comparePickerTriggerRef.current = trigger;
+    setIsComparePickerOpen(true);
+  }, []);
+
+  const closeComparePicker = useCallback(() => setIsComparePickerOpen(false), []);
+
+  useEscapeKey(isComparing && !isModalOpen, exitComparing);
 
   useEscapeKey(isEditing && !isModalOpen, () => {
     // Escape unwinds one layer at a time. A module part-way through a move is the innermost layer,
@@ -226,6 +262,8 @@ export function Dashboard() {
         isRefreshing={isRefreshing}
         onOpenLocationPanel={() => setIsLocationPanelOpen(true)}
         locationButtonRef={locationButtonRef}
+        onCompare={() => setComparing(true)}
+        compareButtonRef={compareButtonRef}
         menu={
           <Menu
             isOpen={isMenuOpen}
@@ -263,50 +301,80 @@ export function Dashboard() {
       {/* One column for everything below the header, so the arrange toolbar's sticky range spans
           the whole page rather than ending with a wrapper. */}
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pt-5 pb-8">
-        <Hero
-          location={location}
-          data={data}
-          isLoading={isLoading && !data}
-          errorMessage={isStale ? undefined : failed}
-          unitSystem={unitSystem}
-          onRefresh={refresh}
-          isRefreshing={isRefreshing}
-          isStale={isStale}
-          failureMessage={failed}
-        />
+        {isComparing && hasHydrated ? (
+          <>
+            <CompareView
+              mainLocation={location}
+              compareLocation={compareLocation}
+              mainWeather={mainWeather}
+              compareWeather={compareWeather}
+              unitSystem={unitSystem}
+              layout={compareLayout}
+              onLayoutChange={setCompareLayout}
+              savedLocations={savedLocations}
+              onSelectCompare={setCompareLocation}
+              onChangeCompare={openComparePicker}
+              onSwap={swapCompareLocations}
+              onDone={exitComparing}
+            />
+            <CompareLocationPicker
+              isOpen={isComparePickerOpen}
+              onClose={closeComparePicker}
+              returnFocusRef={comparePickerTriggerRef}
+              mainLocation={location}
+              compareLocation={compareLocation}
+              saved={savedLocations}
+              onSelect={setCompareLocation}
+            />
+          </>
+        ) : (
+          <>
+            <Hero
+              location={location}
+              data={data}
+              isLoading={isLoading && !data}
+              errorMessage={isStale ? undefined : failed}
+              unitSystem={unitSystem}
+              onRefresh={refresh}
+              isRefreshing={isRefreshing}
+              isStale={isStale}
+              failureMessage={failed}
+            />
 
-        {data && hasDayFollowingCard && (
-          <DayPicker options={dayOptions} selected={forecastDate} onChange={setSelectedDay} />
+            {data && hasDayFollowingCard && (
+              <DayPicker options={dayOptions} selected={forecastDate} onChange={setSelectedDay} />
+            )}
+
+            {isEditing && (
+              <ArrangeToolbar
+                onDone={exitArranging}
+                liftedTitle={liftedTitle}
+                onCancelLift={cancelLift}
+                announcement={moveAnnouncement}
+              />
+            )}
+
+            {/* Rendering the saved layout before rehydration would flash the defaults, so the grid waits. */}
+            <CardGrid
+              cards={cards}
+              isHydrated={hasHydrated}
+              cardProps={{ data, isLoading: isLoading && !data, unitSystem, activities }}
+              dayCardProps={{ data: dayData, isLoading: isLoading && !data, unitSystem, activities, forecastDay }}
+              isEditing={isEditing}
+              onReorder={reorderCards}
+              onSetSize={setCardSize}
+              onRemove={removeCard}
+              onDragActiveChange={(isDragActive) => {
+                isDraggingCardRef.current = isDragActive;
+                // Starting a drag abandons a pending tap-placement: one move at a time.
+                if (isDragActive) setLiftedId(null);
+              }}
+              liftedId={liftedId}
+              onToggleLift={toggleLift}
+              onPlaceAt={placeLiftedAt}
+            />
+          </>
         )}
-
-        {isEditing && (
-          <ArrangeToolbar
-            onDone={exitArranging}
-            liftedTitle={liftedTitle}
-            onCancelLift={cancelLift}
-            announcement={moveAnnouncement}
-          />
-        )}
-
-        {/* Rendering the saved layout before rehydration would flash the defaults, so the grid waits. */}
-        <CardGrid
-          cards={cards}
-          isHydrated={hasHydrated}
-          cardProps={{ data, isLoading: isLoading && !data, unitSystem, activities }}
-          dayCardProps={{ data: dayData, isLoading: isLoading && !data, unitSystem, activities, forecastDay }}
-          isEditing={isEditing}
-          onReorder={reorderCards}
-          onSetSize={setCardSize}
-          onRemove={removeCard}
-          onDragActiveChange={(isDragActive) => {
-            isDraggingCardRef.current = isDragActive;
-            // Starting a drag abandons a pending tap-placement: one move at a time.
-            if (isDragActive) setLiftedId(null);
-          }}
-          liftedId={liftedId}
-          onToggleLift={toggleLift}
-          onPlaceAt={placeLiftedAt}
-        />
       </div>
     </>
   );

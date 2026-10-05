@@ -1,4 +1,6 @@
 import type { Page } from '@playwright/test';
+import { mockWeatherData, mockWeekWeatherData } from '../../lib/weather/mock-data';
+import type { WeatherDashboardData } from '../../lib/weather/types';
 
 export const STORAGE_KEY = 'weather-dashboard';
 
@@ -95,3 +97,53 @@ export const DAY_FOLLOWING_LAYOUT = [
   { id: 'humidity', size: 'small' },
   { id: 'uv-index', size: 'small' },
 ];
+
+/** The Compare specs' second place, as a saved location. Portland is the app's own default. */
+export const LISBON = {
+  id: '2267057',
+  name: 'Lisbon',
+  region: 'Lisbon',
+  country: 'Portugal',
+  latitude: 38.7167,
+  longitude: -9.1333,
+};
+
+export const PORTLAND = {
+  id: '5746545',
+  name: 'Portland',
+  region: 'Oregon',
+  country: 'United States',
+  latitude: 45.5152,
+  longitude: -122.6784,
+};
+
+/**
+ * Lisbon's forecast: warmer than the Portland fixture, and a calendar day ahead of it (Sun 19 –
+ * Tue 21 July against Sat 18 – Mon 20), so "By day" has a row each place is missing.
+ */
+export const lisbonWeatherData: WeatherDashboardData = {
+  ...mockWeekWeatherData,
+  location: { ...mockWeatherData.location, name: 'Lisbon', region: 'Lisbon', country: 'Portugal', timezone: 'Europe/Lisbon', latitude: LISBON.latitude, longitude: LISBON.longitude },
+  current: { ...mockWeatherData.current!, temperatureF: 80, condition: 'sunny', conditionLabel: 'Clear sky' },
+  daily: [
+    { ...mockWeatherData.daily[0], date: '2026-07-19', condition: 'sunny', conditionLabel: 'Clear sky', highF: 86, lowF: 66 },
+    { ...mockWeatherData.daily[1], date: '2026-07-20', highF: 88, lowF: 67 },
+    { ...mockWeatherData.daily[2], date: '2026-07-21', highF: 84, lowF: 65 },
+  ],
+};
+
+/**
+ * Answers `/api/weather` by the requested latitude, so two places on screen at once each get their
+ * own forecast. Anything not listed gets the Portland fixture.
+ */
+export function stubWeatherByLatitude(page: Page, byLatitude: Record<string, WeatherDashboardData> = { [LISBON.latitude]: lisbonWeatherData }) {
+  return page.route('**/api/weather*', (route) => {
+    const latitude = new URL(route.request().url()).searchParams.get('latitude') ?? '';
+    const match = Object.entries(byLatitude).find(([key]) => Number(key) === Number(latitude));
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(match ? match[1] : mockWeekWeatherData),
+    });
+  });
+}

@@ -41,7 +41,8 @@ export default defineConfig({
     {
       name: 'mobile-chrome',
       use: { ...devices['Pixel 7'], ...chromiumBinary },
-      testMatch: /(accessibility|customization)\.spec\.ts/,
+      // Compare too: two places' week in one table is the layout most at risk on a phone.
+      testMatch: /(accessibility|customization|compare)\.spec\.ts/,
     },
     // WebKit on Linux is not iOS Safari, but it is the same engine — and the drag bug that started
     // all of this was a WebKit behaviour Chromium structurally cannot reproduce. The tap-to-place
