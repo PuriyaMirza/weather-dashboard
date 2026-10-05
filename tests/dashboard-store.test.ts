@@ -3,6 +3,7 @@ import { DASHBOARD_STORAGE_KEY, MAX_SAVED_LOCATIONS, useDashboardStore } from '@
 import { DEFAULT_THEME } from '@/lib/theme';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
 import { ALL_CARD_IDS, DEFAULT_CARD_LAYOUT, LAYOUT_PRESETS, defaultSizeFor } from '@/lib/weather/card-layout';
+import { DEFAULT_COMPARE_LAYOUT } from '@/lib/weather/compare';
 
 const SEATTLE: SelectedLocation = {
   id: '5809844',
@@ -41,7 +42,7 @@ describe('dashboard store', () => {
     expect(persisted.state.location).toEqual(SEATTLE);
     // partialize should keep actions out of storage.
     expect(persisted.state.setLocation).toBeUndefined();
-    expect(persisted.version).toBe(11);
+    expect(persisted.version).toBe(12);
   });
 
   it('does not read persisted state until rehydrate is called (skipHydration)', async () => {
@@ -262,7 +263,7 @@ describe('dashboard store — card layout', () => {
     // The next write records the new version, so this is a one-time pass-through.
     useDashboardStore.getState().setUnitSystem('metric');
     const persisted = JSON.parse(window.localStorage.getItem(DASHBOARD_STORAGE_KEY) as string);
-    expect(persisted.version).toBe(11);
+    expect(persisted.version).toBe(12);
     expect(persisted.state.cards).toEqual(saved);
   });
 
@@ -377,6 +378,215 @@ describe('dashboard store — layout presets', () => {
       const ids = preset.layout.map((entry) => entry.id);
       expect(new Set(ids).size).toBe(ids.length);
     }
+  });
+});
+
+describe('dashboard store — compare', () => {
+  const LISBON: SelectedLocation = {
+    id: '2267057',
+    name: 'Lisbon',
+    region: 'Lisbon',
+    country: 'Portugal',
+    latitude: 38.71667,
+    longitude: -9.13333,
+  };
+
+  beforeEach(() => {
+    useDashboardStore.setState({
+      location: DEFAULT_LOCATION,
+      compareLocation: null,
+      compareLayout: DEFAULT_COMPARE_LAYOUT,
+      isComparing: false,
+      isEditing: false,
+    });
+  });
+
+  it('starts with nothing to compare, on the by-day layout, not comparing', () => {
+    const state = useDashboardStore.getState();
+    expect(state.compareLocation).toBeNull();
+    expect(state.compareLayout).toBe('by-day');
+    expect(state.isComparing).toBe(false);
+  });
+
+  it('remembers a compare place and layout, and persists both', () => {
+    useDashboardStore.getState().setCompareLocation(LISBON);
+    useDashboardStore.getState().setCompareLayout('side-by-side');
+
+    expect(useDashboardStore.getState().compareLocation).toEqual(LISBON);
+    const persisted = JSON.parse(window.localStorage.getItem(DASHBOARD_STORAGE_KEY) as string);
+    expect(persisted.state.compareLocation).toEqual(LISBON);
+    expect(persisted.state.compareLayout).toBe('side-by-side');
+  });
+
+  it('clears the compare place', () => {
+    useDashboardStore.getState().setCompareLocation(LISBON);
+    useDashboardStore.getState().setCompareLocation(null);
+    expect(useDashboardStore.getState().compareLocation).toBeNull();
+  });
+
+  /** Comparing a place with itself would always read "about the same" over two identical columns. */
+  it('refuses the dashboard\'s own location as the compare place', () => {
+    useDashboardStore.getState().setCompareLocation(LISBON);
+    useDashboardStore.getState().setCompareLocation({ ...DEFAULT_LOCATION });
+    expect(useDashboardStore.getState().compareLocation).toEqual(LISBON);
+
+    // Same coordinates under another id is the same forecast, so it is refused too.
+    useDashboardStore.getState().setCompareLocation({ ...DEFAULT_LOCATION, id: 'other', name: 'Elsewhere' });
+    expect(useDashboardStore.getState().compareLocation).toEqual(LISBON);
+  });
+
+  it('drops the compare place when the dashboard moves to that very place', () => {
+    useDashboardStore.getState().setCompareLocation(LISBON);
+    useDashboardStore.getState().setLocation(SEATTLE);
+    expect(useDashboardStore.getState().compareLocation).toEqual(LISBON);
+
+    useDashboardStore.getState().setLocation(LISBON);
+    expect(useDashboardStore.getState().compareLocation).toBeNull();
+  });
+
+  it('drops the compare place when resetting onto it', () => {
+    useDashboardStore.setState({ location: LISBON, compareLocation: DEFAULT_LOCATION });
+    useDashboardStore.getState().resetLocation();
+    expect(useDashboardStore.getState().location).toEqual(DEFAULT_LOCATION);
+    expect(useDashboardStore.getState().compareLocation).toBeNull();
+  });
+
+  it('keeps the compare place through redoing setup, unless setup picks that place', () => {
+    useDashboardStore.getState().setCompareLocation(LISBON);
+    useDashboardStore.getState().completeOnboarding({ location: SEATTLE, activities: [], cards: DEFAULT_CARD_LAYOUT });
+    expect(useDashboardStore.getState().compareLocation).toEqual(LISBON);
+
+    useDashboardStore.getState().completeOnboarding({ location: LISBON, activities: [], cards: DEFAULT_CARD_LAYOUT });
+    expect(useDashboardStore.getState().compareLocation).toBeNull();
+  });
+
+  it('swaps the two places', () => {
+    useDashboardStore.getState().setCompareLocation(LISBON);
+    useDashboardStore.getState().swapCompareLocations();
+
+    expect(useDashboardStore.getState().location).toEqual(LISBON);
+    expect(useDashboardStore.getState().compareLocation).toEqual(DEFAULT_LOCATION);
+  });
+
+  it('does nothing on swap when there is no compare place', () => {
+    useDashboardStore.getState().swapCompareLocations();
+    expect(useDashboardStore.getState().location).toEqual(DEFAULT_LOCATION);
+    expect(useDashboardStore.getState().compareLocation).toBeNull();
+  });
+
+  it('leaves arrange mode on entering compare, and compare on entering arrange mode', () => {
+    useDashboardStore.getState().setEditing(true);
+    useDashboardStore.getState().setComparing(true);
+    expect(useDashboardStore.getState().isComparing).toBe(true);
+    expect(useDashboardStore.getState().isEditing).toBe(false);
+
+    useDashboardStore.getState().setEditing(true);
+    expect(useDashboardStore.getState().isEditing).toBe(true);
+    expect(useDashboardStore.getState().isComparing).toBe(false);
+  });
+
+  it('leaves arrange mode alone when compare is switched off', () => {
+    useDashboardStore.getState().setEditing(true);
+    useDashboardStore.getState().setComparing(false);
+    expect(useDashboardStore.getState().isEditing).toBe(true);
+  });
+
+  it('never persists the transient compare-mode flag', () => {
+    useDashboardStore.getState().setComparing(true);
+    useDashboardStore.getState().setCompareLocation(LISBON);
+
+    const partialize = useDashboardStore.persist.getOptions().partialize;
+    expect(partialize?.(useDashboardStore.getState())).not.toHaveProperty('isComparing');
+    const persisted = JSON.parse(window.localStorage.getItem(DASHBOARD_STORAGE_KEY) as string);
+    expect(persisted.state.isComparing).toBeUndefined();
+    expect(persisted.state.isEditing).toBeUndefined();
+  });
+
+  /** Version 12 added the compare fields; everything saved under 11 must come through untouched. */
+  it('rehydrates state saved under version 11 unchanged, with compare defaults', async () => {
+    const saved = {
+      location: SEATTLE,
+      savedLocations: [SEATTLE],
+      unitSystem: 'metric',
+      theme: 'forest',
+      cards: [
+        { id: 'daily-forecast', size: 'large' },
+        { id: 'humidity', size: 'small' },
+      ],
+      activities: ['walk'],
+      hasOnboarded: true,
+    };
+    useDashboardStore.setState({ compareLocation: LISBON, compareLayout: 'side-by-side' });
+    window.localStorage.setItem(DASHBOARD_STORAGE_KEY, JSON.stringify({ state: saved, version: 11 }));
+
+    await useDashboardStore.persist.rehydrate();
+    const state = useDashboardStore.getState();
+    expect({
+      location: state.location,
+      savedLocations: state.savedLocations,
+      unitSystem: state.unitSystem,
+      theme: state.theme,
+      cards: state.cards,
+      activities: state.activities,
+      hasOnboarded: state.hasOnboarded,
+    }).toEqual(saved);
+    expect(state.compareLocation).toBeNull();
+    expect(state.compareLayout).toBe(DEFAULT_COMPARE_LAYOUT);
+  });
+
+  it('restores a saved compare place and layout', async () => {
+    window.localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      JSON.stringify({ state: { location: SEATTLE, compareLocation: LISBON, compareLayout: 'side-by-side' }, version: 12 }),
+    );
+
+    await useDashboardStore.persist.rehydrate();
+    expect(useDashboardStore.getState().compareLocation).toEqual(LISBON);
+    expect(useDashboardStore.getState().compareLayout).toBe('side-by-side');
+  });
+
+  it('falls back rather than trusting a malformed compare place or layout', async () => {
+    window.localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      JSON.stringify({
+        // Missing its latitude, which would otherwise reach the weather route as 0.
+        state: { location: SEATTLE, compareLocation: { id: 'x', name: 'Nowhere', longitude: 4 }, compareLayout: 'grid' },
+        version: 12,
+      }),
+    );
+
+    await useDashboardStore.persist.rehydrate();
+    expect(useDashboardStore.getState().compareLocation).toBeNull();
+    expect(useDashboardStore.getState().compareLayout).toBe(DEFAULT_COMPARE_LAYOUT);
+  });
+
+  it('drops a saved compare place that is the saved location itself', async () => {
+    window.localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      JSON.stringify({ state: { location: SEATTLE, compareLocation: SEATTLE }, version: 12 }),
+    );
+
+    await useDashboardStore.persist.rehydrate();
+    expect(useDashboardStore.getState().compareLocation).toBeNull();
+  });
+
+  it('takes the compare fields from applied preferences', () => {
+    useDashboardStore.getState().setCompareLocation(SEATTLE);
+    useDashboardStore.getState().applyPreferences({
+      ...useDashboardStore.getState(),
+      compareLocation: LISBON,
+      compareLayout: 'side-by-side',
+    });
+    expect(useDashboardStore.getState().compareLocation).toEqual(LISBON);
+    expect(useDashboardStore.getState().compareLayout).toBe('side-by-side');
+  });
+
+  it('leaves the compare setup alone when restoring the default layout', () => {
+    useDashboardStore.getState().setCompareLocation(LISBON);
+    useDashboardStore.getState().setCompareLayout('side-by-side');
+    useDashboardStore.getState().restoreDefaults();
+    expect(useDashboardStore.getState().compareLocation).toEqual(LISBON);
+    expect(useDashboardStore.getState().compareLayout).toBe('side-by-side');
   });
 });
 

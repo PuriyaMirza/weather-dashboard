@@ -11,6 +11,12 @@ import {
   type CardSize,
 } from '@/lib/weather/card-layout';
 import { isActivityId, type ActivityId } from '@/lib/weather/activity-windows';
+import {
+  DEFAULT_COMPARE_LAYOUT,
+  isCompareLayout,
+  isSamePlace,
+  type CompareLayout,
+} from '@/lib/weather/compare';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
 import { DEFAULT_THEME, toThemeId, type ThemeId } from '@/lib/theme';
 import { defaultUnitSystem, type UnitSystem } from '@/lib/weather/units';
@@ -32,6 +38,12 @@ export interface PersistedPreferences {
   cards: CardLayoutEntry[];
   activities: ActivityId[];
   hasOnboarded: boolean;
+  /**
+   * The second place the Compare view sets beside `location`; null until one is chosen. Remembered
+   * like a saved location, so reopening Compare returns to the same pair.
+   */
+  compareLocation: SelectedLocation | null;
+  compareLayout: CompareLayout;
 }
 
 /** What the onboarding flow hands back when someone finishes it. */
@@ -44,6 +56,11 @@ export interface OnboardingResult {
 export interface DashboardState extends PersistedPreferences {
   /** Transient UI state — deliberately not persisted, so a reload never starts in edit mode. */
   isEditing: boolean;
+  /**
+   * Whether the Compare view is showing. Transient for the same reason as `isEditing`: a reload
+   * lands on the dashboard, not halfway through a question asked last week.
+   */
+  isComparing: boolean;
 
   setLocation: (location: SelectedLocation) => void;
   resetLocation: () => void;
@@ -54,6 +71,12 @@ export interface DashboardState extends PersistedPreferences {
   setTheme: (theme: ThemeId) => void;
 
   setEditing: (isEditing: boolean) => void;
+  setComparing: (isComparing: boolean) => void;
+  /** Refused (a no-op) when the place is the dashboard's own location. */
+  setCompareLocation: (location: SelectedLocation | null) => void;
+  setCompareLayout: (layout: CompareLayout) => void;
+  /** Makes the compared place the dashboard's location and vice versa; a no-op with nothing to compare. */
+  swapCompareLocations: () => void;
   addCard: (id: WeatherCardId) => void;
   removeCard: (id: WeatherCardId) => void;
   /** Adds the module if it is absent, removes it if present — what the menu's toggle list needs. */
@@ -96,6 +119,19 @@ function isSelectedLocation(value: unknown): value is SelectedLocation {
 }
 
 /**
+ * The compare place that can stand beside `location`: unchanged, or null when it is the very same
+ * place. Comparing a place with itself is a sentence that always says "about the same" and two
+ * identical columns, so every path that moves the main location (or restores one from storage or
+ * a link) drops a compare place it now coincides with, rather than guessing a different one.
+ */
+function compareLocationBeside(
+  location: SelectedLocation,
+  compareLocation: SelectedLocation | null,
+): SelectedLocation | null {
+  return compareLocation && !isSamePlace(location, compareLocation) ? compareLocation : null;
+}
+
+/**
  * Coerces anything claiming to be saved preferences into preferences this version can actually run.
  *
  * Two callers depend on this, and the second is why it is a shared function rather than inline code
@@ -109,13 +145,14 @@ function isSelectedLocation(value: unknown): value is SelectedLocation {
  */
 export function validatePreferences(raw: unknown): PersistedPreferences {
   const saved = (typeof raw === 'object' && raw !== null ? raw : {}) as Partial<PersistedPreferences>;
+  const location = isSelectedLocation(saved.location) ? saved.location : DEFAULT_LOCATION;
 
   return {
     cards: reconcileLayout(saved.cards),
     // Retired values ('light' | 'dark' | 'system', saved before themes existed) and anything unknown
     // land on the default theme rather than being rejected.
     theme: toThemeId(saved.theme),
-    location: isSelectedLocation(saved.location) ? saved.location : DEFAULT_LOCATION,
+    location,
     // Capped as well as filtered: the store's own action enforces the ceiling, but a hand-crafted
     // link would otherwise be free to stuff the chip row with hundreds of entries.
     savedLocations: Array.isArray(saved.savedLocations)
@@ -130,6 +167,13 @@ export function validatePreferences(raw: unknown): PersistedPreferences {
       ? [...new Set(saved.activities.filter(isActivityId))]
       : [],
     hasOnboarded: saved.hasOnboarded === true,
+    // Absent in everything saved before version 12 and in every link written before Compare
+    // existed; both simply mean "nothing to compare yet".
+    compareLocation: compareLocationBeside(
+      location,
+      isSelectedLocation(saved.compareLocation) ? saved.compareLocation : null,
+    ),
+    compareLayout: isCompareLayout(saved.compareLayout) ? saved.compareLayout : DEFAULT_COMPARE_LAYOUT,
   };
 }
 
@@ -197,10 +241,18 @@ export const useDashboardStore = create<DashboardState>()(
       cards: DEFAULT_CARD_LAYOUT,
       activities: [],
       hasOnboarded: false,
+      compareLocation: null,
+      compareLayout: DEFAULT_COMPARE_LAYOUT,
       isEditing: false,
+      isComparing: false,
 
-      setLocation: (location) => set({ location }),
-      resetLocation: () => set({ location: DEFAULT_LOCATION }),
+      setLocation: (location) =>
+        set((state) => ({ location, compareLocation: compareLocationBeside(location, state.compareLocation) })),
+      resetLocation: () =>
+        set((state) => ({
+          location: DEFAULT_LOCATION,
+          compareLocation: compareLocationBeside(DEFAULT_LOCATION, state.compareLocation),
+        })),
 
       saveLocation: (location) =>
         set((state) => {
@@ -215,7 +267,21 @@ export const useDashboardStore = create<DashboardState>()(
       setUnitSystem: (unitSystem) => set({ unitSystem }),
       setTheme: (theme) => set({ theme }),
 
-      setEditing: (isEditing) => set({ isEditing }),
+      // Arrange mode and Compare are exclusive both ways: Compare replaces the card grid, so
+      // arranging while it shows would rearrange modules nobody can see.
+      setEditing: (isEditing) => set(isEditing ? { isEditing, isComparing: false } : { isEditing }),
+      setComparing: (isComparing) => set(isComparing ? { isComparing, isEditing: false } : { isComparing }),
+
+      setCompareLocation: (compareLocation) =>
+        set((state) =>
+          compareLocation && isSamePlace(state.location, compareLocation) ? state : { compareLocation },
+        ),
+      setCompareLayout: (compareLayout) => set({ compareLayout }),
+
+      swapCompareLocations: () =>
+        set((state) =>
+          state.compareLocation ? { location: state.compareLocation, compareLocation: state.location } : state,
+        ),
 
       addCard: (id) =>
         set((state) =>
@@ -263,13 +329,16 @@ export const useDashboardStore = create<DashboardState>()(
 
       setActivities: (activities) => set({ activities: [...new Set(activities)] }),
 
+      // A remembered compare place survives redoing setup, as saved locations do — unless the
+      // new home location is that very place.
       completeOnboarding: ({ location, activities, cards }) =>
-        set({
+        set((state) => ({
           location,
+          compareLocation: compareLocationBeside(location, state.compareLocation),
           activities: [...new Set(activities)],
           cards: reconcileLayout(cards),
           hasOnboarded: true,
-        }),
+        })),
 
       // Skipping is a real answer, not an absence of one: the flow must not reappear next visit.
       skipOnboarding: () => set({ hasOnboarded: true }),
@@ -287,9 +356,10 @@ export const useDashboardStore = create<DashboardState>()(
         if (error) console.error('[dashboard] could not restore saved preferences:', error);
       },
       // Bump when the persisted shape changes so old saved state is never deserialized into a
-      // shape the code no longer understands. 11 added the `briefing` module id; a saved layout
-      // is kept exactly as it was, not handed the new module — the menu offers it instead.
-      version: 11,
+      // shape the code no longer understands. 12 added `compareLocation` and `compareLayout`;
+      // state saved before them passes through `migrate` untouched and `validatePreferences` fills
+      // in "nothing to compare" and the default layout.
+      version: 12,
       // Without a migrate, zustand *discards* state saved under an older version — which would
       // throw away every existing dashboard on upgrade and make reconcileLayout's span-to-size
       // translation dead code. Older state is handed through instead, because `merge` below
@@ -303,8 +373,8 @@ export const useDashboardStore = create<DashboardState>()(
         }
         return persisted as DashboardState;
       },
-      // Persist preferences only. Actions are unserializable, and isEditing is transient.
-      partialize: (state) => ({
+      // Persist preferences only. Actions are unserializable; isEditing and isComparing are transient.
+      partialize: (state): PersistedPreferences => ({
         location: state.location,
         savedLocations: state.savedLocations,
         unitSystem: state.unitSystem,
@@ -312,6 +382,8 @@ export const useDashboardStore = create<DashboardState>()(
         cards: state.cards,
         activities: state.activities,
         hasOnboarded: state.hasOnboarded,
+        compareLocation: state.compareLocation,
+        compareLayout: state.compareLayout,
       }),
       // Every persisted field is re-validated rather than trusted, because `migrate` above
       // deliberately lets state written by older versions through. A stored layout can reference

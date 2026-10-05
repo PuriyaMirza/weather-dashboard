@@ -22,6 +22,7 @@ import {
   toKilometres,
   toKilometresPerHour,
   toMillimetres,
+  toShownTemperature,
 } from '@/lib/weather/units';
 
 /** Overrides the locale `defaultUnitSystem` reads, restored after each test. */
@@ -220,5 +221,14 @@ describe('defaultUnitSystem', () => {
   it('falls back to imperial when navigator is unavailable, so the module stays SSR-safe', () => {
     vi.stubGlobal('navigator', undefined);
     expect(defaultUnitSystem()).toBe('imperial');
+  });
+});
+
+describe('toShownTemperature', () => {
+  it('is the whole number formatTemperature prints, in either unit', () => {
+    expect(toShownTemperature(72.6, 'imperial')).toBe(73);
+    expect(`${toShownTemperature(72.6, 'imperial')}°`).toBe(formatTemperature(72.6, 'imperial'));
+    expect(toShownTemperature(50, 'metric')).toBe(10);
+    expect(`${toShownTemperature(59.5, 'metric')}°`).toBe(formatTemperature(59.5, 'metric'));
   });
 });
