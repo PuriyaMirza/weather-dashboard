@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: 'search',
     matches: (p) => p.startsWith('/guide') && !p.startsWith('/guide/glossary'),
   },
+  { href: '/log', label: 'Log', icon: 'bookmark', matches: (p) => p.startsWith('/log') },
   { href: '/guide/glossary', label: 'Glossary', icon: 'info', matches: (p) => p.startsWith('/guide/glossary') },
 ];
 

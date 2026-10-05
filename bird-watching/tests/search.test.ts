@@ -63,3 +63,12 @@ describe('filterSpecies', () => {
     expect(filterSpecies(all, { ...EMPTY_FILTERS, query: 'AMRO' })[0].code).toBe('amerob');
   });
 });
+
+describe('quickMatches', () => {
+  it('returns nothing for an empty query and caps the result count', async () => {
+    const { quickMatches } = await import('@/lib/birds/search');
+    expect(quickMatches(all, '  ')).toEqual([]);
+    expect(quickMatches(all, 'a', 2)).toHaveLength(2);
+    expect(quickMatches(all, 'AMGO')[0].code).toBe('amegfi');
+  });
+});

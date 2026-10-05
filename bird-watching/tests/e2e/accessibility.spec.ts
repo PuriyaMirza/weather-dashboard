@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 
 // Serious and critical only, matching the weather dashboard's bar. Extend this list with every
 // new page or major UI state.
-const PAGES = ['/', '/guide', '/guide/amerob', '/guide/rudduc', '/guide/glossary'];
+const PAGES = ['/', '/guide', '/guide/amerob', '/guide/rudduc', '/guide/glossary', '/log', '/log/lists'];
 
 async function expectNoSeriousViolations(page: import('@playwright/test').Page) {
   const results = await new AxeBuilder({ page }).analyze();
@@ -22,5 +22,15 @@ test('no serious axe violations with guide filters open and active', async ({ pa
   await page.goto('/guide');
   await page.locator('summary', { hasText: 'Filter by what you saw' }).click();
   await page.getByRole('button', { name: 'Red' }).click();
+  await expectNoSeriousViolations(page);
+});
+
+test('no serious axe violations on an outing with birds and open details', async ({ page }) => {
+  await page.goto('/log');
+  await page.getByRole('button', { name: 'Start an outing' }).click();
+  await page.getByLabel('Add a bird').fill('NOCA');
+  await page.getByLabel('Add a bird').press('Enter');
+  await page.getByLabel('Add a bird').fill('blu');
+  await page.locator('summary', { hasText: 'Details' }).first().click();
   await expectNoSeriousViolations(page);
 });

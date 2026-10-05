@@ -1,5 +1,5 @@
 import speciesJson from '@/data/species.json';
-import { speciesFileSchema, type Species, type SpeciesFile } from './schema';
+import { speciesFileSchema, type Species, type SpeciesFile, type SpeciesOption } from './schema';
 
 /*
   Server-side access to the field guide's data. Validated once at module load, so a malformed
@@ -49,4 +49,15 @@ const YEAR_ROUND_REGULARS = [
 
 export function getYearRoundRegulars(): Species[] {
   return YEAR_ROUND_REGULARS.map((code) => byCode.get(code)).filter((s): s is Species => s !== undefined);
+}
+
+export function getSpeciesOptions(): SpeciesOption[] {
+  return data.species.map(({ code, commonName, scientificName, bandingCode, taxonOrder, family }) => ({
+    code,
+    commonName,
+    scientificName,
+    bandingCode,
+    taxonOrder,
+    family,
+  }));
 }

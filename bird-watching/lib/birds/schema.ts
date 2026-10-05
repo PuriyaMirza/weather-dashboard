@@ -86,3 +86,6 @@ export type SpeciesFile = z.infer<typeof speciesFileSchema>;
 export type FieldColor = (typeof FIELD_COLORS)[number];
 export type Habitat = (typeof HABITATS)[number];
 export type LookAlike = z.infer<typeof lookAlikeSchema>;
+
+/** The slice of a species the log's pickers need — small enough to ship to the browser. */
+export type SpeciesOption = Pick<Species, 'code' | 'commonName' | 'scientificName' | 'bandingCode' | 'taxonOrder' | 'family'>;
