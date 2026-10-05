@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { UpstreamError } from '@/lib/api/http';
 import type { EbirdObservation } from '@/lib/ebird/schemas';
-import { fetchParkSightings, isInPark, parkArea, toParkSightings } from '@/lib/ebird/sightings';
+import { fetchParkSightings, isInPark, isSpecies, parkArea, toParkSightings } from '@/lib/ebird/sightings';
 
 function obs(overrides: Partial<EbirdObservation>): EbirdObservation {
   return {
@@ -50,6 +50,14 @@ describe('toParkSightings', () => {
       [],
     );
     expect(result).toEqual([]);
+  });
+
+  it('drops hybrids, spuhs and slashes, which are not species', () => {
+    expect(isSpecies({ speciesCode: 'x00004', comName: 'Mallard x American Black Duck (hybrid)' })).toBe(false);
+    expect(isSpecies({ speciesCode: 'warble', comName: 'warbler sp.' })).toBe(false);
+    expect(isSpecies({ speciesCode: 'y00001', comName: 'Greater/Lesser Scaup' })).toBe(false);
+    expect(isSpecies({ speciesCode: 'bawwar', comName: 'Black-and-white Warbler' })).toBe(true);
+    expect(toParkSightings([obs({ speciesCode: 'x00004', comName: 'Mallard x American Black Duck (hybrid)' })], [])).toEqual([]);
   });
 
   it('keeps an uncounted bird as null rather than guessing', () => {

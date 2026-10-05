@@ -43,6 +43,13 @@ describe('migrationOutlook', () => {
     expect(migrationOutlook('2026-05-10', { windFromDeg: 200, windMph: 10, precipitationIn: 0.6 }).level).toBe('low');
   });
 
+  it('calls a light tailwind moderate, not good', () => {
+    const light = migrationOutlook('2026-10-05', { windFromDeg: 335, windMph: 4.4, precipitationIn: 0 });
+    expect(light.level).toBe('moderate');
+    expect(light.reason).toContain('light (4 mph)');
+    expect(migrationOutlook('2026-10-05', { windFromDeg: 335, windMph: 5, precipitationIn: 0 }).level).toBe('high');
+  });
+
   it('treats calm nights as moderate and says when data is missing', () => {
     expect(migrationOutlook('2026-05-10', { windFromDeg: 0, windMph: 1, precipitationIn: 0 }).level).toBe('moderate');
     expect(migrationOutlook('2026-05-10', { windFromDeg: null, windMph: null, precipitationIn: null }).headline).toMatch(/unavailable/);

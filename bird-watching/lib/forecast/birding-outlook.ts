@@ -73,6 +73,8 @@ function favorsFall(deg: number) {
 }
 
 const CALM_MPH = 3;
+// Below this a "tailwind" barely helps; migrants still fly, but in modest numbers.
+const STRONG_TAILWIND_MPH = 5;
 const SOAKING_IN = 0.25;
 
 export function migrationOutlook(date: string, overnight: Overnight): MigrationOutlook {
@@ -102,6 +104,12 @@ export function migrationOutlook(date: string, overnight: Overnight): MigrationO
     return { level: 'low', headline: 'Low migration', reason: 'Steady rain overnight kept most birds grounded wherever they were.' };
   if (windMph < CALM_MPH)
     return { level: 'moderate', headline: 'Moderate migration', reason: 'Calm overnight air lets some birds move even without a tailwind.' };
+  if (tailwind && windMph < STRONG_TAILWIND_MPH)
+    return {
+      level: 'moderate',
+      headline: 'Moderate migration',
+      reason: `Overnight ${direction} winds were in the right direction for ${season} migrants, but light (${Math.round(windMph)} mph).`,
+    };
   if (tailwind)
     return {
       level: 'high',

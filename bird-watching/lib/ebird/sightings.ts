@@ -43,11 +43,20 @@ export function parkArea(locName: string): string {
 }
 
 /**
+ * True for a real species. eBird also reports hybrids ("Mallard x American Black Duck"), spuhs
+ * ("warbler sp.") and slashes ("Greater/Lesser Scaup") — valid records, but not a bird the guide
+ * or a life list can name.
+ */
+export function isSpecies(obs: Pick<EbirdObservation, 'speciesCode' | 'comName'>): boolean {
+  return !/^x\d/.test(obs.speciesCode) && !/ sp\.|\/| x /.test(obs.comName) && !obs.comName.includes('(hybrid)');
+}
+
+/**
  * Merges "recent" (latest report of every species) with "notable" (every report of a rare one)
  * into one row per species, rare birds first, then newest first.
  */
 export function toParkSightings(recent: EbirdObservation[], notable: EbirdObservation[]): ParkSighting[] {
-  const inPark = (o: EbirdObservation) => isInPark(o.locName) && !o.locationPrivate;
+  const inPark = (o: EbirdObservation) => isInPark(o.locName) && !o.locationPrivate && isSpecies(o);
   const notableBySpecies = new Map<string, EbirdObservation>();
   for (const obs of notable.filter(inPark)) {
     const current = notableBySpecies.get(obs.speciesCode);

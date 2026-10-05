@@ -246,8 +246,8 @@
     ],
     "lookAlikes": [
       {
-        "name": "Herring Gull",
-        "code": null,
+        "name": "American Herring Gull",
+        "code": "amhgul1",
         "howToTell": "Noticeably bigger, with pink legs and a red spot (not a black ring) on the yellow bill."
       }
     ],
@@ -521,7 +521,7 @@
   {
     "code": "haiwoo",
     "commonName": "Hairy Woodpecker",
-    "scientificName": "Dryobates villosus",
+    "scientificName": "Leuconotopicus villosus",
     "bandingCode": "HAWO",
     "family": "Woodpeckers",
     "familyScientific": "Picidae",
@@ -877,7 +877,7 @@
     ],
     "lookAlikes": [
       {
-        "name": "House Wren",
+        "name": "Northern House Wren",
         "code": "houwre",
         "howToTell": "Plainer gray-brown with only a faint eyebrow; mainly a spring and fall migrant here."
       }
@@ -1111,8 +1111,8 @@
     ],
     "lookAlikes": [
       {
-        "name": "Yellow Warbler",
-        "code": "yelwar",
+        "name": "Northern Yellow Warbler",
+        "code": "yelwar1",
         "howToTell": "All yellow with no black cap or black wings, and a thin, pointed bill."
       },
       {
@@ -1343,7 +1343,7 @@
     "voice": "A harsh, squeaky readle-eak, like a rusty gate."
   },
   {
-    "code": "bkwwar",
+    "code": "bawwar",
     "commonName": "Black-and-white Warbler",
     "scientificName": "Mniotilta varia",
     "bandingCode": "BAWW",
