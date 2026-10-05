@@ -12,14 +12,18 @@ discussion, check `node_modules/next/dist/docs/` before touching Next APIs).
 
 ```
 app/                 / (Today), /guide, /guide/[code] (prerendered), /guide/glossary,
-                     /log, /log/outing?id= (query param: outings live only in IndexedDB), /log/lists
+                     /log, /log/outing?id= (query param: outings live only in IndexedDB), /log/lists,
+                     /sightings; api/sightings (eBird, needs EBIRD_API_KEY), api/forecast (Open-Meteo)
 components/ui/       Primitives copied from the weather app (Icon subset, Surface, Chip, SectionHeader)
 components/guide/    FieldGuide (client search/filters), SpeciesRow, SpeciesDetail, ToggleChip
 components/log/      LogHome, OutingEditor, OutingDetails, QuickAdd, ObservationRow, SpeciesLists
+components/live/     MorningForecast, SightingsList (client-fetched from our routes)
 components/shell/    SiteHeader, BottomNav
 lib/birds/           schema.ts (Zod, the data contract), species.ts (server-only loader), search.ts,
                      labels.ts (size classes, colour/habitat labels), glossary.ts
-lib/ebird/schemas.ts eBird API response shapes
+lib/ebird/          schemas.ts (eBird response shapes), sightings.ts (geo/recent + notable → ParkSighting)
+lib/forecast/       open-meteo.ts (provider), birding-outlook.ts (morning conditions + migration rule of thumb)
+lib/api/            http.ts (jsonError, CACHE_CONTROL, fetchJson → UpstreamError), request-timeout.ts
 lib/log/             schema.ts (Outing/Observation/Backup), repository.ts (SightingsRepository + memory impl),
                      indexeddb-repository.ts, ebird-csv.ts (Record Format Extended), life-list.ts, backup.ts
 data/                species-content.json (hand-written), species.json (generated — don't hand-edit)
@@ -41,6 +45,9 @@ store/               In-memory Zustand store for guide filters
 - The log goes through `SightingsRepository` only (`getRepository()`); records use client UUIDs,
   `updatedAt`, and soft deletes (`deletedAt`) so a sync backend can be added without a migration.
   Unit tests use the memory repository; IndexedDB is covered by `tests/e2e/log.spec.ts`.
+- External calls only in route handlers; the browser sees `ParkSighting` / `BirdingForecast`, never
+  eBird or Open-Meteo shapes. `EBIRD_API_KEY` is read per request and never reaches the client;
+  missing key → 503 with a readable message. e2e stubs `/api/*` with `page.route`.
 - eBird CSV: 19 columns, no header. Breeding codes travel in species comments (no column for them).
 
 ## Commands

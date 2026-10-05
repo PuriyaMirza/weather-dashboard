@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { MorningForecast } from '@/components/live/morning-forecast';
+import { SightingsList } from '@/components/live/sightings-list';
 import { SpeciesRow } from '@/components/guide/species-row';
 import { Icon } from '@/components/ui/icon';
 import { SectionHeader } from '@/components/ui/section-header';
@@ -24,6 +26,16 @@ export default function TodayPage() {
           everything else.
         </p>
       </header>
+
+      <section aria-labelledby="forecast" className="flex flex-col gap-2">
+        <SectionHeader id="forecast" title="Birding forecast" />
+        <MorningForecast />
+      </section>
+
+      <section aria-labelledby="recent" className="flex flex-col gap-2">
+        <SectionHeader id="recent" title="Seen in the park lately" />
+        <SightingsList guideCodes={getAllSpecies().map((s) => s.code)} preview={5} />
+      </section>
 
       <section aria-labelledby="regulars" className="flex flex-col gap-2">
         <SectionHeader id="regulars" title="Year-round regulars" meta={`${regulars.length} birds`} />

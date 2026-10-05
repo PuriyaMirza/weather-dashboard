@@ -8,6 +8,10 @@ A phone-first field companion for birding Central Park, aimed at beginner and in
 - **Sighting log** — eBird-style checklists: quick-add by name or code, counts (or X), breeding
   codes, notes, effort (protocol, duration, distance), life and year lists. Export to eBird's
   Record Format, or back up and restore as JSON. Stays on your device.
+- **Today** — this morning's birding forecast (sunrise, best light, temperature, wind, rain) and a
+  migration rule of thumb from overnight winds, plus what's been reported in the park lately.
+- **Sightings** — recent eBird reports from Central Park, rare birds first, with "new for you"
+  badges from your log. Requires `EBIRD_API_KEY` on the server (`.env.local` or your host).
 - **Glossary** — parts of a bird and birder slang.
 
 ```bash
