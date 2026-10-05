@@ -5,11 +5,15 @@ import { Icon } from '@/components/ui/icon';
 import { Surface } from '@/components/ui/surface';
 import { COLOR_LABEL, HABITAT_LABEL, SIZE_LABEL, formatLength, sizeClassOf } from '@/lib/birds/labels';
 import type { Species } from '@/lib/birds/schema';
+import type { SpeciesPhoto as Photo } from '@/lib/media/wikipedia';
+import { SpeciesPhoto } from './species-photo';
 
 interface SpeciesDetailProps {
   species: Species;
   /** Codes that have their own page, so look-alikes link only where there's somewhere to go. */
   linkableCodes: ReadonlySet<string>;
+  /** Null when there's no properly licensed photo (or the build was offline). */
+  photo: Photo | null;
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -37,7 +41,7 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 }
 
 /** A species page: everything the guide knows, and nothing it doesn't. */
-export function SpeciesDetail({ species, linkableCodes }: SpeciesDetailProps) {
+export function SpeciesDetail({ species, linkableCodes, photo }: SpeciesDetailProps) {
   const size = sizeClassOf(species.lengthIn);
   return (
     <article className="flex flex-col gap-4">
@@ -62,6 +66,8 @@ export function SpeciesDetail({ species, linkableCodes }: SpeciesDetailProps) {
           )}
         </div>
       </header>
+
+      {photo && <SpeciesPhoto photo={photo} commonName={species.commonName} priority />}
 
       {species.summary && <p className="type-body-md text-on-surface">{species.summary}</p>}
 

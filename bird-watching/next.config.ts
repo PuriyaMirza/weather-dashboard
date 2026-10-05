@@ -28,6 +28,10 @@ const nextConfig: NextConfig = {
     root: path.join(__dirname),
   },
   outputFileTracingRoot: path.join(__dirname),
+  images: {
+    // Species photos come from Wikimedia Commons only (see lib/media/wikipedia.ts).
+    remotePatterns: [{ protocol: 'https', hostname: 'upload.wikimedia.org', pathname: '/wikipedia/commons/**' }],
+  },
   async headers() {
     return [
       { source: '/(.*)', headers: SECURITY_HEADERS },
