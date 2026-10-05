@@ -37,6 +37,8 @@ tests/                     Flat directory, mirrors lib/components by filename (n
                            and UI-review passes — read-only, write to findings/.
 findings/                  Dated research/critique reports produced by the above subagents.
 ROADMAP.md, PRD.md         Source of truth for status and requirements — check before planning work.
+bird-watching/             Separate app (Central Park birding) with its own package, CI and CLAUDE.md;
+                           excluded from this app's tsconfig/eslint/vitest. Don't import across.
 ```
 
 ## Tech stack
@@ -119,8 +121,8 @@ npx playwright test tests/e2e/home.spec.ts  # one e2e spec
   reached only through dev tooling (`eslint-config-next` → `@next/eslint-plugin-next` → `fast-glob`
   → `micromatch` → `braces`); it never ships to users. CI's audit was narrowed to `--omit=dev` because
   of it (Oct 2026). Check with `npm audit --audit-level=high` (full, dev included) and
-  `npm view braces version`. Once a patched version exists: update the lockfile, restore
-  `npm audit --audit-level=high` in `.github/workflows/ci.yml` and the CI description above, tell
+  `npm view braces version`. Once a patched version exists: update both lockfiles (root and `bird-watching/`), restore
+  `npm audit --audit-level=high` in `.github/workflows/ci.yml` and `bird-watching.yml` and the CI description above, tell
   the user it's resolved, and delete this bullet.
 - **E2E `baseURL` must be `http://localhost:3000`, not `127.0.0.1`** — Next blocks cross-origin dev
   resources, so a mismatched host silently prevents the client bundle from loading and tests then

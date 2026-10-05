@@ -9,9 +9,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    // .claude/worktrees holds agent worktrees: full repo copies whose tests aren't this checkout's.
-    // bird-watching/ is a separate app with its own vitest config and dependencies.
-    exclude: ['**/node_modules/**', '**/tests/e2e/**', '.claude/**', 'bird-watching/**'],
+    exclude: ['**/node_modules/**', '**/tests/e2e/**'],
     globals: true,
     setupFiles: ['./tests/setup.ts'],
   },

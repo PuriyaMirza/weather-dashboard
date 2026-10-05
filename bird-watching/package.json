@@ -1,0 +1,42 @@
+{
+  "name": "central-park-birding",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --port 3100",
+    "lint": "eslint .",
+    "qa": "npm run lint && npm run typecheck && npm run test && npm run build && CI=1 playwright test",
+    "start": "next start --port 3100",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "data:species": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/build-species.ts"
+  },
+  "dependencies": {
+    "next": "^16.3.4",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.61.1",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.2.10",
+    "jsdom": "^29.1.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}

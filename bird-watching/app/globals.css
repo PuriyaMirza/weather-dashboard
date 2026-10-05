@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+/*
+  Design tokens. The palette is the weather dashboard's Forest theme, copied rather than shared:
+  this app is a separate package, and a shared token file would couple two release cycles for the
+  sake of a dozen hex values.
+
+  Components reference semantic tokens only (bg-surface-container-high, text-on-surface…), never
+  raw colours. Colour is never the only signal: abundance bands and statuses always carry a word.
+*/
+
+:root {
+  --surface: #001711;
+  --surface-container-lowest: #00110d;
+  --surface-container-low: #042019;
+  --surface-container: #08241d;
+  --surface-container-high: #142f28;
+  --surface-container-highest: #1f3a32;
+  --primary: #ffffff;
+  --primary-fixed: #d1e8df;
+  --secondary: #a8cfbf;
+  --secondary-fixed: #c4ebda;
+  --secondary-container: #2d5043;
+  --on-surface: #cbe9de;
+  --on-surface-variant: #c2c8c4;
+  --on-secondary-container: #9bc1b1;
+  --on-secondary: #12362b;
+  --outline-variant: #424845;
+  --error: #ffb4ab;
+  --error-container: #4a1d19;
+  --on-error-container: #ffdad6;
+
+  /* Shadows are tinted with the surface hue rather than pure black, which reads muddy on green. */
+  --shadow-color: 0 17 13;
+
+  /* Abundance bands, common → rare. Each text/bg pair clears WCAG AA and every band is also
+     spelled out in words. */
+  --scale-1: #9fe3b5;
+  --scale-1-bg: #173a27;
+  --scale-2: #f3d98b;
+  --scale-2-bg: #3a3316;
+  --scale-3: #f7b98a;
+  --scale-3-bg: #43291a;
+  --scale-4: #ffb4ab;
+  --scale-4-bg: #4a1d19;
+  --scale-5: #e2b8ff;
+  --scale-5-bg: #34204a;
+
+  --header-height: 3.75rem;
+  --nav-height: 4rem;
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), ui-serif, Georgia, serif;
+  --color-surface: var(--surface);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-primary: var(--primary);
+  --color-primary-fixed: var(--primary-fixed);
+  --color-secondary: var(--secondary);
+  --color-secondary-fixed: var(--secondary-fixed);
+  --color-secondary-container: var(--secondary-container);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-on-secondary-container: var(--on-secondary-container);
+  --color-on-secondary: var(--on-secondary);
+  --color-outline-variant: var(--outline-variant);
+  --color-error: var(--error);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+  --color-scale-1: var(--scale-1);
+  --color-scale-1-bg: var(--scale-1-bg);
+  --color-scale-2: var(--scale-2);
+  --color-scale-2-bg: var(--scale-2-bg);
+  --color-scale-3: var(--scale-3);
+  --color-scale-3-bg: var(--scale-3-bg);
+  --color-scale-4: var(--scale-4);
+  --color-scale-4-bg: var(--scale-4-bg);
+  --color-scale-5: var(--scale-5);
+  --color-scale-5-bg: var(--scale-5-bg);
+  --shadow-card: 0 1px 3px rgb(var(--shadow-color) / 0.35);
+  --shadow-raised: 0 8px 24px rgb(var(--shadow-color) / 0.5);
+  --shadow-header: 0 4px 24px rgb(var(--shadow-color) / 0.6);
+}
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--on-surface);
+}
+
+/* Phone-first: a visible ring on keyboard focus everywhere, so no component can forget one. */
+:focus-visible {
+  outline: 2px solid var(--secondary-fixed);
+  outline-offset: 2px;
+}
+
+/* Type scale — mirrors the weather dashboard's Figma text styles. */
+@utility type-display-lg {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-size: 2.375rem;
+  line-height: 2.875rem;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+}
+
+@utility type-headline-md {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+}
+
+@utility type-headline-sm {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+}
+
+@utility type-label-lg {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+
+@utility type-label-md {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+@utility type-label-sm {
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+@utility type-body-sm {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  font-weight: 400;
+}
+
+@utility type-body-md {
+  font-size: 0.9375rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
