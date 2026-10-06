@@ -19,5 +19,8 @@ npm ci
 npm run dev      # http://localhost:3100
 ```
 
+Species photos are the lead images of each bird's English Wikipedia article, from Wikimedia
+Commons, shown with the photographer and licence credited on every species page.
+
 Taxonomy and the park species list come from [eBird](https://ebird.org) (Cornell Lab of
 Ornithology). See [ROADMAP.md](./ROADMAP.md) for what's next.

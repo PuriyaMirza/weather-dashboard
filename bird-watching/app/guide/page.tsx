@@ -2,11 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FieldGuide } from '@/components/guide/field-guide';
 import { getAllSpecies, getFamilies, getSpeciesSource } from '@/lib/birds/species';
+import { getSpeciesPhotos } from '@/lib/media/wikipedia';
 
 export const metadata: Metadata = { title: 'Field guide' };
 
-export default function GuidePage() {
+export default async function GuidePage() {
   const species = getAllSpecies();
+  const photos = await getSpeciesPhotos(species);
+  const thumbs = Object.fromEntries(Object.entries(photos).map(([code, photo]) => [code, photo.src]));
   const source = getSpeciesSource();
   return (
     <div className="flex flex-col gap-5">
@@ -23,6 +26,7 @@ export default function GuidePage() {
         species={species}
         families={getFamilies()}
         hasUndescribedSpecies={species.some((s) => !s.startHere)}
+        thumbs={thumbs}
       />
     </div>
   );

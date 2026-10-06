@@ -23,6 +23,7 @@ lib/birds/           schema.ts (Zod, the data contract), species.ts (server-only
                      labels.ts (size classes, colour/habitat labels), glossary.ts
 lib/ebird/          schemas.ts (eBird response shapes), sightings.ts (geo/recent + notable → ParkSighting)
 lib/forecast/       open-meteo.ts (provider), birding-outlook.ts (morning conditions + migration rule of thumb)
+lib/media/          wikipedia.ts (species lead photo + Commons credit; server-only, cached 1 week)
 lib/api/            http.ts (jsonError, CACHE_CONTROL, fetchJson → UpstreamError), request-timeout.ts
 lib/log/             schema.ts (Outing/Observation/Backup), repository.ts (SightingsRepository + memory impl),
                      indexeddb-repository.ts, ebird-csv.ts (Record Format Extended), life-list.ts, backup.ts
@@ -48,6 +49,8 @@ store/               In-memory Zustand store for guide filters
 - External calls only in route handlers; the browser sees `ParkSighting` / `BirdingForecast`, never
   eBird or Open-Meteo shapes. `EBIRD_API_KEY` is read per request and never reaches the client;
   missing key → 503 with a readable message. e2e stubs `/api/*` with `page.route`.
+- Photos only with credit: `getSpeciesPhoto` returns null for non-Commons files, missing or non-free
+  licences, or any fetch failure — never show an uncredited image. Offline builds render no photos.
 - eBird CSV: 19 columns, no header. Breeding codes travel in species comments (no column for them).
 
 ## Commands
