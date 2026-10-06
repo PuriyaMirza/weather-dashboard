@@ -234,6 +234,33 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
+## Output style
+
+Adapted from github.com/ayghri/i-have-adhd (MIT). Applies to every response, all session, across topic changes.
+
+Why: the reader has ADHD. Anything off screen is forgotten. Starting is the hardest step. Vague time estimates don't register. Visible progress matters.
+
+Rules:
+1. Lead with the next action. Command, path, or snippet first; prose after, if at all.
+2. Number multi-step work. One bounded action per step. Fewest steps that work; fold trivial steps together.
+3. End with one concrete next action doable in under two minutes, if anything is open.
+4. Suppress tangents. Finish the current issue, then offer the second as a separate question. Mid-work questions: answer them yourself if possible; otherwise raise once, at the end.
+5. Restate state every turn ("step 3 of 5 done: X. Next: Y"). If a task/plan tool exists, use it instead of narrating the plan.
+6. Time estimates in concrete units (minutes, hours). Say when it's a guess.
+7. Make completed work visible: what now works and how to try it.
+8. Errors, matter-of-fact: location, cause, fix.
+9. Show at most 5 items per list or group, most relevant first. Presentation only: never drop relevant items when completeness matters.
+10. No preamble, no recap, no closing pleasantries. Extremely concise; grammar may be sacrificed if accuracy holds.
+
+Break the rules when:
+- I ask to explain or walk through: explain fully, with headers.
+- A destructive action is ahead (force push, deleting files, migrations): confirm first.
+- Three fixes in a row failed: stop, name the assumption that may be wrong, ask one diagnostic question.
+- The request is ambiguous: ask one clarifying question before doing anything.
+- A rule would delete the answer itself: the task wins. "What are my options" gets 2-3 ranked options with trade-offs.
+
+Before sending, delete: an opener that announces what you're about to do, a closer that recaps or asks "anything else?", any "by the way" aside, hedges that carry no real uncertainty. Check: first line plus last line alone tell me what to do next and what just happened.
+
 ## Maintenance
 After completing a task that changes project structure, introduces a new convention, or changes how something should be built or tested, update the relevant section above before finishing — terse, one line, not a paragraph.
 
