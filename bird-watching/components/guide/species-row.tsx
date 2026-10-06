@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Icon } from '@/components/ui/icon';
 import { SIZE_LABEL, sizeClassOf } from '@/lib/birds/labels';
 import type { Species } from '@/lib/birds/schema';
+import { SpeciesThumb } from './species-photo';
 
 interface SpeciesRowProps {
   species: Species;
@@ -9,10 +10,12 @@ interface SpeciesRowProps {
   showFamily?: boolean;
   /** Tag birds that have a guide write-up — only useful when some don't. */
   markWriteUp?: boolean;
+  /** Photo thumbnail URL; rows without one keep an empty tile so names stay aligned. */
+  thumbSrc?: string;
 }
 
 /** One tappable line in the guide: common name, scientific name, and size in everyday terms. */
-export function SpeciesRow({ species, showFamily = false, markWriteUp = false }: SpeciesRowProps) {
+export function SpeciesRow({ species, showFamily = false, markWriteUp = false, thumbSrc }: SpeciesRowProps) {
   const size = sizeClassOf(species.lengthIn);
   const details = [showFamily ? species.family : null, size ? SIZE_LABEL[size] : null].filter(Boolean).join(' · ');
   return (
@@ -20,6 +23,7 @@ export function SpeciesRow({ species, showFamily = false, markWriteUp = false }:
       href={`/guide/${species.code}`}
       className="flex min-h-14 items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-surface-container-high"
     >
+      <SpeciesThumb src={thumbSrc} />
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-baseline gap-x-2">
           <span className="type-label-lg text-primary">{species.commonName}</span>

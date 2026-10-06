@@ -1,5 +1,5 @@
 import { sizeClassOf, type SizeClass } from './labels';
-import type { FieldColor, Habitat, Species } from './schema';
+import type { FieldColor, Habitat, Species, SpeciesOption } from './schema';
 
 export interface GuideFilters {
   query: string;
@@ -29,7 +29,7 @@ export function normalize(text: string): string {
  * How well a species matches a typed query; lower is better, null is no match. A four-letter
  * banding code (AMRO) is how experienced birders jot notes, so an exact code match ranks first.
  */
-export function matchRank(species: Species, rawQuery: string): number | null {
+export function matchRank(species: SpeciesOption, rawQuery: string): number | null {
   const query = normalize(rawQuery);
   if (!query) return 0;
   const name = normalize(species.commonName);
@@ -68,4 +68,15 @@ export function filterSpecies(species: Species[], filters: GuideFilters): Specie
     if (rank !== null) ranked.push({ species: s, rank });
   }
   return ranked.sort((a, b) => a.rank - b.rank || a.species.taxonOrder - b.species.taxonOrder).map((r) => r.species);
+}
+
+/** Top matches for a quick-add box: best match first, taxonomic order within a rank. */
+export function quickMatches<T extends SpeciesOption>(options: T[], query: string, limit = 6): T[] {
+  if (!normalize(query)) return [];
+  return options
+    .map((option) => ({ option, rank: matchRank(option, query) }))
+    .filter((r): r is { option: T; rank: number } => r.rank !== null)
+    .sort((a, b) => a.rank - b.rank || a.option.taxonOrder - b.option.taxonOrder)
+    .slice(0, limit)
+    .map((r) => r.option);
 }

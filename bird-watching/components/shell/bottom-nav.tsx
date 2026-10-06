@@ -18,9 +18,10 @@ const NAV_ITEMS: NavItem[] = [
     href: '/guide',
     label: 'Guide',
     icon: 'search',
-    matches: (p) => p.startsWith('/guide') && !p.startsWith('/guide/glossary'),
+    matches: (p) => p.startsWith('/guide'),
   },
-  { href: '/guide/glossary', label: 'Glossary', icon: 'info', matches: (p) => p.startsWith('/guide/glossary') },
+  { href: '/sightings', label: 'Sightings', icon: 'visibility', matches: (p) => p.startsWith('/sightings') },
+  { href: '/log', label: 'Log', icon: 'bookmark', matches: (p) => p.startsWith('/log') },
 ];
 
 /** Phone-first primary navigation, fixed to the bottom of the viewport. */

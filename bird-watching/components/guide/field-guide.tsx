@@ -21,6 +21,8 @@ interface FieldGuideProps {
   families: string[];
   /** True when some species have no guide write-up, so colour/size/habitat filters can't see them. */
   hasUndescribedSpecies: boolean;
+  /** Thumbnail URL by species code, for the species that have a photo. */
+  thumbs: Record<string, string>;
 }
 
 function toggle<T>(list: T[], value: T): T[] {
@@ -38,7 +40,7 @@ function groupByFamily(species: Species[]): [string, Species[]][] {
  * Search and filter the park's birds. Filters mirror how a beginner remembers a bird —
  * "small, yellow and black, in the bushes" — rather than how a taxonomist files it.
  */
-export function FieldGuide({ species, families, hasUndescribedSpecies }: FieldGuideProps) {
+export function FieldGuide({ species, families, hasUndescribedSpecies, thumbs }: FieldGuideProps) {
   const filters = useGuideFiltersStore();
   const { setFilters, reset } = filters;
   const ids = { search: useId(), family: useId() };
@@ -184,7 +186,7 @@ export function FieldGuide({ species, families, hasUndescribedSpecies }: FieldGu
         <ul className="flex flex-col">
           {results.map((s) => (
             <li key={s.code}>
-              <SpeciesRow species={s} showFamily markWriteUp={hasUndescribedSpecies} />
+              <SpeciesRow species={s} showFamily markWriteUp={hasUndescribedSpecies} thumbSrc={thumbs[s.code]} />
             </li>
           ))}
         </ul>
@@ -196,7 +198,7 @@ export function FieldGuide({ species, families, hasUndescribedSpecies }: FieldGu
               <ul className="flex flex-col">
                 {members.map((s) => (
                   <li key={s.code}>
-                    <SpeciesRow species={s} markWriteUp={hasUndescribedSpecies} />
+                    <SpeciesRow species={s} markWriteUp={hasUndescribedSpecies} thumbSrc={thumbs[s.code]} />
                   </li>
                 ))}
               </ul>
