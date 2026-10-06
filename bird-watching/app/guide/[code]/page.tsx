@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { SpeciesDetail } from '@/components/guide/species-detail';
 import { getAllSpecies, getSpecies } from '@/lib/birds/species';
+import { getSpeciesPhoto } from '@/lib/media/wikipedia';
 
 interface SpeciesPageProps {
   params: Promise<{ code: string }>;
@@ -24,5 +25,6 @@ export default async function SpeciesPage({ params }: SpeciesPageProps) {
   const species = getSpecies((await params).code);
   if (!species) notFound();
   const linkableCodes = new Set(getAllSpecies().map((s) => s.code));
-  return <SpeciesDetail species={species} linkableCodes={linkableCodes} />;
+  const photo = await getSpeciesPhoto(species.scientificName);
+  return <SpeciesDetail species={species} linkableCodes={linkableCodes} photo={photo} />;
 }

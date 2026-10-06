@@ -65,6 +65,8 @@ export function OutingDetails({ outing, onChange }: OutingDetailsProps) {
           Where in the park
         </label>
         <select id={ids.area} value={outing.area} onChange={(e) => onChange({ area: e.target.value })} className={field}>
+          {/* An outing saved under an older area name keeps it rather than silently changing. */}
+          {!(PARK_AREAS as readonly string[]).includes(outing.area) && <option>{outing.area}</option>}
           {PARK_AREAS.map((area) => (
             <option key={area}>{area}</option>
           ))}
