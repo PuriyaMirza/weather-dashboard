@@ -1,0 +1,123 @@
+name: Nightly
+
+# Catches what PR CI structurally can't: things that break without anyone pushing code.
+# - Upstream drift: PR tests run on recorded fixtures, so a renamed Open-Meteo/eBird/Wikipedia
+#   field would pass every PR and only fail in production. tests/live-upstream.test.ts in each app
+#   calls the real APIs (skipped everywhere except here).
+# - New advisories: published against packages we already ship, on their own schedule.
+# - The production-build smoke + accessibility pass, against main as it stands today.
+# GitHub emails whoever last edited the schedule when a scheduled run fails.
+on:
+  schedule:
+    - cron: '17 9 * * *' # 09:17 UTC daily (early morning in New York), off the busy top of the hour
+  workflow_dispatch:
+  # Validate edits to this workflow or the live tests on the PR that makes them.
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/nightly.yml'
+      - 'tests/live-upstream.test.ts'
+      - 'bird-watching/tests/live-upstream.test.ts'
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  weather:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Same scope as PR CI (--omit=dev, see ci.yml); here it catches advisories published since
+      # the last PR touched the lockfile.
+      - name: Security audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Live upstream contract
+        run: npx vitest run tests/live-upstream.test.ts
+        env:
+          LIVE_UPSTREAM: '1'
+
+      - name: Build
+        run: npm run build
+
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: QA smoke and accessibility checks
+        run: npx playwright test tests/e2e/qa-smoke.spec.ts tests/e2e/accessibility.spec.ts
+        env:
+          CI: '1'
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-weather-report
+          path: playwright-report/
+          retention-days: 7
+
+  bird-watching:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bird-watching
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: bird-watching/package-lock.json
+
+      - run: npm ci
+
+      - name: Security audit
+        run: npm audit --omit=dev --audit-level=high
+
+      # The eBird check skips itself when the secret isn't set (forks, or before it's added).
+      - name: Live upstream contract
+        run: npx vitest run tests/live-upstream.test.ts
+        env:
+          LIVE_UPSTREAM: '1'
+          EBIRD_API_KEY: ${{ secrets.EBIRD_API_KEY }}
+
+      - name: Build
+        run: npm run build
+
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-bird-${{ runner.os }}-${{ hashFiles('bird-watching/package-lock.json') }}
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Accessibility checks
+        run: npx playwright test tests/e2e/accessibility.spec.ts
+        env:
+          CI: '1'
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-bird-watching-report
+          path: bird-watching/playwright-report/
+          retention-days: 7
