@@ -29,8 +29,13 @@ const nextConfig: NextConfig = {
   },
   outputFileTracingRoot: path.join(__dirname),
   images: {
-    // Species photos come from Wikimedia Commons only (see lib/media/wikipedia.ts).
-    remotePatterns: [{ protocol: 'https', hostname: 'upload.wikimedia.org', pathname: '/wikipedia/commons/**' }],
+    // Species photos come from Wikimedia Commons only (see lib/media/wikipedia.ts). Commons
+    // serves originals from upload.wikimedia.org but hands out resized renditions on
+    // thumb.wikimedia.org, so both hosts are allowed — for Commons paths only.
+    remotePatterns: [
+      { protocol: 'https', hostname: 'upload.wikimedia.org', pathname: '/wikipedia/commons/**' },
+      { protocol: 'https', hostname: 'thumb.wikimedia.org', pathname: '/wikipedia/commons/**' },
+    ],
   },
   async headers() {
     return [

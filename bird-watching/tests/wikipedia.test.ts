@@ -121,3 +121,12 @@ describe('getSpeciesPhotos', () => {
     expect(Object.keys(photos)).toEqual(['amerob']);
   });
 });
+
+describe('next.config image hosts', () => {
+  it('allows every host Commons serves photo renditions from', async () => {
+    const { default: config } = await import('@/next.config');
+    const hosts = (config.images?.remotePatterns ?? []).map((p) => (p instanceof URL ? p.hostname : p.hostname));
+    // Commons returns thumburl on thumb.wikimedia.org (seen live) and originals on upload.wikimedia.org.
+    expect(hosts).toEqual(expect.arrayContaining(['upload.wikimedia.org', 'thumb.wikimedia.org']));
+  });
+});
