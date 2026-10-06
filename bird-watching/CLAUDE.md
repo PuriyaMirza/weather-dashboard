@@ -61,6 +61,9 @@ npm run qa           # lint + typecheck + test + build + playwright
 PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test   # in the cloud sandbox
 ```
 
+`tests/live-upstream.test.ts` hits the real APIs; it only runs with `LIVE_UPSTREAM=1` (nightly
+workflow, eBird only if the `EBIRD_API_KEY` repo secret is set).
+
 Playwright: `mobile-chrome` (Pixel 7) runs everything; `chromium` (desktop) runs `accessibility.spec.ts`
 only. Add every new page/state to `tests/e2e/accessibility.spec.ts`.
 

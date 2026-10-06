@@ -104,7 +104,9 @@ Node >= 22 is required. CI (`.github/workflows/ci.yml`) has two jobs on every PR
 `build-and-test` (audit → lint → typecheck → test → build → e2e) and `qa` (build → `qa-smoke.spec.ts`
 + `accessibility.spec.ts` against the production build). `npm audit --omit=dev --audit-level=high`
 blocks on high/critical advisories in shipped (runtime) dependencies only — dev tooling is checked
-by hand, see the open advisory below.
+by hand, see the open advisory below. `.github/workflows/nightly.yml` runs daily on `main` for both
+apps: prod audit, `tests/live-upstream.test.ts` (real Open-Meteo/Wikipedia/eBird calls, skipped
+unless `LIVE_UPSTREAM=1`), and the smoke + accessibility pass.
 
 Running a single test:
 
