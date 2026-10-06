@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GET as getForecast } from '@/app/api/forecast/route';
+import { GET as getRareHighlight } from '@/app/api/rare-highlight/route';
 import { GET as getSightings } from '@/app/api/sightings/route';
 import { forecastResponse } from './forecast-fixture';
 
@@ -48,6 +49,32 @@ describe('GET /api/sightings', () => {
     const response = await getSightings(request('/api/sightings', '10.0.0.4'));
     expect(response.status).toBe(502);
     expect((await response.json()).error).toMatch(/eBird is having trouble/);
+  });
+});
+
+describe('GET /api/rare-highlight', () => {
+  it('says plainly when no eBird key is configured', async () => {
+    vi.stubEnv('EBIRD_API_KEY', '');
+    const response = await getRareHighlight(request('/api/rare-highlight', '10.0.1.1'));
+    expect(response.status).toBe(503);
+    expect((await response.json()).error).toMatch(/no eBird API key/);
+  });
+
+  it('returns no highlight, not an error, when nothing rare was reported', async () => {
+    vi.stubEnv('EBIRD_API_KEY', 'test-key');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('[]', { status: 200 })));
+    const response = await getRareHighlight(request('/api/rare-highlight', '10.0.1.2'));
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toContain('s-maxage=900');
+    expect((await response.json()).highlight).toBeNull();
+  });
+
+  it('turns an eBird outage into a readable 502', async () => {
+    vi.stubEnv('EBIRD_API_KEY', 'test-key');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('oops', { status: 500 })));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const response = await getRareHighlight(request('/api/rare-highlight', '10.0.1.3'));
+    expect(response.status).toBe(502);
   });
 });
 

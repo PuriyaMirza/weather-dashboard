@@ -63,8 +63,24 @@ test('no serious axe violations on Today and Sightings with live data', async ({
       },
     }),
   );
+  await page.route('**/api/rare-highlight', (route) =>
+    route.fulfill({
+      json: {
+        fetchedAt: '',
+        highlight: {
+          sighting: { speciesCode: 'conwar', commonName: 'Connecticut Warbler', scientificName: 'Oporornis agilis', area: 'The Ramble', observedAt: `${today} 07:45`, count: 1, notable: true, unconfirmed: true, checklistUrl: 'https://ebird.org/checklist/S1' },
+          photo: { src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/W.jpg/800px-W.jpg', width: 800, height: 600, artist: 'A. Photographer', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0', sourceUrl: 'https://commons.wikimedia.org/wiki/File:W.jpg', articleUrl: 'https://en.wikipedia.org/wiki/W' },
+        },
+      },
+    }),
+  );
+  // A 1×1 PNG, so the hero's image request never reaches Wikimedia.
+  await page.route('**/_next/image?*', (route) =>
+    route.fulfill({ contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64') }),
+  );
   await page.goto('/');
   await page.getByText('Fallout watch').waitFor();
+  await page.getByRole('region', { name: 'Connecticut Warbler' }).waitFor();
   await expectNoSeriousViolations(page);
   await page.goto('/sightings');
   await page.getByText('Connecticut Warbler', { exact: true }).waitFor();

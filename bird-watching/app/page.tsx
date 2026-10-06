@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { MorningForecast } from '@/components/live/morning-forecast';
+import { RareBirdHero } from '@/components/live/rare-bird-hero';
 import { SightingsList } from '@/components/live/sightings-list';
 import { SpeciesRow } from '@/components/guide/species-row';
 import { Icon } from '@/components/ui/icon';
@@ -28,6 +29,8 @@ export default async function TodayPage() {
           everything else.
         </p>
       </header>
+
+      <RareBirdHero guideCodes={getAllSpecies().map((s) => s.code)} />
 
       <section aria-labelledby="forecast" className="flex flex-col gap-2">
         <SectionHeader id="forecast" title="Birding forecast" />
