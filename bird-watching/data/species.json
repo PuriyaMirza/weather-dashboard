@@ -1,0 +1,2289 @@
+{
+  "source": "seed",
+  "generatedAt": "2026-10-05T14:26:49.198Z",
+  "species": [
+    {
+      "code": "cangoo",
+      "commonName": "Canada Goose",
+      "scientificName": "Branta canadensis",
+      "bandingCode": "CANG",
+      "family": "Ducks, Geese, and Waterfowl",
+      "familyScientific": "Anatidae",
+      "taxonOrder": 1,
+      "startHere": true,
+      "lengthIn": [
+        30,
+        43
+      ],
+      "colors": [
+        "brown",
+        "black",
+        "white"
+      ],
+      "habitats": [
+        "water",
+        "lawns"
+      ],
+      "summary": "The big brown goose with a black neck and white chinstrap — the park's most obvious waterbird.",
+      "idTips": [
+        "Black head and long black neck with a white 'chinstrap' running under the chin.",
+        "Gray-brown body, paler chest, white under the tail.",
+        "Flies in V-shaped or wavering lines, honking."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Cackling Goose",
+          "code": "cacgoo1",
+          "howToTell": "Rare in the park. Mallard-sized with a stubby bill and short neck; Canada Goose is far larger with a long, sloping bill."
+        }
+      ],
+      "whereInPark": "The Reservoir, Harlem Meer, the Lake, and the open lawns where they graze.",
+      "whenInPark": "Year-round; numbers rise in fall and winter when migrants join the local birds.",
+      "behavior": "Grazes on lawns in family groups. Hisses and lowers its head when approached — give goslings space in spring.",
+      "voice": "A deep, two-part honk (ha-ronk), often from many birds at once."
+    },
+    {
+      "code": "wooduc",
+      "commonName": "Wood Duck",
+      "scientificName": "Aix sponsa",
+      "bandingCode": "WODU",
+      "family": "Ducks, Geese, and Waterfowl",
+      "familyScientific": "Anatidae",
+      "taxonOrder": 2,
+      "startHere": true,
+      "lengthIn": [
+        18.5,
+        21.3
+      ],
+      "colors": [
+        "green",
+        "white",
+        "brown",
+        "red"
+      ],
+      "habitats": [
+        "water",
+        "woodland"
+      ],
+      "summary": "A small, crested duck; the male is arguably the most ornate bird in the park.",
+      "idTips": [
+        "Male: glossy green crested head with crisp white face stripes, red eye, chestnut breast.",
+        "Female: gray-brown with a white teardrop-shaped patch around the eye and a subtle crest.",
+        "Often sits under overhanging branches along the shore rather than out on open water."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Mandarin Duck",
+          "code": "manduc",
+          "howToTell": "An escaped Asian species (one became famous at the Pond in 2018). Male has orange 'sails' on the back and orange whisker plumes; female has a thin white line behind the eye instead of a teardrop."
+        }
+      ],
+      "whereInPark": "Quiet coves of the Lake along the Ramble shore, the Pool in the North Woods, and Harlem Meer.",
+      "whenInPark": "Small numbers most of the year; easiest to find in spring and fall.",
+      "behavior": "Shy. Swims close to shoreline cover and flushes with a squeal. Perches on branches — unusual for a duck.",
+      "voice": "Female gives a rising, squealing oo-eek when flushed; male a thin, high whistle."
+    },
+    {
+      "code": "norsho",
+      "commonName": "Northern Shoveler",
+      "scientificName": "Spatula clypeata",
+      "bandingCode": "NSHO",
+      "family": "Ducks, Geese, and Waterfowl",
+      "familyScientific": "Anatidae",
+      "taxonOrder": 3,
+      "startHere": true,
+      "lengthIn": [
+        17.3,
+        20.1
+      ],
+      "colors": [
+        "green",
+        "white",
+        "brown",
+        "orange"
+      ],
+      "habitats": [
+        "water"
+      ],
+      "summary": "A duck with an oversized, spoon-shaped bill that feeds by spinning in circles.",
+      "idTips": [
+        "Huge, broad, spatula-shaped bill — longer than the head — is the giveaway at any distance.",
+        "Male: green head, white chest, rusty-chestnut sides, yellow eye.",
+        "Female: mottled brown like a female Mallard, but with that enormous bill."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Mallard",
+          "code": "mallar3",
+          "howToTell": "Male Mallard also has a green head, but a chestnut breast (not white) and a normal-sized yellow bill. Females differ mainly in bill shape."
+        }
+      ],
+      "whereInPark": "The Reservoir — rafts of shovelers gather there through the winter.",
+      "whenInPark": "October to April, peaking in late fall and winter. Rare in summer.",
+      "behavior": "Groups swim in tight circles with bills skimming the surface, stirring up food and filtering it.",
+      "voice": "Usually quiet; males give a soft, hollow took-took."
+    },
+    {
+      "code": "mallar3",
+      "commonName": "Mallard",
+      "scientificName": "Anas platyrhynchos",
+      "bandingCode": "MALL",
+      "family": "Ducks, Geese, and Waterfowl",
+      "familyScientific": "Anatidae",
+      "taxonOrder": 4,
+      "startHere": true,
+      "lengthIn": [
+        19.7,
+        25.6
+      ],
+      "colors": [
+        "green",
+        "brown",
+        "gray"
+      ],
+      "habitats": [
+        "water",
+        "lawns"
+      ],
+      "summary": "The classic park duck — the starting point for learning every other duck.",
+      "idTips": [
+        "Male: glossy green head, thin white neck ring, chestnut breast, gray body, yellow bill.",
+        "Female: mottled brown with an orange-and-dark bill.",
+        "Both show a blue wing patch (the speculum) edged in white."
+      ],
+      "lookAlikes": [
+        {
+          "name": "American Black Duck",
+          "code": "ambduc",
+          "howToTell": "Darker, chocolate-brown all over with a paler face; wing patch is purple-blue without white edges. Hybrids with Mallards are common."
+        },
+        {
+          "name": "Northern Shoveler",
+          "code": "norsho",
+          "howToTell": "Look at the bill: a shoveler's is huge and spoon-shaped."
+        }
+      ],
+      "whereInPark": "Every water body — the Pond, the Lake, Turtle Pond, Harlem Meer, and the Reservoir.",
+      "whenInPark": "Year-round.",
+      "behavior": "Dabbles — tips tail-up to feed rather than diving. Readily approaches people (please don't feed bread).",
+      "voice": "The female gives the classic loud quack; males make a softer, raspy note."
+    },
+    {
+      "code": "buffle",
+      "commonName": "Bufflehead",
+      "scientificName": "Bucephala albeola",
+      "bandingCode": "BUFF",
+      "family": "Ducks, Geese, and Waterfowl",
+      "familyScientific": "Anatidae",
+      "taxonOrder": 5,
+      "startHere": true,
+      "lengthIn": [
+        12.6,
+        15.8
+      ],
+      "colors": [
+        "black",
+        "white"
+      ],
+      "habitats": [
+        "water"
+      ],
+      "summary": "A tiny, round diving duck with a big white head patch.",
+      "idTips": [
+        "Male: mostly white body with a black back; dark head with a large white wedge behind the eye.",
+        "Female: gray-brown with a neat white oval on the cheek.",
+        "Dives constantly and pops back up like a cork."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Hooded Merganser",
+          "code": "hoomer",
+          "howToTell": "Male also has a white head patch, but it's fan-shaped and outlined in black, with rusty sides and a thin bill."
+        }
+      ],
+      "whereInPark": "The Reservoir; occasionally Harlem Meer.",
+      "whenInPark": "November to April.",
+      "behavior": "Small groups dive in unison; one bird often stays up as a lookout.",
+      "voice": "Mostly silent."
+    },
+    {
+      "code": "rudduc",
+      "commonName": "Ruddy Duck",
+      "scientificName": "Oxyura jamaicensis",
+      "bandingCode": "RUDU",
+      "family": "Ducks, Geese, and Waterfowl",
+      "familyScientific": "Anatidae",
+      "taxonOrder": 6,
+      "startHere": true,
+      "lengthIn": [
+        13.8,
+        16.9
+      ],
+      "colors": [
+        "brown",
+        "white",
+        "black"
+      ],
+      "habitats": [
+        "water"
+      ],
+      "summary": "A compact, stiff-tailed diving duck that often naps with its tail cocked up.",
+      "idTips": [
+        "Winter male: gray-brown body, dark cap, bright white cheek.",
+        "Female: similar, but with a dark line across the pale cheek.",
+        "Stiff, spiky tail often held upright."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Bufflehead",
+          "code": "buffle",
+          "howToTell": "Bufflehead's white is behind the eye on a dark head; Ruddy's white fills the whole cheek below a dark cap."
+        }
+      ],
+      "whereInPark": "The Reservoir, often in large rafts.",
+      "whenInPark": "November to April.",
+      "behavior": "Spends much of the day asleep on the water; dives rather than flies to escape.",
+      "voice": "Silent in winter."
+    },
+    {
+      "code": "rocpig",
+      "commonName": "Rock Pigeon",
+      "scientificName": "Columba livia",
+      "bandingCode": "ROPI",
+      "family": "Pigeons and Doves",
+      "familyScientific": "Columbidae",
+      "taxonOrder": 7,
+      "startHere": true,
+      "lengthIn": [
+        11.8,
+        14.2
+      ],
+      "colors": [
+        "gray",
+        "black",
+        "white"
+      ],
+      "habitats": [
+        "lawns",
+        "overhead"
+      ],
+      "summary": "The city pigeon — worth a second look for its surprising variety.",
+      "idTips": [
+        "Classic bird: blue-gray with two black bars on each wing and an iridescent green-purple neck.",
+        "White rump shows in flight on the classic pattern.",
+        "Colors vary widely — checkered, white, reddish-brown — all the same species."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Mourning Dove",
+          "code": "moudov",
+          "howToTell": "Slimmer and tan-brown, with a long pointed tail and black spots on the wings."
+        }
+      ],
+      "whereInPark": "Plazas, lawns, and around park entrances.",
+      "whenInPark": "Year-round.",
+      "behavior": "Feeds on the ground in flocks; males puff up and turn in circles while cooing at females.",
+      "voice": "Soft, throaty coos."
+    },
+    {
+      "code": "moudov",
+      "commonName": "Mourning Dove",
+      "scientificName": "Zenaida macroura",
+      "bandingCode": "MODO",
+      "family": "Pigeons and Doves",
+      "familyScientific": "Columbidae",
+      "taxonOrder": 8,
+      "startHere": true,
+      "lengthIn": [
+        9.1,
+        13.4
+      ],
+      "colors": [
+        "brown",
+        "gray",
+        "black"
+      ],
+      "habitats": [
+        "lawns",
+        "thickets",
+        "feeders"
+      ],
+      "summary": "A slim, soft-brown dove with a long pointed tail.",
+      "idTips": [
+        "Plain tan-buff body, small round head, black spots on the wing.",
+        "Long, pointed tail with white edges shows in flight.",
+        "Wings make a whistling sound on takeoff."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Rock Pigeon",
+          "code": "rocpig",
+          "howToTell": "Chunkier and gray, with a short, square tail."
+        }
+      ],
+      "whereInPark": "Lawns, path edges, and the winter feeders in the Ramble.",
+      "whenInPark": "Year-round.",
+      "behavior": "Picks seeds from the ground; often sits on branches in pairs.",
+      "voice": "A mournful coo-OOO-oo-oo-oo, often mistaken for an owl."
+    },
+    {
+      "code": "ribgul",
+      "commonName": "Ring-billed Gull",
+      "scientificName": "Larus delawarensis",
+      "bandingCode": "RBGU",
+      "family": "Gulls, Terns, and Skimmers",
+      "familyScientific": "Laridae",
+      "taxonOrder": 9,
+      "startHere": true,
+      "lengthIn": [
+        16.9,
+        21.3
+      ],
+      "colors": [
+        "white",
+        "gray",
+        "yellow",
+        "black"
+      ],
+      "habitats": [
+        "water",
+        "lawns",
+        "overhead"
+      ],
+      "summary": "The medium-sized gull of lawns and the Reservoir — learn it first, then compare other gulls to it.",
+      "idTips": [
+        "Adult: pale gray back, white head and body, yellow bill with a crisp black ring near the tip.",
+        "Yellowish legs.",
+        "Young birds are mottled brown-gray and take about three years to look like adults."
+      ],
+      "lookAlikes": [
+        {
+          "name": "American Herring Gull",
+          "code": "amhgul1",
+          "howToTell": "Noticeably bigger, with pink legs and a red spot (not a black ring) on the yellow bill."
+        }
+      ],
+      "whereInPark": "The Reservoir, the Great Lawn, Sheep Meadow, and any open water.",
+      "whenInPark": "Most of the year; most numerous fall through spring.",
+      "behavior": "Loafs on lawns and open water; scavenges boldly around people.",
+      "voice": "High-pitched mewing and laughing calls."
+    },
+    {
+      "code": "doccor",
+      "commonName": "Double-crested Cormorant",
+      "scientificName": "Nannopterum auritum",
+      "bandingCode": "DCCO",
+      "family": "Cormorants and Shags",
+      "familyScientific": "Phalacrocoracidae",
+      "taxonOrder": 10,
+      "startHere": true,
+      "lengthIn": [
+        27.6,
+        35.4
+      ],
+      "colors": [
+        "black",
+        "orange"
+      ],
+      "habitats": [
+        "water",
+        "overhead"
+      ],
+      "summary": "A large black waterbird that swims low and dries its wings spread wide.",
+      "idTips": [
+        "All dark, with a long neck and hooked bill; orange-yellow skin at the base of the bill.",
+        "Swims with the body low in the water and the bill angled slightly upward.",
+        "Perches with wings held open to dry."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Great Cormorant",
+          "code": "grecor",
+          "howToTell": "Rare in the park, mostly in winter. Bigger and bulkier with a white throat patch; young birds have a white belly."
+        }
+      ],
+      "whereInPark": "The Reservoir, the Lake, and Harlem Meer; look for birds drying on rocks and snags.",
+      "whenInPark": "Mostly April to November.",
+      "behavior": "Dives from the surface and stays under for long stretches, popping up yards away.",
+      "voice": "Silent away from nesting colonies."
+    },
+    {
+      "code": "grbher3",
+      "commonName": "Great Blue Heron",
+      "scientificName": "Ardea herodias",
+      "bandingCode": "GBHE",
+      "family": "Herons, Egrets, and Bitterns",
+      "familyScientific": "Ardeidae",
+      "taxonOrder": 11,
+      "startHere": true,
+      "lengthIn": [
+        38,
+        54
+      ],
+      "colors": [
+        "gray",
+        "blue",
+        "white",
+        "black"
+      ],
+      "habitats": [
+        "water",
+        "overhead"
+      ],
+      "summary": "The park's tallest bird — a big blue-gray heron.",
+      "idTips": [
+        "Very tall and blue-gray, with a long, dagger-like bill.",
+        "White face with a black stripe over the eye that ends in plumes.",
+        "In flight: slow, deep wingbeats with the neck folded back."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Great Egret",
+          "code": "greegr",
+          "howToTell": "All white rather than blue-gray."
+        }
+      ],
+      "whereInPark": "Turtle Pond, the Lake, the Pool, and Harlem Meer.",
+      "whenInPark": "Seen in every season; most often in spring and fall.",
+      "behavior": "Hunts by standing still for long periods; flies off with a deep croak if disturbed.",
+      "voice": "A deep, harsh, prehistoric-sounding croak."
+    },
+    {
+      "code": "greegr",
+      "commonName": "Great Egret",
+      "scientificName": "Ardea alba",
+      "bandingCode": "GREG",
+      "family": "Herons, Egrets, and Bitterns",
+      "familyScientific": "Ardeidae",
+      "taxonOrder": 12,
+      "startHere": true,
+      "lengthIn": [
+        37,
+        41
+      ],
+      "colors": [
+        "white",
+        "yellow",
+        "black"
+      ],
+      "habitats": [
+        "water"
+      ],
+      "summary": "A tall, all-white heron with a yellow bill and black legs.",
+      "idTips": [
+        "All white, very tall and slender, with an S-curved neck.",
+        "Yellow bill; black legs and feet.",
+        "Flies with the neck tucked in and legs trailing."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Snowy Egret",
+          "code": "snoegr",
+          "howToTell": "Smaller, with a black bill and bright yellow feet ('golden slippers')."
+        }
+      ],
+      "whereInPark": "Turtle Pond, the Lake, and Harlem Meer — anywhere with shallow edges.",
+      "whenInPark": "April to October.",
+      "behavior": "Stands motionless or stalks slowly in shallow water, then strikes at fish with a lightning jab.",
+      "voice": "A low, harsh croak when disturbed."
+    },
+    {
+      "code": "bcnher",
+      "commonName": "Black-crowned Night Heron",
+      "scientificName": "Nycticorax nycticorax",
+      "bandingCode": "BCNH",
+      "family": "Herons, Egrets, and Bitterns",
+      "familyScientific": "Ardeidae",
+      "taxonOrder": 13,
+      "startHere": true,
+      "lengthIn": [
+        22.8,
+        26
+      ],
+      "colors": [
+        "black",
+        "gray",
+        "white",
+        "brown"
+      ],
+      "habitats": [
+        "water"
+      ],
+      "summary": "A stocky, short-necked heron that roosts by day in shoreline trees.",
+      "idTips": [
+        "Adult: black cap and back, pale gray wings, white underparts, red eye.",
+        "Juvenile: brown with heavy white spots and streaks — it looks like a different bird.",
+        "Hunched posture with the neck pulled in; looks almost neckless at rest."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Green Heron",
+          "code": "grnher",
+          "howToTell": "Much smaller, with a dark green back and chestnut neck."
+        },
+        {
+          "name": "Yellow-crowned Night Heron",
+          "code": "ycnher",
+          "howToTell": "Juveniles are similar; Yellow-crowned is grayer with finer spots and a thicker, all-dark bill. Adults have a black-and-white striped face."
+        }
+      ],
+      "whereInPark": "Shorelines of the Lake, Turtle Pond, and Harlem Meer, often perched in overhanging branches.",
+      "whenInPark": "Mostly March to November; a few remain in winter.",
+      "behavior": "Most active at dusk and night. By day it roosts quietly and is easy to walk right past.",
+      "voice": "A single flat, barking quok, often heard overhead at dusk."
+    },
+    {
+      "code": "rethaw",
+      "commonName": "Red-tailed Hawk",
+      "scientificName": "Buteo jamaicensis",
+      "bandingCode": "RTHA",
+      "family": "Hawks, Eagles, and Kites",
+      "familyScientific": "Accipitridae",
+      "taxonOrder": 14,
+      "startHere": true,
+      "lengthIn": [
+        17.7,
+        25.6
+      ],
+      "colors": [
+        "brown",
+        "white",
+        "red"
+      ],
+      "habitats": [
+        "overhead",
+        "woodland",
+        "lawns"
+      ],
+      "summary": "Central Park's famous resident hawk, often perched high or soaring over the lawns.",
+      "idTips": [
+        "Adult has a brick-red tail — visible from above, or from below when the light shines through.",
+        "Pale chest with a band of dark streaks across the belly (the 'belly band').",
+        "From below, a dark bar along the leading edge of the inner wing."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Cooper's Hawk",
+          "code": "coohaw",
+          "howToTell": "Smaller and slimmer with a long, banded tail and short rounded wings; flies with quick flaps and glides through trees rather than soaring in wide circles."
+        }
+      ],
+      "whereInPark": "Anywhere — scan tall trees, the building tops along Fifth Avenue and Central Park West, the Great Lawn, Turtle Pond, and the North End.",
+      "whenInPark": "Year-round; pairs have nested in and around the park for decades.",
+      "behavior": "Hunts rats and squirrels from a high perch; soars on broad wings with a fanned tail.",
+      "voice": "A hoarse, descending scream (kee-eeer) — the 'hawk cry' movies use for every raptor."
+    },
+    {
+      "code": "belkin1",
+      "commonName": "Belted Kingfisher",
+      "scientificName": "Megaceryle alcyon",
+      "bandingCode": "BEKI",
+      "family": "Kingfishers",
+      "familyScientific": "Alcedinidae",
+      "taxonOrder": 15,
+      "startHere": true,
+      "lengthIn": [
+        11,
+        13.8
+      ],
+      "colors": [
+        "blue",
+        "white",
+        "orange"
+      ],
+      "habitats": [
+        "water"
+      ],
+      "summary": "A shaggy-crested, blue-gray bird that plunges headfirst for fish.",
+      "idTips": [
+        "Big head with a ragged crest and a heavy, dagger-like bill.",
+        "Blue-gray above, with a blue band across the white chest.",
+        "Female has an extra rusty-orange band across the belly — one of few birds where the female is more colorful."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Blue Jay",
+          "code": "blujay",
+          "howToTell": "Jays are bright blue with black-and-white wings and a neat crest, and they don't hover or dive into water."
+        }
+      ],
+      "whereInPark": "The Lake, Harlem Meer, the Pool, and Turtle Pond — listen for the rattle.",
+      "whenInPark": "Mostly in migration and winter; scarce in summer.",
+      "behavior": "Perches over water or hovers, then dives headfirst; flies low and fast along the shore.",
+      "voice": "A loud, dry rattle — often the first clue that one is around."
+    },
+    {
+      "code": "rebwoo",
+      "commonName": "Red-bellied Woodpecker",
+      "scientificName": "Melanerpes carolinus",
+      "bandingCode": "RBWO",
+      "family": "Woodpeckers",
+      "familyScientific": "Picidae",
+      "taxonOrder": 16,
+      "startHere": true,
+      "lengthIn": [
+        9.1,
+        10.5
+      ],
+      "colors": [
+        "red",
+        "white",
+        "black",
+        "gray"
+      ],
+      "habitats": [
+        "woodland",
+        "feeders"
+      ],
+      "summary": "A common, noisy woodpecker with a zebra-barred back and a red head — the red belly is barely visible.",
+      "idTips": [
+        "Black-and-white 'zebra' barring across the back.",
+        "Male: red from bill to nape. Female: red only on the nape.",
+        "Pale gray-buff face and underparts; the namesake reddish wash on the belly is faint."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Red-headed Woodpecker",
+          "code": "rehwoo",
+          "howToTell": "Uncommon. Entire head is deep red, with a solid black back and big white wing patches — no barring."
+        },
+        {
+          "name": "Northern Flicker",
+          "code": "norfli",
+          "howToTell": "Brown and spotted below with a black chest crescent; often on the ground."
+        }
+      ],
+      "whereInPark": "Woodlands throughout — the Ramble, the North Woods, Hallett Nature Sanctuary — and at feeders.",
+      "whenInPark": "Year-round.",
+      "behavior": "Hitches up trunks and big limbs; wedges nuts into bark crevices to store them.",
+      "voice": "A rolling kwirr and a loud chiff-chiff."
+    },
+    {
+      "code": "yebsap",
+      "commonName": "Yellow-bellied Sapsucker",
+      "scientificName": "Sphyrapicus varius",
+      "bandingCode": "YBSA",
+      "family": "Woodpeckers",
+      "familyScientific": "Picidae",
+      "taxonOrder": 17,
+      "startHere": true,
+      "lengthIn": [
+        7.1,
+        8.7
+      ],
+      "colors": [
+        "black",
+        "white",
+        "red",
+        "yellow"
+      ],
+      "habitats": [
+        "woodland"
+      ],
+      "summary": "A quiet woodpecker that drills neat rows of sap wells in tree bark.",
+      "idTips": [
+        "Long white stripe along the folded wing — the best field mark.",
+        "Red forehead; male also has a red throat (female's is white).",
+        "Look for horizontal rows of small holes on trunks — its sap wells."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Downy Woodpecker",
+          "code": "dowwoo",
+          "howToTell": "Smaller, with a white stripe down the back instead of along the wing, and no red on the forehead."
+        }
+      ],
+      "whereInPark": "Woodlands across the park; check trees with fresh rows of sap wells.",
+      "whenInPark": "Mostly April and October; some stay the winter.",
+      "behavior": "Clings quietly at its sap wells, returning to sip sap and eat the insects drawn to it.",
+      "voice": "A nasal, mewing neeah; drums in an irregular, stuttering rhythm."
+    },
+    {
+      "code": "dowwoo",
+      "commonName": "Downy Woodpecker",
+      "scientificName": "Dryobates pubescens",
+      "bandingCode": "DOWO",
+      "family": "Woodpeckers",
+      "familyScientific": "Picidae",
+      "taxonOrder": 18,
+      "startHere": true,
+      "lengthIn": [
+        5.5,
+        6.7
+      ],
+      "colors": [
+        "black",
+        "white",
+        "red"
+      ],
+      "habitats": [
+        "woodland",
+        "feeders",
+        "thickets"
+      ],
+      "summary": "The smallest and most common woodpecker, often traveling with chickadees.",
+      "idTips": [
+        "Black and white with a broad white stripe down the back.",
+        "Tiny bill, much shorter than the head.",
+        "Male has a small red patch on the back of the head."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Hairy Woodpecker",
+          "code": "haiwoo",
+          "howToTell": "Bigger, with a bill about as long as its head (Downy's is stubby). Outer tail feathers plain white; Downy's have black spots."
+        }
+      ],
+      "whereInPark": "Anywhere with trees — even weed stems and shrubs — plus the Ramble feeders.",
+      "whenInPark": "Year-round.",
+      "behavior": "Forages on thin branches and weed stems, often upside down.",
+      "voice": "A soft pik and a descending, whinnying rattle."
+    },
+    {
+      "code": "haiwoo",
+      "commonName": "Hairy Woodpecker",
+      "scientificName": "Leuconotopicus villosus",
+      "bandingCode": "HAWO",
+      "family": "Woodpeckers",
+      "familyScientific": "Picidae",
+      "taxonOrder": 19,
+      "startHere": true,
+      "lengthIn": [
+        7.1,
+        10.2
+      ],
+      "colors": [
+        "black",
+        "white",
+        "red"
+      ],
+      "habitats": [
+        "woodland"
+      ],
+      "summary": "A larger, longer-billed version of the Downy — the classic ID test for new birders.",
+      "idTips": [
+        "Bill about as long as the head — the key difference from Downy.",
+        "Same black-and-white pattern, with a white back stripe.",
+        "Clean white outer tail feathers without black spots."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Downy Woodpecker",
+          "code": "dowwoo",
+          "howToTell": "Downy is smaller with a stubby bill and black spots on the white outer tail."
+        }
+      ],
+      "whereInPark": "Larger trees in the Ramble and the North Woods.",
+      "whenInPark": "Year-round, less common than Downy.",
+      "behavior": "Works trunks and large limbs, hammering harder than a Downy.",
+      "voice": "A loud, sharp peek and a fast rattle on one pitch."
+    },
+    {
+      "code": "norfli",
+      "commonName": "Northern Flicker",
+      "scientificName": "Colaptes auratus",
+      "bandingCode": "NOFL",
+      "family": "Woodpeckers",
+      "familyScientific": "Picidae",
+      "taxonOrder": 20,
+      "startHere": true,
+      "lengthIn": [
+        11,
+        12.2
+      ],
+      "colors": [
+        "brown",
+        "black",
+        "yellow",
+        "red",
+        "white"
+      ],
+      "habitats": [
+        "lawns",
+        "woodland"
+      ],
+      "summary": "A big, brown woodpecker that feeds on the ground for ants.",
+      "idTips": [
+        "Brown barred back, spotted belly, and a black crescent on the chest.",
+        "Bright white rump and yellow underwings flash in flight.",
+        "Male has a black 'mustache'; both sexes have a red patch on the nape."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Red-bellied Woodpecker",
+          "code": "rebwoo",
+          "howToTell": "Zebra-barred back and no black chest crescent; rarely feeds on the ground."
+        }
+      ],
+      "whereInPark": "Lawns and meadow edges — the Great Hill, the North Meadow, and around Sheep Meadow in migration.",
+      "whenInPark": "Small numbers year-round; many more in fall migration (September–October).",
+      "behavior": "Hops on lawns probing for ants; flies up into trees with a bounding flight.",
+      "voice": "A loud, long wick-wick-wick-wick and a single piercing klee-yer."
+    },
+    {
+      "code": "easpho",
+      "commonName": "Eastern Phoebe",
+      "scientificName": "Sayornis phoebe",
+      "bandingCode": "EAPH",
+      "family": "Tyrant Flycatchers",
+      "familyScientific": "Tyrannidae",
+      "taxonOrder": 21,
+      "startHere": true,
+      "lengthIn": [
+        5.5,
+        6.7
+      ],
+      "colors": [
+        "gray",
+        "brown",
+        "white"
+      ],
+      "habitats": [
+        "water",
+        "thickets"
+      ],
+      "summary": "A plain gray-brown flycatcher that constantly pumps its tail.",
+      "idTips": [
+        "Dark head, gray-brown back, whitish underparts; no bold wingbars.",
+        "Pumps and fans its tail downward while perched.",
+        "All-dark bill."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Eastern Wood-Pewee",
+          "code": "eawpew",
+          "howToTell": "Has two clear wingbars and a pale lower bill, and doesn't wag its tail; arrives later, in mid-May."
+        }
+      ],
+      "whereInPark": "Low perches near water — the Pool, the Lake shore, and Turtle Pond.",
+      "whenInPark": "One of the first spring migrants (late March–April); again in October.",
+      "behavior": "Sallies out from a low perch to snap up insects, then returns to the same spot.",
+      "voice": "Says its name: a raspy fee-bee."
+    },
+    {
+      "code": "blujay",
+      "commonName": "Blue Jay",
+      "scientificName": "Cyanocitta cristata",
+      "bandingCode": "BLJA",
+      "family": "Crows, Jays, and Magpies",
+      "familyScientific": "Corvidae",
+      "taxonOrder": 22,
+      "startHere": true,
+      "lengthIn": [
+        9.8,
+        11.8
+      ],
+      "colors": [
+        "blue",
+        "white",
+        "black"
+      ],
+      "habitats": [
+        "woodland",
+        "feeders"
+      ],
+      "summary": "A bold, crested, blue-and-white jay with a big vocabulary.",
+      "idTips": [
+        "Bright blue above with a crest; white face and underparts.",
+        "Black necklace across the throat and chest.",
+        "White patches and black bars on the blue wings and tail."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Belted Kingfisher",
+          "code": "belkin1",
+          "howToTell": "Kingfisher is blue-gray with a huge bill and shaggy crest, and lives along the water."
+        }
+      ],
+      "whereInPark": "Woodlands throughout; noisy at the Ramble feeders.",
+      "whenInPark": "Year-round; big migrating flocks pass over in late September–October and in May.",
+      "behavior": "Caches acorns. Mobs hawks and owls — follow screaming jays to find raptors.",
+      "voice": "A loud jay-jay scream, squeaky gate calls, and a convincing Red-tailed Hawk imitation."
+    },
+    {
+      "code": "amecro",
+      "commonName": "American Crow",
+      "scientificName": "Corvus brachyrhynchos",
+      "bandingCode": "AMCR",
+      "family": "Crows, Jays, and Magpies",
+      "familyScientific": "Corvidae",
+      "taxonOrder": 23,
+      "startHere": true,
+      "lengthIn": [
+        15.8,
+        20.9
+      ],
+      "colors": [
+        "black"
+      ],
+      "habitats": [
+        "lawns",
+        "overhead",
+        "woodland"
+      ],
+      "summary": "The all-black, intelligent crow of lawns and treetops.",
+      "idTips": [
+        "Entirely glossy black, including bill and legs.",
+        "Square or slightly rounded tail in flight.",
+        "Walks confidently on lawns."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Fish Crow",
+          "code": "fiscro",
+          "howToTell": "Nearly identical to look at; the reliable difference is voice — a nasal, short uh-uh instead of a clear caw."
+        },
+        {
+          "name": "Common Grackle",
+          "code": "comgra",
+          "howToTell": "Much smaller, with a long keel-shaped tail and a pale yellow eye."
+        }
+      ],
+      "whereInPark": "Lawns, treetops, and the sky over the whole park.",
+      "whenInPark": "Year-round.",
+      "behavior": "Forages on the ground in pairs or families; mobs hawks loudly.",
+      "voice": "A clear, familiar caw-caw."
+    },
+    {
+      "code": "bkcchi",
+      "commonName": "Black-capped Chickadee",
+      "scientificName": "Poecile atricapillus",
+      "bandingCode": "BCCH",
+      "family": "Tits, Chickadees, and Titmice",
+      "familyScientific": "Paridae",
+      "taxonOrder": 24,
+      "startHere": true,
+      "lengthIn": [
+        4.7,
+        5.9
+      ],
+      "colors": [
+        "black",
+        "white",
+        "gray"
+      ],
+      "habitats": [
+        "woodland",
+        "feeders",
+        "thickets"
+      ],
+      "summary": "A tiny, curious bird with a black cap and bib — the core of winter mixed flocks.",
+      "idTips": [
+        "Black cap and black bib with bright white cheeks.",
+        "Soft gray back and buffy sides.",
+        "Tiny bill; acrobatic, often hangs upside down."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Carolina Chickadee",
+          "code": "carchi",
+          "howToTell": "Very rare this far north. Nearly identical; Black-capped shows whiter edges on the wing feathers and a raggeder lower edge to the bib. Song is the best clue."
+        }
+      ],
+      "whereInPark": "The Ramble, the North Woods, and the feeders; listen for it in any mixed flock.",
+      "whenInPark": "Year-round; numbers vary from year to year.",
+      "behavior": "Travels in small flocks with titmice, nuthatches, and kinglets — find the chickadees and you've found the flock.",
+      "voice": "Says chick-a-dee-dee-dee; the song is a clear, whistled fee-bee."
+    },
+    {
+      "code": "tuftit",
+      "commonName": "Tufted Titmouse",
+      "scientificName": "Baeolophus bicolor",
+      "bandingCode": "TUTI",
+      "family": "Tits, Chickadees, and Titmice",
+      "familyScientific": "Paridae",
+      "taxonOrder": 25,
+      "startHere": true,
+      "lengthIn": [
+        5.5,
+        6.3
+      ],
+      "colors": [
+        "gray",
+        "white",
+        "orange",
+        "black"
+      ],
+      "habitats": [
+        "woodland",
+        "feeders"
+      ],
+      "summary": "A small gray bird with a pointed crest and big dark eyes.",
+      "idTips": [
+        "Soft gray above, whitish below, with peachy-orange flanks.",
+        "Pointed gray crest.",
+        "Small black patch just above the bill."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Black-capped Chickadee",
+          "code": "bkcchi",
+          "howToTell": "Chickadee has a black cap and bib, and no crest."
+        }
+      ],
+      "whereInPark": "Woodlands and feeders throughout the park.",
+      "whenInPark": "Year-round.",
+      "behavior": "Bold and noisy; holds seeds with its feet and hammers them open.",
+      "voice": "A loud, whistled peter-peter-peter."
+    },
+    {
+      "code": "ruckin",
+      "commonName": "Ruby-crowned Kinglet",
+      "scientificName": "Corthylio calendula",
+      "bandingCode": "RCKI",
+      "family": "Kinglets",
+      "familyScientific": "Regulidae",
+      "taxonOrder": 26,
+      "startHere": true,
+      "lengthIn": [
+        3.5,
+        4.3
+      ],
+      "colors": [
+        "green",
+        "gray",
+        "white",
+        "red"
+      ],
+      "habitats": [
+        "woodland",
+        "thickets"
+      ],
+      "summary": "A tiny, restless olive bird that constantly flicks its wings.",
+      "idTips": [
+        "Olive-gray with a broken white eye ring and a white wingbar.",
+        "Nervous wing-flicking — it's almost never still.",
+        "Male's red crown patch is usually hidden; it flares when the bird is excited."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Golden-crowned Kinglet",
+          "code": "gockin",
+          "howToTell": "Has a bold black-and-white striped face and a yellow-orange crown that's always visible."
+        }
+      ],
+      "whereInPark": "Thickets and woodland edges throughout — the Ramble, Shakespeare Garden, Strawberry Fields.",
+      "whenInPark": "Migration: April and October–November; a few winter.",
+      "behavior": "Hovers briefly to pick insects off leaf tips.",
+      "voice": "A husky ji-dit call; a surprisingly loud, rollicking song for its size."
+    },
+    {
+      "code": "gockin",
+      "commonName": "Golden-crowned Kinglet",
+      "scientificName": "Regulus satrapa",
+      "bandingCode": "GCKI",
+      "family": "Kinglets",
+      "familyScientific": "Regulidae",
+      "taxonOrder": 27,
+      "startHere": true,
+      "lengthIn": [
+        3.1,
+        4.3
+      ],
+      "colors": [
+        "green",
+        "yellow",
+        "orange",
+        "black",
+        "white"
+      ],
+      "habitats": [
+        "woodland"
+      ],
+      "summary": "One of the smallest birds in the park, with a bright striped crown.",
+      "idTips": [
+        "Black-and-white striped face.",
+        "Crown stripe yellow (female) or yellow with an orange center (male).",
+        "Olive-gray body with a white wingbar."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Ruby-crowned Kinglet",
+          "code": "ruckin",
+          "howToTell": "Plain face with a white eye ring, and no stripes."
+        }
+      ],
+      "whereInPark": "Conifers and woodland — the pines around the Ramble and the North Woods.",
+      "whenInPark": "Migration (late March–April and October–November); small numbers winter.",
+      "behavior": "Forages high in conifers, constantly moving and hovering.",
+      "voice": "A very high, thin see-see-see — too high for some people to hear."
+    },
+    {
+      "code": "cedwax",
+      "commonName": "Cedar Waxwing",
+      "scientificName": "Bombycilla cedrorum",
+      "bandingCode": "CEDW",
+      "family": "Waxwings",
+      "familyScientific": "Bombycillidae",
+      "taxonOrder": 28,
+      "startHere": true,
+      "lengthIn": [
+        5.5,
+        6.7
+      ],
+      "colors": [
+        "brown",
+        "yellow",
+        "black",
+        "red",
+        "gray"
+      ],
+      "habitats": [
+        "woodland",
+        "thickets"
+      ],
+      "summary": "A sleek, crested bird with a black mask that travels in flocks looking for fruit.",
+      "idTips": [
+        "Silky tan-brown with a crest and a narrow black mask.",
+        "Yellow tip to the tail.",
+        "Red, waxy tips on some wing feathers (hence the name)."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Bohemian Waxwing",
+          "code": "bohwax",
+          "howToTell": "Very rare here. Grayer and larger, with a rusty undertail and white-and-yellow wing marks."
+        }
+      ],
+      "whereInPark": "Fruiting trees and shrubs anywhere; in summer, catching insects over the Lake and Turtle Pond.",
+      "whenInPark": "Can appear in any season; flock movements are irregular.",
+      "behavior": "Moves in tight flocks; birds sometimes pass berries beak to beak.",
+      "voice": "Very high, thin, buzzy whistles — listen for it overhead."
+    },
+    {
+      "code": "whbnut",
+      "commonName": "White-breasted Nuthatch",
+      "scientificName": "Sitta carolinensis",
+      "bandingCode": "WBNU",
+      "family": "Nuthatches",
+      "familyScientific": "Sittidae",
+      "taxonOrder": 29,
+      "startHere": true,
+      "lengthIn": [
+        5.1,
+        5.5
+      ],
+      "colors": [
+        "gray",
+        "white",
+        "black"
+      ],
+      "habitats": [
+        "woodland",
+        "feeders"
+      ],
+      "summary": "A blue-gray bird that walks headfirst down tree trunks.",
+      "idTips": [
+        "Blue-gray back, white face and breast, black cap.",
+        "Long, slightly upturned bill.",
+        "Rusty patch under the tail."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Red-breasted Nuthatch",
+          "code": "rebnut",
+          "howToTell": "Smaller, with a black eye-line, white eyebrow, and rusty-orange underparts. Irruptive — common some falls, absent in others."
+        }
+      ],
+      "whereInPark": "Mature trees across the park and the Ramble feeders.",
+      "whenInPark": "Year-round.",
+      "behavior": "Creeps headfirst down trunks; wedges seeds into bark and hacks them open.",
+      "voice": "A nasal yank-yank, like a toy horn."
+    },
+    {
+      "code": "brncre",
+      "commonName": "Brown Creeper",
+      "scientificName": "Certhia americana",
+      "bandingCode": "BRCR",
+      "family": "Treecreepers",
+      "familyScientific": "Certhiidae",
+      "taxonOrder": 30,
+      "startHere": true,
+      "lengthIn": [
+        4.7,
+        5.5
+      ],
+      "colors": [
+        "brown",
+        "white"
+      ],
+      "habitats": [
+        "woodland"
+      ],
+      "summary": "A tiny, bark-colored bird that spirals up tree trunks.",
+      "idTips": [
+        "Streaky brown above — perfectly camouflaged against bark.",
+        "White underparts and a thin, down-curved bill.",
+        "Uses its stiff tail as a prop."
+      ],
+      "lookAlikes": [
+        {
+          "name": "White-breasted Nuthatch",
+          "code": "whbnut",
+          "howToTell": "Nuthatch is gray with a black cap and climbs down headfirst; creepers climb up."
+        }
+      ],
+      "whereInPark": "Large trees in the Ramble, the North Woods, and around the Reservoir.",
+      "whenInPark": "Migration and winter, roughly October to April.",
+      "behavior": "Hitches up a trunk, then flies to the base of the next tree and starts again.",
+      "voice": "A very high, thin seee."
+    },
+    {
+      "code": "carwre",
+      "commonName": "Carolina Wren",
+      "scientificName": "Thryothorus ludovicianus",
+      "bandingCode": "CARW",
+      "family": "Wrens",
+      "familyScientific": "Troglodytidae",
+      "taxonOrder": 31,
+      "startHere": true,
+      "lengthIn": [
+        4.7,
+        5.5
+      ],
+      "colors": [
+        "brown",
+        "orange",
+        "white"
+      ],
+      "habitats": [
+        "thickets",
+        "woodland"
+      ],
+      "summary": "A small, rich-brown wren with a very loud song.",
+      "idTips": [
+        "Warm rusty-brown above, buffy-orange below.",
+        "Bold white eyebrow stripe.",
+        "Often cocks its tail up."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Northern House Wren",
+          "code": "houwre",
+          "howToTell": "Plainer gray-brown with only a faint eyebrow; mainly a spring and fall migrant here."
+        }
+      ],
+      "whereInPark": "Dense undergrowth in the Ramble, the North Woods, and Hallett Nature Sanctuary.",
+      "whenInPark": "Year-round.",
+      "behavior": "Skulks low in tangles; pairs stay together all year.",
+      "voice": "A ringing teakettle-teakettle-teakettle, far louder than you'd expect."
+    },
+    {
+      "code": "grycat",
+      "commonName": "Gray Catbird",
+      "scientificName": "Dumetella carolinensis",
+      "bandingCode": "GRCA",
+      "family": "Mockingbirds and Thrashers",
+      "familyScientific": "Mimidae",
+      "taxonOrder": 32,
+      "startHere": true,
+      "lengthIn": [
+        8.3,
+        9.4
+      ],
+      "colors": [
+        "gray",
+        "black",
+        "brown"
+      ],
+      "habitats": [
+        "thickets"
+      ],
+      "summary": "A slate-gray bird that mews like a cat from dense shrubs.",
+      "idTips": [
+        "Uniform slate gray with a black cap.",
+        "Rusty patch under the tail.",
+        "Long tail, often flicked or cocked."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Northern Mockingbird",
+          "code": "normoc",
+          "howToTell": "Paler gray with big white patches in the wings and tail."
+        }
+      ],
+      "whereInPark": "Shrubby edges everywhere — the Ramble, Strawberry Fields, the North Woods.",
+      "whenInPark": "Late April through October, and it nests in the park. A few try to overwinter.",
+      "behavior": "Stays low in thick cover; curious and often pops out when you pish.",
+      "voice": "A cat-like mew, and a long, jumbled song of squeaks and borrowed phrases."
+    },
+    {
+      "code": "normoc",
+      "commonName": "Northern Mockingbird",
+      "scientificName": "Mimus polyglottos",
+      "bandingCode": "NOMO",
+      "family": "Mockingbirds and Thrashers",
+      "familyScientific": "Mimidae",
+      "taxonOrder": 33,
+      "startHere": true,
+      "lengthIn": [
+        8.3,
+        10.2
+      ],
+      "colors": [
+        "gray",
+        "white"
+      ],
+      "habitats": [
+        "thickets",
+        "lawns"
+      ],
+      "summary": "A long-tailed gray songbird famous for its endless mimicry.",
+      "idTips": [
+        "Pale gray above, whitish below.",
+        "Large white wing patches and white outer tail feathers flash in flight.",
+        "Long tail; often perches conspicuously on top of shrubs."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Gray Catbird",
+          "code": "grycat",
+          "howToTell": "Darker slate gray with a black cap and no white patches."
+        }
+      ],
+      "whereInPark": "Open areas with shrubs, mostly around the park's edges and the south end.",
+      "whenInPark": "Year-round in small numbers.",
+      "behavior": "Sings from high perches, even at night in spring; defends fruiting shrubs in winter.",
+      "voice": "Long runs of other birds' songs, each phrase repeated several times."
+    },
+    {
+      "code": "eursta",
+      "commonName": "European Starling",
+      "scientificName": "Sturnus vulgaris",
+      "bandingCode": "EUST",
+      "family": "Starlings and Mynas",
+      "familyScientific": "Sturnidae",
+      "taxonOrder": 34,
+      "startHere": true,
+      "lengthIn": [
+        7.9,
+        9.1
+      ],
+      "colors": [
+        "black",
+        "green",
+        "white",
+        "yellow"
+      ],
+      "habitats": [
+        "lawns",
+        "overhead"
+      ],
+      "summary": "A stocky, short-tailed bird from Europe, first released in North America right here in Central Park in 1890.",
+      "idTips": [
+        "Short, square tail and pointed triangular wings in flight.",
+        "Breeding: glossy purple-green with a yellow bill.",
+        "Winter: covered in white spots, with a dark bill."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Common Grackle",
+          "code": "comgra",
+          "howToTell": "Grackle has a long tail and a pale eye; starlings look short-tailed and walk with a waddling strut."
+        }
+      ],
+      "whereInPark": "Lawns everywhere, especially the Great Lawn and Sheep Meadow.",
+      "whenInPark": "Year-round.",
+      "behavior": "Probes lawns in flocks; mimics other birds and mechanical sounds.",
+      "voice": "A jumble of whistles, clicks, and imitations."
+    },
+    {
+      "code": "herthr",
+      "commonName": "Hermit Thrush",
+      "scientificName": "Catharus guttatus",
+      "bandingCode": "HETH",
+      "family": "Thrushes and Allies",
+      "familyScientific": "Turdidae",
+      "taxonOrder": 35,
+      "startHere": true,
+      "lengthIn": [
+        5.5,
+        7.1
+      ],
+      "colors": [
+        "brown",
+        "white"
+      ],
+      "habitats": [
+        "woodland"
+      ],
+      "summary": "A brown, spotted thrush with a reddish tail and an ethereal song.",
+      "idTips": [
+        "Brown back contrasting with a warmer, reddish tail.",
+        "Spotted breast and a thin white eye ring.",
+        "Slowly raises its tail and lowers it again."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Wood Thrush",
+          "code": "woothr",
+          "howToTell": "Bigger and plumper, rusty-brown on the head and back, with large round black spots on a white breast."
+        },
+        {
+          "name": "Swainson's Thrush",
+          "code": "swathr",
+          "howToTell": "Evenly olive-brown with no tail contrast, and a buffy 'spectacled' eye ring."
+        }
+      ],
+      "whereInPark": "Leaf litter and low branches in the Ramble and the North Woods.",
+      "whenInPark": "April and October–November migration; some winter.",
+      "behavior": "Hops on the forest floor flicking leaves, then freezes.",
+      "voice": "A soft chuck call; the song (rarely heard here) is a flute-like phrase repeated on different pitches."
+    },
+    {
+      "code": "amerob",
+      "commonName": "American Robin",
+      "scientificName": "Turdus migratorius",
+      "bandingCode": "AMRO",
+      "family": "Thrushes and Allies",
+      "familyScientific": "Turdidae",
+      "taxonOrder": 36,
+      "startHere": true,
+      "lengthIn": [
+        7.9,
+        11
+      ],
+      "colors": [
+        "orange",
+        "gray",
+        "black",
+        "white"
+      ],
+      "habitats": [
+        "lawns",
+        "woodland"
+      ],
+      "summary": "The familiar orange-breasted thrush — and the size yardstick for other birds.",
+      "idTips": [
+        "Brick-orange breast, gray-brown back, dark head.",
+        "Broken white eye ring and a yellow bill.",
+        "Runs and stops on lawns with its head cocked."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Eastern Towhee",
+          "code": "eastow",
+          "howToTell": "Smaller, with a black (male) or brown (female) hood and a white belly; rusty only on the sides."
+        }
+      ],
+      "whereInPark": "Lawns everywhere; in winter, flocks gather in fruiting trees.",
+      "whenInPark": "Year-round; most numerous in spring and fall migration.",
+      "behavior": "Pulls earthworms from lawns; winter flocks switch to berries.",
+      "voice": "A caroling cheerily, cheer-up, cheerio at dawn; sharp tut-tut calls."
+    },
+    {
+      "code": "houspa",
+      "commonName": "House Sparrow",
+      "scientificName": "Passer domesticus",
+      "bandingCode": "HOSP",
+      "family": "Old World Sparrows",
+      "familyScientific": "Passeridae",
+      "taxonOrder": 37,
+      "startHere": true,
+      "lengthIn": [
+        5.9,
+        6.7
+      ],
+      "colors": [
+        "brown",
+        "gray",
+        "black",
+        "white"
+      ],
+      "habitats": [
+        "lawns",
+        "thickets",
+        "feeders"
+      ],
+      "summary": "The chunky, chirping sparrow of plazas and food carts — introduced from Europe.",
+      "idTips": [
+        "Male: gray crown, chestnut nape, black bib, whitish cheeks.",
+        "Female: plain buffy-brown with a pale stripe behind the eye.",
+        "Thick, conical bill and an unstreaked breast."
+      ],
+      "lookAlikes": [
+        {
+          "name": "White-throated Sparrow",
+          "code": "whtspa",
+          "howToTell": "Striped head with a white throat and a yellow spot by the eye; scratches in leaf litter in the woods rather than hopping on plazas."
+        },
+        {
+          "name": "Song Sparrow",
+          "code": "sonspa",
+          "howToTell": "Heavily streaked breast with a central spot; House Sparrows have plain breasts."
+        }
+      ],
+      "whereInPark": "Park entrances, playgrounds, plazas, and food stands.",
+      "whenInPark": "Year-round.",
+      "behavior": "Noisy flocks dust-bathe and hop around people.",
+      "voice": "Monotonous cheep-cheep chirping."
+    },
+    {
+      "code": "houfin",
+      "commonName": "House Finch",
+      "scientificName": "Haemorhous mexicanus",
+      "bandingCode": "HOFI",
+      "family": "Finches, Euphonias, and Allies",
+      "familyScientific": "Fringillidae",
+      "taxonOrder": 38,
+      "startHere": true,
+      "lengthIn": [
+        5.1,
+        5.5
+      ],
+      "colors": [
+        "red",
+        "brown",
+        "white"
+      ],
+      "habitats": [
+        "thickets",
+        "feeders",
+        "lawns"
+      ],
+      "summary": "A small finch; males have a red head and breast, females are streaky brown.",
+      "idTips": [
+        "Male: red (sometimes orange or yellow) on the head, breast, and rump.",
+        "Blurry brown streaks on the flanks and belly.",
+        "Female: plain face, streaked all over."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Purple Finch",
+          "code": "purfin",
+          "howToTell": "Male looks dipped in raspberry juice, including back and wings, with clean unstreaked flanks. Female has a bold face pattern with a white eyebrow."
+        }
+      ],
+      "whereInPark": "Plantings near park entrances, edges, and feeders.",
+      "whenInPark": "Year-round.",
+      "behavior": "Small flocks feed on seeds and buds; males sing from treetops.",
+      "voice": "A long, warbled song often ending in a burry note; a cheep call."
+    },
+    {
+      "code": "amegfi",
+      "commonName": "American Goldfinch",
+      "scientificName": "Spinus tristis",
+      "bandingCode": "AMGO",
+      "family": "Finches, Euphonias, and Allies",
+      "familyScientific": "Fringillidae",
+      "taxonOrder": 39,
+      "startHere": true,
+      "lengthIn": [
+        4.3,
+        5.1
+      ],
+      "colors": [
+        "yellow",
+        "black",
+        "white",
+        "brown"
+      ],
+      "habitats": [
+        "thickets",
+        "feeders",
+        "overhead"
+      ],
+      "summary": "A small finch; breeding males are brilliant lemon-yellow with a black cap.",
+      "idTips": [
+        "Summer male: bright yellow with a black forehead and black-and-white wings.",
+        "Winter: dull brownish-olive with a buffy face, but always bold wingbars.",
+        "Bouncy, roller-coaster flight."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Northern Yellow Warbler",
+          "code": "yelwar1",
+          "howToTell": "All yellow with no black cap or black wings, and a thin, pointed bill."
+        },
+        {
+          "name": "Pine Siskin",
+          "code": "pinsis",
+          "howToTell": "Heavily streaked brown with yellow flashes in the wings; irruptive."
+        }
+      ],
+      "whereInPark": "Weedy edges, gardens such as the Conservatory Garden and Shakespeare Garden, and feeders.",
+      "whenInPark": "Year-round; numbers vary.",
+      "behavior": "Clings to seedheads like coneflower and thistle; forms flocks in winter.",
+      "voice": "In flight, a cheerful per-chick-o-ree or po-ta-to-chip."
+    },
+    {
+      "code": "daejun",
+      "commonName": "Dark-eyed Junco",
+      "scientificName": "Junco hyemalis",
+      "bandingCode": "DEJU",
+      "family": "New World Sparrows",
+      "familyScientific": "Passerellidae",
+      "taxonOrder": 40,
+      "startHere": true,
+      "lengthIn": [
+        5.5,
+        6.3
+      ],
+      "colors": [
+        "gray",
+        "white"
+      ],
+      "habitats": [
+        "lawns",
+        "woodland",
+        "feeders"
+      ],
+      "summary": "A slate-gray sparrow with a white belly that arrives with winter.",
+      "idTips": [
+        "Slate-gray hood and back with a clean white belly.",
+        "Pale pinkish bill.",
+        "White outer tail feathers flash as it flies off."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Eastern Towhee",
+          "code": "eastow",
+          "howToTell": "Bigger, with rusty sides and white wing patches; male black, female brown."
+        }
+      ],
+      "whereInPark": "Path edges, lawns along woodland borders, and the Ramble feeders.",
+      "whenInPark": "Late October to April.",
+      "behavior": "Feeds on the ground in loose flocks, often with White-throated Sparrows.",
+      "voice": "A sharp tick and a dry, musical trill."
+    },
+    {
+      "code": "whtspa",
+      "commonName": "White-throated Sparrow",
+      "scientificName": "Zonotrichia albicollis",
+      "bandingCode": "WTSP",
+      "family": "New World Sparrows",
+      "familyScientific": "Passerellidae",
+      "taxonOrder": 41,
+      "startHere": true,
+      "lengthIn": [
+        6.3,
+        7.1
+      ],
+      "colors": [
+        "brown",
+        "white",
+        "gray",
+        "yellow",
+        "black"
+      ],
+      "habitats": [
+        "woodland",
+        "thickets",
+        "feeders"
+      ],
+      "summary": "Central Park's signature winter sparrow, scratching in leaves everywhere.",
+      "idTips": [
+        "Crisp white throat patch outlined in gray.",
+        "Yellow spot between the eye and the bill.",
+        "Striped head: white-striped and tan-striped forms both occur."
+      ],
+      "lookAlikes": [
+        {
+          "name": "White-crowned Sparrow",
+          "code": "whcspa",
+          "howToTell": "No white throat or yellow spot; pinkish-orange bill and gray neck. Uncommon in the park."
+        }
+      ],
+      "whereInPark": "Leaf litter and brushy edges throughout — the Ramble, the North Woods, everywhere in fall.",
+      "whenInPark": "Fall through spring, roughly October to mid-May; absent in summer.",
+      "behavior": "Double-scratch hops in dead leaves, kicking back with both feet.",
+      "voice": "A clear, whistled Old Sam Peabody-Peabody-Peabody (or Oh sweet Canada-Canada)."
+    },
+    {
+      "code": "sonspa",
+      "commonName": "Song Sparrow",
+      "scientificName": "Melospiza melodia",
+      "bandingCode": "SOSP",
+      "family": "New World Sparrows",
+      "familyScientific": "Passerellidae",
+      "taxonOrder": 42,
+      "startHere": true,
+      "lengthIn": [
+        4.7,
+        6.7
+      ],
+      "colors": [
+        "brown",
+        "white",
+        "gray"
+      ],
+      "habitats": [
+        "thickets",
+        "water"
+      ],
+      "summary": "A streaky brown sparrow with a central breast spot and a busy song.",
+      "idTips": [
+        "Heavy brown streaks on a white breast, converging in a central spot.",
+        "Gray-and-brown striped face with a dark 'mustache' stripe.",
+        "Pumps its long, rounded tail in flight."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Savannah Sparrow",
+          "code": "savspa",
+          "howToTell": "Shorter-tailed, with a yellow spot over the eye and finer streaks; on lawns in migration."
+        },
+        {
+          "name": "Lincoln's Sparrow",
+          "code": "linspa",
+          "howToTell": "Finer, crisper streaks on a buffy chest and a gray face; more secretive."
+        }
+      ],
+      "whereInPark": "Brushy edges near water — Turtle Pond, Harlem Meer, the Pool.",
+      "whenInPark": "Most of the year; most numerous in March–April and October.",
+      "behavior": "Sings from exposed perches; ducks into cover when disturbed.",
+      "voice": "Two or three clear notes, then a jumbled trill: maids-maids-maids, put on your tea-kettle-ettle-ettle."
+    },
+    {
+      "code": "eastow",
+      "commonName": "Eastern Towhee",
+      "scientificName": "Pipilo erythrophthalmus",
+      "bandingCode": "EATO",
+      "family": "New World Sparrows",
+      "familyScientific": "Passerellidae",
+      "taxonOrder": 43,
+      "startHere": true,
+      "lengthIn": [
+        6.8,
+        8.2
+      ],
+      "colors": [
+        "black",
+        "orange",
+        "white",
+        "brown"
+      ],
+      "habitats": [
+        "thickets",
+        "woodland"
+      ],
+      "summary": "A big, striking sparrow that scratches noisily in dead leaves.",
+      "idTips": [
+        "Male: black hood and back. Female: warm brown instead of black.",
+        "Rusty-orange sides and a white belly.",
+        "Red eye; white corners on the long tail."
+      ],
+      "lookAlikes": [
+        {
+          "name": "American Robin",
+          "code": "amerob",
+          "howToTell": "Robin's whole breast is orange, with no dark hood or white belly."
+        }
+      ],
+      "whereInPark": "Thick undergrowth in the Ramble and the North Woods.",
+      "whenInPark": "Migration (April and October); a few winter.",
+      "behavior": "Hops backward to scratch through leaf litter — often heard before it's seen.",
+      "voice": "A rising chewink call; the song is drink-your-teeeee."
+    },
+    {
+      "code": "balori",
+      "commonName": "Baltimore Oriole",
+      "scientificName": "Icterus galbula",
+      "bandingCode": "BAOR",
+      "family": "Troupials and Allies",
+      "familyScientific": "Icteridae",
+      "taxonOrder": 44,
+      "startHere": true,
+      "lengthIn": [
+        6.7,
+        7.5
+      ],
+      "colors": [
+        "orange",
+        "black",
+        "white",
+        "yellow"
+      ],
+      "habitats": [
+        "woodland"
+      ],
+      "summary": "A flame-orange-and-black songbird of the treetops in May.",
+      "idTips": [
+        "Male: black hood and back, brilliant orange underparts and rump.",
+        "Female: yellow-orange below, olive-brown above, with two white wingbars.",
+        "Sharp, pointed, silver-gray bill."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Orchard Oriole",
+          "code": "orcori",
+          "howToTell": "Smaller; adult male is deep chestnut (not orange) and black. Females are greenish-yellow."
+        },
+        {
+          "name": "American Robin",
+          "code": "amerob",
+          "howToTell": "Robin's orange is a duller brick color, and it lacks the black hood and white wingbars."
+        }
+      ],
+      "whereInPark": "Tall trees across the park; in May, check the treetops around the Ramble.",
+      "whenInPark": "Arrives late April–May and some stay to nest; gone by September.",
+      "behavior": "Weaves a hanging, sock-shaped nest high on a drooping branch.",
+      "voice": "Rich, flute-like whistled phrases and a dry chatter."
+    },
+    {
+      "code": "rewbla",
+      "commonName": "Red-winged Blackbird",
+      "scientificName": "Agelaius phoeniceus",
+      "bandingCode": "RWBL",
+      "family": "Troupials and Allies",
+      "familyScientific": "Icteridae",
+      "taxonOrder": 45,
+      "startHere": true,
+      "lengthIn": [
+        6.7,
+        9.1
+      ],
+      "colors": [
+        "black",
+        "red",
+        "yellow",
+        "brown"
+      ],
+      "habitats": [
+        "water",
+        "thickets"
+      ],
+      "summary": "The male's red-and-yellow shoulder patches are a sure sign of spring at the park's ponds.",
+      "idTips": [
+        "Male: glossy black with red shoulder patches edged in yellow.",
+        "Female: heavily streaked brown — easily mistaken for a big sparrow.",
+        "Sharp, pointed bill."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Common Grackle",
+          "code": "comgra",
+          "howToTell": "Larger and iridescent, with a long tail and a pale eye; no red shoulders."
+        },
+        {
+          "name": "Song Sparrow",
+          "code": "sonspa",
+          "howToTell": "Female blackbirds are larger and darker, with a longer, pointier bill."
+        }
+      ],
+      "whereInPark": "Reeds and shoreline plants at Turtle Pond, Harlem Meer, and the Pool.",
+      "whenInPark": "Arrives in March; most visible March–July and in migration.",
+      "behavior": "Males flare their shoulders and sing from cattails to defend territory.",
+      "voice": "A gurgling conk-la-reee."
+    },
+    {
+      "code": "comgra",
+      "commonName": "Common Grackle",
+      "scientificName": "Quiscalus quiscula",
+      "bandingCode": "COGR",
+      "family": "Troupials and Allies",
+      "familyScientific": "Icteridae",
+      "taxonOrder": 46,
+      "startHere": true,
+      "lengthIn": [
+        11,
+        13.4
+      ],
+      "colors": [
+        "black",
+        "blue",
+        "brown"
+      ],
+      "habitats": [
+        "lawns",
+        "water"
+      ],
+      "summary": "A long-tailed, iridescent blackbird with piercing pale eyes.",
+      "idTips": [
+        "Long, keel-shaped tail.",
+        "Glossy purple-blue head and bronze body in good light.",
+        "Pale yellow eye."
+      ],
+      "lookAlikes": [
+        {
+          "name": "European Starling",
+          "code": "eursta",
+          "howToTell": "Starling is short-tailed with a dark eye."
+        },
+        {
+          "name": "American Crow",
+          "code": "amecro",
+          "howToTell": "Much bigger and flat black, with a dark eye."
+        }
+      ],
+      "whereInPark": "Lawns and pond edges throughout.",
+      "whenInPark": "Mostly March to October; large flocks in migration, a few in winter.",
+      "behavior": "Struts on lawns; raids nests and will even catch small birds.",
+      "voice": "A harsh, squeaky readle-eak, like a rusty gate."
+    },
+    {
+      "code": "bawwar",
+      "commonName": "Black-and-white Warbler",
+      "scientificName": "Mniotilta varia",
+      "bandingCode": "BAWW",
+      "family": "New World Warblers",
+      "familyScientific": "Parulidae",
+      "taxonOrder": 47,
+      "startHere": true,
+      "lengthIn": [
+        4.3,
+        5.1
+      ],
+      "colors": [
+        "black",
+        "white"
+      ],
+      "habitats": [
+        "woodland"
+      ],
+      "summary": "A zebra-striped warbler that creeps along trunks like a nuthatch.",
+      "idTips": [
+        "Bold black-and-white stripes all over, including the crown.",
+        "Creeps up, down, and around trunks and branches.",
+        "Male has a black throat; the female's is white."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Blackpoll Warbler",
+          "code": "bkpwar",
+          "howToTell": "Spring male has a solid black cap and white cheeks (not a striped crown), and doesn't creep on bark."
+        }
+      ],
+      "whereInPark": "The Ramble and the North Woods during migration.",
+      "whenInPark": "Migration: mid-April to May and August to October.",
+      "behavior": "Forages on bark like a nuthatch — unique among warblers.",
+      "voice": "A high, squeaky wheesy-wheesy-wheesy, like a squeaky wheel."
+    },
+    {
+      "code": "comyel",
+      "commonName": "Common Yellowthroat",
+      "scientificName": "Geothlypis trichas",
+      "bandingCode": "COYE",
+      "family": "New World Warblers",
+      "familyScientific": "Parulidae",
+      "taxonOrder": 48,
+      "startHere": true,
+      "lengthIn": [
+        4.3,
+        5.1
+      ],
+      "colors": [
+        "yellow",
+        "black",
+        "green",
+        "white"
+      ],
+      "habitats": [
+        "thickets",
+        "water"
+      ],
+      "summary": "A skulking warbler; the male wears a black bandit mask.",
+      "idTips": [
+        "Male: broad black mask bordered above by white.",
+        "Bright yellow throat and olive back.",
+        "Female: no mask; olive with a yellow throat."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Kentucky Warbler",
+          "code": "kenwar",
+          "howToTell": "Rare. Yellow 'spectacles' and all-yellow underparts, with black on the face below the eye."
+        }
+      ],
+      "whereInPark": "Low, wet thickets — the Pool, the edges of Turtle Pond and Harlem Meer, the North Woods.",
+      "whenInPark": "May and September–October migration.",
+      "behavior": "Stays low in dense vegetation; pops up curiously when you pish.",
+      "voice": "A rollicking witchety-witchety-witchety."
+    },
+    {
+      "code": "amered",
+      "commonName": "American Redstart",
+      "scientificName": "Setophaga ruticilla",
+      "bandingCode": "AMRE",
+      "family": "New World Warblers",
+      "familyScientific": "Parulidae",
+      "taxonOrder": 49,
+      "startHere": true,
+      "lengthIn": [
+        4.3,
+        5.1
+      ],
+      "colors": [
+        "black",
+        "orange",
+        "yellow",
+        "white",
+        "gray"
+      ],
+      "habitats": [
+        "woodland"
+      ],
+      "summary": "A hyperactive warbler that fans its patterned tail to flush insects.",
+      "idTips": [
+        "Male: black with bright orange patches on the wings, tail, and sides.",
+        "Female and young: gray with yellow patches in the same places.",
+        "Constantly fans its tail and droops its wings."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Baltimore Oriole",
+          "code": "balori",
+          "howToTell": "Much bigger, with fully orange underparts rather than side patches."
+        }
+      ],
+      "whereInPark": "Woodlands — the Ramble, the North Woods, and Strawberry Fields.",
+      "whenInPark": "May and late August–September migration.",
+      "behavior": "Flashes its colorful tail and darts after flying insects.",
+      "voice": "High, variable songs, often ending in an emphatic down-slurred note: see-see-see-SEEoo."
+    },
+    {
+      "code": "btbwar",
+      "commonName": "Black-throated Blue Warbler",
+      "scientificName": "Setophaga caerulescens",
+      "bandingCode": "BTBW",
+      "family": "New World Warblers",
+      "familyScientific": "Parulidae",
+      "taxonOrder": 50,
+      "startHere": true,
+      "lengthIn": [
+        5.1,
+        5.5
+      ],
+      "colors": [
+        "blue",
+        "black",
+        "white",
+        "brown"
+      ],
+      "habitats": [
+        "woodland",
+        "thickets"
+      ],
+      "summary": "A striking warbler; the male is navy blue, black, and white.",
+      "idTips": [
+        "Male: deep blue back, black face and throat, white belly.",
+        "Both sexes: a small white square on the wing (the 'pocket handkerchief').",
+        "Female: plain olive-brown with a pale eyebrow — look for that white wing square."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Cerulean Warbler",
+          "code": "cerwar",
+          "howToTell": "Rare here. Sky-blue with white wingbars and a thin dark necklace, not a black face."
+        }
+      ],
+      "whereInPark": "Low and mid-level in the Ramble and the North Woods.",
+      "whenInPark": "May and September–October migration.",
+      "behavior": "Forages in the understory, often lower than other warblers.",
+      "voice": "A lazy, buzzy I'm so la-zeee, rising at the end."
+    },
+    {
+      "code": "palwar",
+      "commonName": "Palm Warbler",
+      "scientificName": "Setophaga palmarum",
+      "bandingCode": "PAWA",
+      "family": "New World Warblers",
+      "familyScientific": "Parulidae",
+      "taxonOrder": 51,
+      "startHere": true,
+      "lengthIn": [
+        4.7,
+        5.5
+      ],
+      "colors": [
+        "brown",
+        "yellow"
+      ],
+      "habitats": [
+        "lawns",
+        "thickets"
+      ],
+      "summary": "A tail-bobbing warbler that feeds on the ground — one of the first warblers each spring.",
+      "idTips": [
+        "Constant tail-bobbing, even while walking.",
+        "Bright yellow under the tail.",
+        "Spring: rusty cap and yellow eyebrow."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Yellow-rumped Warbler",
+          "code": "yerwar",
+          "howToTell": "Yellow is on the rump and the sides of the chest, not under the tail, and it doesn't bob its tail."
+        }
+      ],
+      "whereInPark": "Lawns and path edges near the woods, and low in the Ramble.",
+      "whenInPark": "An early migrant in April and a late one in October.",
+      "behavior": "Walks on the ground or low branches, pumping its tail.",
+      "voice": "A sharp chik call; the song is a buzzy trill."
+    },
+    {
+      "code": "yerwar",
+      "commonName": "Yellow-rumped Warbler",
+      "scientificName": "Setophaga coronata",
+      "bandingCode": "YRWA",
+      "family": "New World Warblers",
+      "familyScientific": "Parulidae",
+      "taxonOrder": 52,
+      "startHere": true,
+      "lengthIn": [
+        4.7,
+        5.5
+      ],
+      "colors": [
+        "gray",
+        "yellow",
+        "black",
+        "white",
+        "brown"
+      ],
+      "habitats": [
+        "woodland",
+        "thickets"
+      ],
+      "summary": "The most numerous warbler in migration — look for the yellow rump.",
+      "idTips": [
+        "Bright yellow rump patch (birders call it 'butter butt').",
+        "Yellow patches on the sides of the chest.",
+        "Winter birds are brownish and streaked, but keep the yellow rump."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Magnolia Warbler",
+          "code": "magwar",
+          "howToTell": "Also has a yellow rump, but bright yellow underparts with black streaks and a white band across the tail."
+        },
+        {
+          "name": "Palm Warbler",
+          "code": "palwar",
+          "howToTell": "Yellow under the tail (not the rump), and it constantly bobs its tail."
+        }
+      ],
+      "whereInPark": "Everywhere in migration; in winter, near fruiting shrubs and sunny edges.",
+      "whenInPark": "April–early May and October; a few winter.",
+      "behavior": "Adaptable — catches flying insects, gleans leaves, and eats berries.",
+      "voice": "A sharp check call; the song is a loose, warbled trill."
+    },
+    {
+      "code": "scatan",
+      "commonName": "Scarlet Tanager",
+      "scientificName": "Piranga olivacea",
+      "bandingCode": "SCTA",
+      "family": "Cardinals and Allies",
+      "familyScientific": "Cardinalidae",
+      "taxonOrder": 53,
+      "startHere": true,
+      "lengthIn": [
+        6.3,
+        6.7
+      ],
+      "colors": [
+        "red",
+        "black",
+        "yellow",
+        "green"
+      ],
+      "habitats": [
+        "woodland"
+      ],
+      "summary": "A spring jewel: brilliant red with black wings, high in the canopy.",
+      "idTips": [
+        "Breeding male: scarlet body with jet-black wings and tail.",
+        "Female and fall male: olive-yellow with darker wings.",
+        "Stout, pale bill."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Northern Cardinal",
+          "code": "norcar",
+          "howToTell": "Cardinal has a crest, red wings, and a black face."
+        }
+      ],
+      "whereInPark": "Treetops in the Ramble and the North Woods.",
+      "whenInPark": "May and September migration.",
+      "behavior": "Moves slowly through the canopy — surprisingly hard to spot despite the color.",
+      "voice": "A burry, robin-like song and a distinctive chip-burr call."
+    },
+    {
+      "code": "norcar",
+      "commonName": "Northern Cardinal",
+      "scientificName": "Cardinalis cardinalis",
+      "bandingCode": "NOCA",
+      "family": "Cardinals and Allies",
+      "familyScientific": "Cardinalidae",
+      "taxonOrder": 54,
+      "startHere": true,
+      "lengthIn": [
+        8.3,
+        9.1
+      ],
+      "colors": [
+        "red",
+        "brown",
+        "black",
+        "orange"
+      ],
+      "habitats": [
+        "thickets",
+        "feeders",
+        "woodland"
+      ],
+      "summary": "The bright red, crested songbird — a year-round park favorite.",
+      "idTips": [
+        "Male: all red with a black face around a thick red-orange bill.",
+        "Female: warm tan-brown with red tinges in the wings, tail, and crest.",
+        "Pointed crest and heavy conical bill."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Scarlet Tanager",
+          "code": "scatan",
+          "howToTell": "Male is red with jet-black wings and tail, and no crest."
+        },
+        {
+          "name": "Summer Tanager",
+          "code": "sumtan",
+          "howToTell": "All red, but with no crest or black face and a pale bill. A rare migrant."
+        }
+      ],
+      "whereInPark": "Shrubby edges and feeders throughout.",
+      "whenInPark": "Year-round.",
+      "behavior": "Pairs stay together; males feed females during courtship.",
+      "voice": "Loud, clear whistles — cheer-cheer-cheer or birdie-birdie-birdie — and a sharp chip."
+    },
+    {
+      "code": "robgro",
+      "commonName": "Rose-breasted Grosbeak",
+      "scientificName": "Pheucticus ludovicianus",
+      "bandingCode": "RBGR",
+      "family": "Cardinals and Allies",
+      "familyScientific": "Cardinalidae",
+      "taxonOrder": 55,
+      "startHere": true,
+      "lengthIn": [
+        7.1,
+        8.3
+      ],
+      "colors": [
+        "black",
+        "white",
+        "red",
+        "brown"
+      ],
+      "habitats": [
+        "woodland"
+      ],
+      "summary": "A chunky songbird with a huge pale bill; the male wears a rose-red bib.",
+      "idTips": [
+        "Male: black and white with a triangular rose-red patch on the chest.",
+        "Female: streaky brown with a bold white eyebrow — like a giant sparrow.",
+        "Massive pale, conical bill."
+      ],
+      "lookAlikes": [
+        {
+          "name": "Purple Finch",
+          "code": "purfin",
+          "howToTell": "Female grosbeak resembles a huge female Purple Finch but has a much bigger bill and bold white wingbars."
+        }
+      ],
+      "whereInPark": "The middle and upper canopy in the Ramble and the North Woods.",
+      "whenInPark": "May and September migration.",
+      "behavior": "Eats seeds, buds, and insects; often sits still for long stretches.",
+      "voice": "A robin-like song, often described as a robin that took voice lessons; a squeaky-sneaker eek call."
+    }
+  ]
+}
