@@ -178,3 +178,11 @@ starting with **Forest** (from the approved Figma design). Every customization f
   the neighbouring day — from `lib/weather/briefing.ts`. First in the default layout (persist v11).
 - **CI audit narrowed to `--omit=dev`** while GHSA-vfj7-8cjw-p6xm (`braces`, dev tooling only) has
   no fix — see CLAUDE.md.
+
+## v7 — Compare two locations — done
+
+- **Compare view.** A header button swaps the dashboard for the main location beside a remembered
+  second place (`compareLocation`, `compareLayout`; persist v12): a Right now card each, a sentence
+  on the temperature gap, and both 7-day forecasts — **By day** (rows matched by calendar date, so
+  places a day apart never pair different days; missing side shows "—") or **Side by side**, on one
+  shared temperature scale. One extra request, only while Compare is open.

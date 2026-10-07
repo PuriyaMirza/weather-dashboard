@@ -15,6 +15,8 @@ function renderHeader(overrides: Partial<Parameters<typeof SiteHeader>[0]> = {})
     isRefreshing: false,
     onOpenLocationPanel: vi.fn(),
     locationButtonRef: createRef<HTMLButtonElement>(),
+    onCompare: vi.fn(),
+    compareButtonRef: createRef<HTMLButtonElement>(),
     menu: <button type="button">Open menu</button>,
     ...overrides,
   };
@@ -70,6 +72,17 @@ describe('SiteHeader', () => {
     renderHeader({ hasHydrated: false });
     expect(screen.queryByRole('button', { name: /change location/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /^refresh$/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^compare$/i })).toBeNull();
+  });
+
+  it('opens Compare from a button named Compare, with the word in its text as well as its icon', () => {
+    const props = renderHeader();
+    const button = screen.getByRole('button', { name: /^compare$/i });
+    expect(button).toHaveTextContent('Compare');
+    expect(props.compareButtonRef.current).toBe(button);
+
+    fireEvent.click(button);
+    expect(props.onCompare).toHaveBeenCalledTimes(1);
   });
 });
 

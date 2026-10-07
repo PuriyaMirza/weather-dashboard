@@ -21,6 +21,8 @@ components/
                            card-frame.tsx (shared loading/error/unavailable/ready states).
   location/                Location search and the change-location dialog.
   onboarding/               First-run flow.
+  compare/                 Compare view: two places side by side (Right now cards, by-day / side-by-side
+                           7-day forecasts, second-place picker). A dashboard mode, not a page.
 lib/
   weather/                 Domain logic: schemas (Zod), providers (Open-Meteo fetch), normalizer,
                            types (WeatherDashboardData — the only shape cards see), units, metrics,
@@ -131,7 +133,7 @@ npx playwright test tests/e2e/home.spec.ts  # one e2e spec
   only assert server HTML.
 - **Playwright projects**: `chromium` runs the full `tests/e2e/**` suite; `mobile-chrome` (Pixel 7)
   and `webkit` are scoped via `testMatch` to `accessibility.spec.ts` and `customization.spec.ts`
-  only — the two specs with width- or engine-dependent behaviour (arrange-mode/drag controls).
+  (mobile-chrome also runs `compare.spec.ts`) — the two specs with width- or engine-dependent behaviour (arrange-mode/drag controls).
   Don't assume a new e2e spec runs on all three projects; add it to the `testMatch` regex if it needs to.
 - `PLAYWRIGHT_CHROMIUM_PATH` overrides the Chromium binary for environments that ship their own and
   forbid downloading one (applied per-project so it never hands WebKit a Chromium binary).

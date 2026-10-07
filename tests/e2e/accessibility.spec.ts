@@ -1,7 +1,15 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { mockWeatherData, mockWeekWeatherData } from '../../lib/weather/mock-data';
-import { DAY_FOLLOWING_LAYOUT, markOnboarded, openLocationPanel, seedPreferences } from './support';
+import {
+  DAY_FOLLOWING_LAYOUT,
+  LISBON,
+  PORTLAND,
+  markOnboarded,
+  openLocationPanel,
+  seedPreferences,
+  stubWeatherByLatitude,
+} from './support';
 
 // These specs exercise the returning-visitor dashboard; the first-run flow would sit over it.
 test.beforeEach(async ({ page }) => {
@@ -189,4 +197,60 @@ test('the default dashboard planning a later day has no serious accessibility vi
 
   const violations = await scan(page);
   expect(violations, describe(violations)).toEqual([]);
+});
+
+test.describe('Compare', () => {
+  test.beforeEach(async ({ page }) => {
+    await seedPreferences(page, { location: PORTLAND, savedLocations: [PORTLAND, LISBON] });
+    await stubWeatherByLatitude(page);
+  });
+
+  async function openCompare(page: Page) {
+    await page.goto('/');
+    await page.getByRole('button', { name: /^compare$/i }).click();
+    await expect(page.getByRole('heading', { level: 2, name: 'Compare' })).toBeVisible();
+  }
+
+  async function pickLisbon(page: Page) {
+    await page.getByRole('button', { name: /compare with lisbon/i }).click();
+    await expect(page.getByText('Lisbon is 8° warmer than Portland right now.')).toBeVisible();
+  }
+
+  test('the empty Compare view has no serious accessibility violations', async ({ page }) => {
+    await openCompare(page);
+    await expect(page.getByRole('heading', { name: /pick a place to compare with/i })).toBeVisible();
+    // Portland's own reading too, so the scan covers a ready card beside the prompt.
+    await expect(page.getByRole('article', { name: 'Portland' })).toContainText('72°');
+
+    const violations = await scan(page);
+    expect(violations, describe(violations)).toEqual([]);
+  });
+
+  test('Compare by day has no serious accessibility violations', async ({ page }) => {
+    await openCompare(page);
+    await pickLisbon(page);
+    await expect(page.getByRole('table', { name: /by day/i })).toBeVisible();
+
+    const violations = await scan(page);
+    expect(violations, describe(violations)).toEqual([]);
+  });
+
+  test('Compare side by side has no serious accessibility violations', async ({ page }) => {
+    await openCompare(page);
+    await pickLisbon(page);
+    await page.getByRole('radio', { name: 'Side by side' }).locator('xpath=ancestor::label[1]').click();
+    await expect(page.getByRole('table', { name: '7-day forecast for Lisbon' })).toBeVisible();
+
+    const violations = await scan(page);
+    expect(violations, describe(violations)).toEqual([]);
+  });
+
+  test('the open Compare picker has no serious accessibility violations', async ({ page }) => {
+    await openCompare(page);
+    await page.getByRole('button', { name: /choose a place/i }).click();
+    await expect(page.getByRole('dialog', { name: 'Compare with…' })).toBeVisible();
+
+    const violations = await scan(page);
+    expect(violations, describe(violations)).toEqual([]);
+  });
 });

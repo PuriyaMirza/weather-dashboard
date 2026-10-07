@@ -66,6 +66,15 @@ function round(value: number, decimals = 0): string {
   return value.toFixed(decimals);
 }
 
+/**
+ * The whole-degree number `formatTemperature` prints, in the chosen unit. For arithmetic on what
+ * the reader actually sees — a gap computed from raw readings can disagree with the two numbers
+ * on screen by a degree once each is rounded.
+ */
+export function toShownTemperature(fahrenheit: number, system: UnitSystem): number {
+  return Number(round(system === 'metric' ? toCelsius(fahrenheit) : fahrenheit));
+}
+
 /** Temperature with a degree symbol, e.g. "72°" — the unit letter is usually implied by context. */
 export function formatTemperature(fahrenheit: number | null | undefined, system: UnitSystem): string {
   if (fahrenheit == null) return UNAVAILABLE;

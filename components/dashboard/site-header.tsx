@@ -20,6 +20,10 @@ interface SiteHeaderProps {
   onOpenLocationPanel: () => void;
   /** Attached to the location button, so closing the dialog can return focus to it. */
   locationButtonRef: RefObject<HTMLButtonElement | null>;
+  /** Opens the Compare view. */
+  onCompare: () => void;
+  /** Attached to the Compare button, so leaving the view can return focus to it. */
+  compareButtonRef: RefObject<HTMLButtonElement | null>;
   /** The settings menu, rendered at the header's right edge. */
   menu: ReactNode;
 }
@@ -75,6 +79,8 @@ export function SiteHeader({
   isRefreshing,
   onOpenLocationPanel,
   locationButtonRef,
+  onCompare,
+  compareButtonRef,
   menu,
 }: SiteHeaderProps) {
   const minute = useCurrentMinute();
@@ -137,6 +143,20 @@ export function SiteHeader({
             >
               <Icon name="refresh" size={22} className={isRefreshing ? 'animate-spin' : undefined} />
               <span className="sr-only">Refresh</span>
+            </button>
+          )}
+
+          {hasHydrated && (
+            // The word hides on a phone, where the header cannot spare the width, but stays in the
+            // accessible name — so voice control and screen readers still hear "Compare".
+            <button
+              ref={compareButtonRef}
+              type="button"
+              onClick={onCompare}
+              className="flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2.5 text-secondary outline-none hover:bg-surface-container-highest hover:text-primary focus-visible:ring-2 focus-visible:ring-secondary-fixed sm:px-3.5"
+            >
+              <Icon name="compare-arrows" size={22} />
+              <span className="sr-only type-label-lg sm:not-sr-only">Compare</span>
             </button>
           )}
 

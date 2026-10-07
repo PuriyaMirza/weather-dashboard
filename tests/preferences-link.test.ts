@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ACTIVITIES, findActivityWindows, type ActivityId } from '@/lib/weather/activity-windows';
 import { composeLayoutForActivities, DEFAULT_CARD_LAYOUT } from '@/lib/weather/card-layout';
+import { DEFAULT_COMPARE_LAYOUT } from '@/lib/weather/compare';
 import { DEFAULT_LOCATION, type SelectedLocation } from '@/lib/weather/location';
 import { mockWeatherData } from '@/lib/weather/mock-data';
 import { buildShareUrl, decodePreferences, encodePreferences, SHARE_PARAM } from '@/lib/weather/share-link';
@@ -15,6 +16,20 @@ const PORTLAND: SelectedLocation = {
   longitude: -122.6784,
 };
 
+const LISBON: SelectedLocation = {
+  id: '2267057',
+  name: 'Lisbon',
+  region: 'Lisbon',
+  country: 'Portugal',
+  latitude: 38.71667,
+  longitude: -9.13333,
+};
+
+/** Encodes a hand-written wire object, the way a link from an older (or hostile) writer arrives. */
+function encodeWire(wire: Record<string, unknown>): string {
+  return btoa(JSON.stringify(wire)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+}
+
 const PREFERENCES: PersistedPreferences = {
   location: PORTLAND,
   savedLocations: [PORTLAND],
@@ -26,6 +41,8 @@ const PREFERENCES: PersistedPreferences = {
   ],
   activities: ['cycle', 'walk'],
   hasOnboarded: true,
+  compareLocation: LISBON,
+  compareLayout: 'side-by-side',
 };
 
 /**
@@ -99,6 +116,54 @@ describe('the shareable setup link', () => {
     expect(decoded).toEqual(PREFERENCES);
   });
 
+  it('round-trips with nothing to compare, leaving the compare keys out of the link', () => {
+    const withoutCompare = { ...PREFERENCES, compareLocation: null, compareLayout: DEFAULT_COMPARE_LAYOUT };
+    const encoded = encodePreferences(withoutCompare);
+
+    expect(decodePreferences(encoded)).toEqual(withoutCompare);
+    expect(JSON.parse(atob(encoded.replaceAll('-', '+').replaceAll('_', '/')))).not.toHaveProperty('k');
+  });
+
+  /**
+   * Links written before Compare existed carry neither key, and the wire version was deliberately
+   * left at 1 — so they must still decode, with nothing to compare and the default layout.
+   */
+  it('still reads a link from before Compare existed', () => {
+    const legacy = encodeWire({
+      v: 1,
+      l: PORTLAND,
+      s: [PORTLAND],
+      u: 'metric',
+      t: 'forest',
+      c: [['temperature', 'medium']],
+      a: ['walk'],
+    });
+
+    const decoded = decodePreferences(legacy);
+    expect(decoded).not.toBeNull();
+    expect(decoded?.location).toEqual(PORTLAND);
+    expect(decoded?.unitSystem).toBe('metric');
+    expect(decoded?.compareLocation).toBeNull();
+    expect(decoded?.compareLayout).toBe(DEFAULT_COMPARE_LAYOUT);
+  });
+
+  it('falls back on garbage in the compare keys without discarding the rest of the link', () => {
+    for (const [k, y] of [
+      [{ id: 'evil', name: 'Evil', longitude: 999 }, 'grid'],
+      ['Lisbon', 7],
+      [[LISBON], null],
+      // The dashboard's own location is no place to compare with.
+      [PORTLAND, '__proto__'],
+    ]) {
+      const decoded = decodePreferences(encodeWire({ v: 1, l: PORTLAND, u: 'metric', k, y }));
+      expect(decoded).not.toBeNull();
+      expect(decoded?.location).toEqual(PORTLAND);
+      expect(decoded?.unitSystem).toBe('metric');
+      expect(decoded?.compareLocation).toBeNull();
+      expect(decoded?.compareLayout).toBe(DEFAULT_COMPARE_LAYOUT);
+    }
+  });
+
   it('survives non-ASCII place names', () => {
     // btoa is latin1-only, so anything that skips the UTF-8 encode step breaks exactly here.
     const zurich = { ...PORTLAND, id: 'z', name: 'Zürich', region: 'Zürich', country: 'Schweiz' };
@@ -132,9 +197,7 @@ describe('the shareable setup link', () => {
       c: [['../../etc/passwd', 'huge'], ['temperature', 'small']],
       a: ['walk', '__proto__'],
     };
-    const encoded = btoa(JSON.stringify(hostile)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
-
-    const decoded = decodePreferences(encoded);
+    const decoded = decodePreferences(encodeWire(hostile));
     expect(decoded).not.toBeNull();
     expect(decoded?.location).toEqual(DEFAULT_LOCATION);
     expect(decoded?.theme).toBe('forest');

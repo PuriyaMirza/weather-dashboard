@@ -20,7 +20,11 @@ import { validatePreferences, type PersistedPreferences } from '@/store/dashboar
 
 export const SHARE_PARAM = 'p';
 
-/** Bumped when the wire shape changes, so an old link is refused rather than half-read. */
+/**
+ * Bumped when the wire shape changes incompatibly, so an old link is refused rather than half-read.
+ * Adding an optional key is not such a change: a link written before the key existed decodes as if
+ * it carried the default, which is what Compare's `k`/`y` rely on to keep version-1 links working.
+ */
 const SHARE_VERSION = 1;
 
 /**
@@ -38,7 +42,19 @@ interface WirePreferences {
   t?: string;
   c?: [string, string][];
   a?: string[];
+  /** Compare place. Omitted when there is none, so a link without Compare reads as it always did. */
+  k?: unknown;
+  /** Compare layout. */
+  y?: string;
 }
+
+/**
+ * What a link can be built from: every persisted preference, with the Compare pair optional.
+ * Absent means "the default" on both sides of the wire — exactly how a link from before Compare
+ * decodes — so a caller with no compare setup to carry is not made to spell one out.
+ */
+export type ShareablePreferences = Omit<PersistedPreferences, 'compareLocation' | 'compareLayout'> &
+  Partial<Pick<PersistedPreferences, 'compareLocation' | 'compareLayout'>>;
 
 function toBase64Url(text: string): string {
   const bytes = new TextEncoder().encode(text);
@@ -56,7 +72,7 @@ function fromBase64Url(value: string): string {
 }
 
 /** Serializes preferences into the value of the `?p=` parameter. */
-export function encodePreferences(preferences: PersistedPreferences): string {
+export function encodePreferences(preferences: ShareablePreferences): string {
   const wire: WirePreferences = {
     v: SHARE_VERSION,
     l: preferences.location,
@@ -65,8 +81,11 @@ export function encodePreferences(preferences: PersistedPreferences): string {
     t: preferences.theme,
     c: preferences.cards.map((card) => [card.id, card.size]),
     a: preferences.activities,
+    k: preferences.compareLocation ?? undefined,
+    y: preferences.compareLayout,
   };
 
+  // JSON.stringify drops the undefined keys, so an unused Compare costs a link nothing.
   return toBase64Url(JSON.stringify(wire));
 }
 
@@ -99,6 +118,8 @@ export function decodePreferences(value: string | null | undefined): PersistedPr
         : [],
       activities: wire.a,
       hasOnboarded: true,
+      compareLocation: wire.k,
+      compareLayout: wire.y,
     });
   } catch {
     return null;
@@ -106,7 +127,7 @@ export function decodePreferences(value: string | null | undefined): PersistedPr
 }
 
 /** Builds the full shareable URL for the current page. */
-export function buildShareUrl(baseUrl: string, preferences: PersistedPreferences): string {
+export function buildShareUrl(baseUrl: string, preferences: ShareablePreferences): string {
   const url = new URL(baseUrl);
   url.searchParams.set(SHARE_PARAM, encodePreferences(preferences));
   return url.toString();
