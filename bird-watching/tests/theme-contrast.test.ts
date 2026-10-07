@@ -29,7 +29,15 @@ describe('theme contrast (WCAG AA, 4.5:1)', () => {
     expect(contrast(tokens[text], tokens[surface])).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('dark text on the filled chips and buttons', () => {
+  it('light text on the filled chips, buttons and active tab', () => {
     expect(contrast(tokens['on-secondary'], tokens['secondary-fixed'])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it.each([1, 2, 3, 4, 5].map((n) => [`scale-${n}`, `scale-${n}-bg`]))('%s on %s', (text, bg) => {
+    expect(contrast(tokens[text], tokens[bg])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('error text on its container', () => {
+    expect(contrast(tokens['on-error-container'], tokens['error-container'])).toBeGreaterThanOrEqual(4.5);
   });
 });

@@ -45,7 +45,7 @@ export function BottomNav() {
                 }`}
               >
                 <span
-                  className={`flex h-7 w-14 items-center justify-center rounded-full ${active ? 'bg-secondary-container' : ''}`}
+                  className={`flex h-7 w-14 items-center justify-center rounded-full ${active ? 'bg-secondary-fixed text-on-secondary' : ''}`}
                 >
                   <Icon name={item.icon} size={20} />
                 </span>

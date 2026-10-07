@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   // Matches --surface so the browser chrome doesn't sit on a seam.
-  themeColor: '#001711',
+  themeColor: '#f2f3e4',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
