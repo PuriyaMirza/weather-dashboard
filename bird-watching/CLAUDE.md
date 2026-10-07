@@ -13,7 +13,8 @@ discussion, check `node_modules/next/dist/docs/` before touching Next APIs).
 ```
 app/                 / (Today), /guide, /guide/[code] (prerendered), /guide/glossary,
                      /log, /log/outing?id= (query param: outings live only in IndexedDB), /log/lists,
-                     /sightings; api/sightings (eBird, needs EBIRD_API_KEY), api/forecast (Open-Meteo)
+                     /sightings; api/sightings (eBird, needs EBIRD_API_KEY), api/forecast (Open-Meteo),
+                     api/rare-highlight (Today's hero: newest rare bird with a credited species photo)
 components/ui/       Primitives copied from the weather app (Icon subset, Surface, Chip, SectionHeader)
 components/guide/    FieldGuide (client search/filters), SpeciesRow, SpeciesDetail, ToggleChip
 components/log/      LogHome, OutingEditor, OutingDetails, QuickAdd, ObservationRow, SpeciesLists

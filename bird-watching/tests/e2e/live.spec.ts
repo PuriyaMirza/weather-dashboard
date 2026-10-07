@@ -21,8 +21,26 @@ const sighting = (code: string, name: string, extra: object = {}) => ({
   count: 2, notable: false, unconfirmed: false, checklistUrl: 'https://ebird.org/checklist/S1', ...extra,
 });
 
+// A 1×1 PNG, so the hero's next/image request never reaches Wikimedia.
+const PIXEL = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+
+const rareHighlight = {
+  fetchedAt: new Date().toISOString(),
+  highlight: {
+    sighting: sighting('bawwar', 'Black-and-white Warbler', { scientificName: 'Mniotilta varia', area: 'Evodia Field', count: 1, notable: true }),
+    photo: {
+      src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Mniotilta.jpg/800px-Mniotilta.jpg',
+      width: 800, height: 600, artist: 'A. Photographer', license: 'CC BY-SA 4.0',
+      licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Mniotilta.jpg',
+      articleUrl: 'https://en.wikipedia.org/wiki/Black-and-white_warbler',
+    },
+  },
+};
+
 async function stubApis(page: Page) {
   await page.route('**/api/forecast', (route) => route.fulfill({ json: forecast }));
+  await page.route('**/api/rare-highlight', (route) => route.fulfill({ json: { fetchedAt: '', highlight: null } }));
   await page.route('**/api/sightings?*', (route) => {
     const days = Number(new URL(route.request().url()).searchParams.get('days'));
     return route.fulfill({
@@ -46,6 +64,26 @@ test('Today shows the migration outlook and recent park sightings', async ({ pag
   await expect(page.getByText('6:58 AM · 6:31 PM')).toBeVisible();
   await expect(page.getByText('Connecticut Warbler', { exact: true })).toBeVisible();
   await expect(page.getByText('Rare here · unconfirmed')).toBeVisible();
+});
+
+test('Today leads with a recent rare bird and its credited photo', async ({ page }) => {
+  await stubApis(page);
+  await page.route('**/api/rare-highlight', (route) => route.fulfill({ json: rareHighlight }));
+  await page.route('**/_next/image?*', (route) => route.fulfill({ contentType: 'image/png', body: PIXEL }));
+  await page.goto('/');
+  const hero = page.getByRole('region', { name: 'Black-and-white Warbler' });
+  await expect(hero.getByRole('img', { name: /Black-and-white Warbler, a representative photo/ })).toBeVisible();
+  await expect(hero.getByText(/Photo of the species, not this sighting: A\. Photographer/)).toBeVisible();
+  await expect(hero.getByText(/Reported at Evodia Field · Today 7:45 AM/)).toBeVisible();
+  await hero.getByRole('link', { name: 'Black-and-white Warbler' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Black-and-white Warbler' })).toBeVisible();
+});
+
+test('Today leaves the hero out when no rare bird can be shown', async ({ page }) => {
+  await stubApis(page);
+  await page.goto('/');
+  await expect(page.getByText('Good migration night')).toBeVisible();
+  await expect(page.getByText(/representative photo|Looking for rare birds/)).toHaveCount(0);
 });
 
 test('sightings page filters by days and area, and links to the guide', async ({ page }) => {

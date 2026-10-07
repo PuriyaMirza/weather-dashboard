@@ -8,6 +8,7 @@ import type { RateLimitResult } from '@/lib/rate-limit';
 export const CACHE_CONTROL = {
   // eBird reports trickle in through the morning; 15 minutes is fresh enough to chase a rarity.
   sightings: 'public, max-age=0, s-maxage=900, stale-while-revalidate=300',
+  rareHighlight: 'public, max-age=0, s-maxage=900, stale-while-revalidate=300',
   // Open-Meteo refreshes hourly forecasts on roughly that cadence.
   forecast: 'public, max-age=0, s-maxage=1800, stale-while-revalidate=600',
   none: 'no-store',
