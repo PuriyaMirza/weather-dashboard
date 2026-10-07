@@ -1,55 +1,56 @@
 @import "tailwindcss";
 
 /*
-  Design tokens. The palette is the weather dashboard's Forest theme, copied rather than shared:
-  this app is a separate package, and a shared token file would couple two release cycles for the
-  sake of a dozen hex values.
+  Design tokens. Light olive: a pale olive page, near-white olive cards, and dark forest green kept
+  for accents (titles, links, filled buttons, the active tab) so it reads as a pop, not a wash.
+  Mirrors the "Theme / Light olive" variables in the Figma mockup.
 
   Components reference semantic tokens only (bg-surface-container-high, text-on-surface…), never
   raw colours. Colour is never the only signal: abundance bands and statuses always carry a word.
+  tests/theme-contrast.test.ts checks every text/surface pair against WCAG AA.
 */
 
 :root {
-  --surface: #001711;
-  --surface-container-lowest: #00110d;
-  --surface-container-low: #042019;
-  --surface-container: #08241d;
-  --surface-container-high: #142f28;
-  --surface-container-highest: #1f3a32;
-  --primary: #ffffff;
-  --primary-fixed: #d1e8df;
-  --secondary: #a8cfbf;
-  --secondary-fixed: #c4ebda;
-  --secondary-container: #2d5043;
-  --on-surface: #cbe9de;
-  --on-surface-variant: #c2c8c4;
-  --on-secondary-container: #9bc1b1;
-  --on-secondary: #12362b;
-  --outline-variant: #424845;
-  --error: #ffb4ab;
-  --error-container: #4a1d19;
-  --on-error-container: #ffdad6;
+  --surface: #f2f3e4;
+  --surface-container-lowest: #fdfdf8;
+  --surface-container-low: #f7f8ec;
+  --surface-container: #fbfbf4;
+  --surface-container-high: #e9ebd7;
+  --surface-container-highest: #dfe2ca;
+  --primary: #0e3b2c;
+  --primary-fixed: #1b4a38;
+  --secondary: #3d6650;
+  --secondary-fixed: #1f5a3e;
+  --secondary-container: #dce6d3;
+  --on-surface: #1b2a21;
+  --on-surface-variant: #4d5a4f;
+  --on-secondary-container: #2f4a3b;
+  --on-secondary: #f7f8ec;
+  --outline-variant: #d5d8bf;
+  --error: #a8281c;
+  --error-container: #f8ddd8;
+  --on-error-container: #5c140d;
 
-  /* Shadows are tinted with the surface hue rather than pure black, which reads muddy on green. */
-  --shadow-color: 0 17 13;
+  /* Olive-tinted rather than black, and light: on a pale page a heavy shadow reads as dirt. */
+  --shadow-color: 74 82 44;
 
   /* Abundance bands, common → rare. Each text/bg pair clears WCAG AA and every band is also
      spelled out in words. */
-  --scale-1: #9fe3b5;
-  --scale-1-bg: #173a27;
-  --scale-2: #f3d98b;
-  --scale-2-bg: #3a3316;
-  --scale-3: #f7b98a;
-  --scale-3-bg: #43291a;
-  --scale-4: #ffb4ab;
-  --scale-4-bg: #4a1d19;
-  --scale-5: #e2b8ff;
-  --scale-5-bg: #34204a;
+  --scale-1: #1f5a36;
+  --scale-1-bg: #d7ebd5;
+  --scale-2: #6b5300;
+  --scale-2-bg: #f4e8b8;
+  --scale-3: #8a4b12;
+  --scale-3-bg: #f8e0cb;
+  --scale-4: #8e2b1f;
+  --scale-4-bg: #f5ddd6;
+  --scale-5: #6a2c8a;
+  --scale-5-bg: #ebddf5;
 
   --header-height: 3.75rem;
   --nav-height: 4rem;
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -84,9 +85,9 @@
   --color-scale-4-bg: var(--scale-4-bg);
   --color-scale-5: var(--scale-5);
   --color-scale-5-bg: var(--scale-5-bg);
-  --shadow-card: 0 1px 3px rgb(var(--shadow-color) / 0.35);
-  --shadow-raised: 0 8px 24px rgb(var(--shadow-color) / 0.5);
-  --shadow-header: 0 4px 24px rgb(var(--shadow-color) / 0.6);
+  --shadow-card: 0 1px 3px rgb(var(--shadow-color) / 0.12);
+  --shadow-raised: 0 8px 24px rgb(var(--shadow-color) / 0.18);
+  --shadow-header: 0 2px 12px rgb(var(--shadow-color) / 0.1);
 }
 
 body {

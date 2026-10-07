@@ -8,7 +8,8 @@ import { useApi } from '@/lib/live/use-api';
 
 // Bands reuse the severity scale tokens; each always shows its headline in words too.
 const LEVEL_CLASS: Record<OutlookLevel, string> = {
-  high: 'bg-scale-1-bg text-scale-1',
+  // The one outlook worth an early alarm gets the accent fill; the headline still says it in words.
+  high: 'bg-secondary-fixed text-on-secondary',
   'fallout-watch': 'bg-scale-5-bg text-scale-5',
   moderate: 'bg-scale-2-bg text-scale-2',
   low: 'bg-scale-3-bg text-scale-3',
