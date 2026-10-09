@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { commonsFileName, getSpeciesPhoto, getSpeciesPhotos, isFreeLicense, plainText } from '@/lib/media/wikipedia';
+import { commonsFileName, getSpeciesPhoto, getSpeciesPhotos, isFreeLicense, plainText, retryDelayMs } from '@/lib/media/wikipedia';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -119,6 +119,59 @@ describe('getSpeciesPhotos', () => {
       { code: 'norcar', scientificName: 'Cardinalis cardinalis' },
     ]);
     expect(Object.keys(photos)).toEqual(['amerob']);
+  });
+});
+
+describe('rate limits', () => {
+  const ok = (url: string) =>
+    new Response(JSON.stringify(url.includes('/summary/') ? summary : imageInfo({ Artist: 'A', LicenseShortName: 'CC0' })));
+  // A sub-second Retry-After keeps the test fast while exercising the real wait.
+  const slowDown = () => new Response('{}', { status: 429, headers: { 'Retry-After': '0.01' } });
+
+  it('waits and retries when Wikimedia says to slow down', async () => {
+    let first = true;
+    const fetchMock = vi.fn(async (url: string) => {
+      if (first) {
+        first = false;
+        return slowDown();
+      }
+      return ok(url);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await getSpeciesPhoto('Turdus migratorius')).not.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('gives up after four attempts and shows no photo rather than an uncredited one', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const fetchMock = vi.fn(async () => slowDown());
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await getSpeciesPhoto('Turdus migratorius')).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it('never has more than two requests in flight', async () => {
+    let inFlight = 0;
+    let peak = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        peak = Math.max(peak, ++inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        inFlight--;
+        return ok(url);
+      }),
+    );
+    const species = ['a', 'b', 'c', 'd', 'e'].map((code) => ({ code, scientificName: `${code} sci` }));
+    await Promise.all([getSpeciesPhotos(species), getSpeciesPhoto('Turdus migratorius')]);
+    expect(peak).toBe(2);
+  });
+
+  it('honours Retry-After in seconds, capped, and otherwise backs off exponentially', () => {
+    expect(retryDelayMs('3', 1)).toBe(3000);
+    expect(retryDelayMs('120', 1)).toBe(10_000);
+    expect(retryDelayMs(null, 1)).toBe(1000);
+    expect(retryDelayMs('Wed, 21 Oct 2026 07:28:00 GMT', 3)).toBe(4000);
   });
 });
 

@@ -91,14 +91,54 @@ export function plainText(html: string): string {
     .slice(0, 120);
 }
 
+/*
+  Builds prerender every species page at once, across several workers, and Wikimedia answers a
+  burst like that with 429s — which used to leave a few pages photo-less until the next weekly
+  revalidate. So requests are throttled per process and a "slow down" answer is retried. Next only
+  caches 200 responses, so a retry is a real new request, not a replay of the 429.
+*/
+const MAX_CONCURRENT = 2;
+const MAX_ATTEMPTS = 4;
+const MAX_RETRY_WAIT_S = 10;
+
+let active = 0;
+const queue: (() => void)[] = [];
+
+async function throttled<T>(task: () => Promise<T>): Promise<T> {
+  if (active >= MAX_CONCURRENT) await new Promise<void>((resolve) => queue.push(resolve));
+  active++;
+  try {
+    return await task();
+  } finally {
+    active--;
+    queue.shift()?.();
+  }
+}
+
+/** How long to wait before retry number `attempt` (1-based): the server's Retry-After, else 1s, 2s, 4s… */
+export function retryDelayMs(retryAfter: string | null, attempt: number): number {
+  const seconds = Number(retryAfter);
+  if (retryAfter && Number.isFinite(seconds) && seconds > 0) return Math.min(seconds, MAX_RETRY_WAIT_S) * 1000;
+  return 1000 * 2 ** (attempt - 1);
+}
+
 async function getJson(url: string): Promise<unknown> {
-  const response = await fetch(url, {
-    headers: { 'User-Agent': USER_AGENT, 'Api-User-Agent': USER_AGENT },
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-    next: { revalidate: ONE_WEEK_S },
-  });
-  if (!response.ok) throw new Error(`${url} → ${response.status}`);
-  return response.json();
+  for (let attempt = 1; ; attempt++) {
+    const response = await throttled(() =>
+      fetch(url, {
+        headers: { 'User-Agent': USER_AGENT, 'Api-User-Agent': USER_AGENT },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+        next: { revalidate: ONE_WEEK_S },
+      }),
+    );
+    const retryable = response.status === 429 || response.status === 503;
+    if (retryable && attempt < MAX_ATTEMPTS) {
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs(response.headers.get('retry-after'), attempt)));
+      continue;
+    }
+    if (!response.ok) throw new Error(`${url} → ${response.status}`);
+    return response.json();
+  }
 }
 
 /**
@@ -147,10 +187,10 @@ export async function getSpeciesPhoto(scientificName: string): Promise<SpeciesPh
   }
 }
 
-/** Photos for many species, a few at a time — polite to Wikimedia and quick enough at build. */
+/** Photos for many species, a few at a time; getJson's throttle keeps the request rate polite. */
 export async function getSpeciesPhotos(
   species: { code: string; scientificName: string }[],
-  concurrency = 6,
+  concurrency = MAX_CONCURRENT,
 ): Promise<Record<string, SpeciesPhoto>> {
   const result: Record<string, SpeciesPhoto> = {};
   const queue = [...species];
