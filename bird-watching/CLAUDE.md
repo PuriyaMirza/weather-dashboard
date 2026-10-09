@@ -21,7 +21,7 @@ components/log/      LogHome, OutingEditor, OutingDetails, QuickAdd, Observation
 components/live/     MorningForecast, SightingsList, RareBirdHero (client-fetched from our routes)
 components/shell/    BottomNav, ServiceWorkerRegistrar; SiteHeader exists but is not rendered (hidden
                      for later iteration — re-add it in app/layout.tsx)
-lib/birds/           schema.ts (Zod, the data contract), species.ts (server-only loader), search.ts,
+lib/birds/           season.ts (ebirdWeek, picksForWeek — client-safe), abundance.ts (server loader), schema.ts (Zod, the data contract), species.ts (server-only loader), search.ts,
                      labels.ts (size classes, colour/habitat labels), glossary.ts
 lib/ebird/          schemas.ts (eBird response shapes), sightings.ts (geo/recent + notable → ParkSighting)
 lib/forecast/       open-meteo.ts (provider), birding-outlook.ts (morning conditions + migration rule of thumb)
@@ -30,7 +30,8 @@ lib/live/           rare-highlight.ts (pick a rare sighting with a credited phot
 lib/api/            http.ts (jsonError, CACHE_CONTROL, fetchJson → UpstreamError), request-timeout.ts
 lib/log/             schema.ts (Outing/Observation/Backup), repository.ts (SightingsRepository + memory impl),
                      indexeddb-repository.ts, ebird-csv.ts (Record Format Extended), life-list.ts, backup.ts
-data/                species-content.json (hand-written), species.json (generated — don't hand-edit)
+data/                species-content.json (hand-written), species.json + abundance.json (generated — don't hand-edit;
+                     abundance comes from ebird-barchart.tsv via `npm run data:abundance`, county chart, 48 eBird weeks)
 scripts/             build-species.ts (run with Node type stripping, imports only zod + lib/*/schema*.ts)
 store/               In-memory Zustand store for guide filters
 app/manifest.ts      PWA manifest; icons in public/icon-*.png (+ maskable), iOS touch icon app/apple-icon.png
