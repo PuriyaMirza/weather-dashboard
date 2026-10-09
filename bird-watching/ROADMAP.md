@@ -9,7 +9,7 @@ repository interface. Phone-first, installable, offline-capable.
 | 2 | Weekly abundance from eBird bar chart → "what's around this week" checklist; Wikimedia photos + recordings with credits | Next — needs bar chart TSV download |
 | 3 | eBird-style sighting log (outings, counts, breeding codes), life/year lists, eBird CSV + JSON backup/restore | **Done** — on-device (IndexedDB) |
 | 4 | Today: birding forecast (Open-Meteo, migration rule-of-thumb) + live eBird sightings (`/sightings`) | **Done** — sightings need `EBIRD_API_KEY` on the server |
-| 5 | PWA: manifest, service worker, offline guide + log; a11y/e2e pass | Planned |
+| 5 | PWA: manifest, service worker, offline guide + log; a11y/e2e pass | **Done** — installable; live sightings/forecast stay online-only |
 | — | Park map with hotspots and "you are here" | Deferred |
 | — | Supabase sync / accounts | Deferred |
 

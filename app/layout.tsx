@@ -26,6 +26,8 @@ export const metadata: Metadata = {
   description:
     'A customizable weather dashboard. Choose which readings you see, arrange them how you like, for any location, with live data from Open-Meteo.',
   applicationName: 'Weather Dashboard',
+  // Opens full-screen from the iOS home screen; the touch icon itself is app/apple-icon.png.
+  appleWebApp: { capable: true, title: 'Weather', statusBarStyle: 'default' },
   openGraph: {
     title: 'Weather Dashboard',
     description: 'Choose which readings you see, arrange them how you like, for any location.',
