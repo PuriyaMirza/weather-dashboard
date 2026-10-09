@@ -39,6 +39,8 @@ tests/                     Flat directory, mirrors lib/components by filename (n
                            and UI-review passes — read-only, write to findings/.
 findings/                  Dated research/critique reports produced by the above subagents.
 ROADMAP.md, PRD.md         Source of truth for status and requirements — check before planning work.
+public/                    PWA icons (icon-192/512, maskable); app/manifest.ts + app/apple-icon.png make
+                           the dashboard installable to a home screen (no service worker: data is live).
 bird-watching/             Separate app (Central Park birding) with its own package, CI and CLAUDE.md;
                            excluded from this app's tsconfig/eslint/vitest. Don't import across.
 ```
@@ -109,6 +111,10 @@ blocks on high/critical advisories in shipped (runtime) dependencies only — de
 by hand, see the open advisory below. `.github/workflows/nightly.yml` runs daily on `main` for both
 apps: prod audit, `tests/live-upstream.test.ts` (real Open-Meteo/Wikipedia/eBird calls, skipped
 unless `LIVE_UPSTREAM=1`), and the smoke + accessibility pass.
+
+Deploys: Vercel, two projects from this one repo — `weather-dashboard` (repo root) and `nyc-bird-tracker`
+(Root Directory `bird-watching`). Each has an Ignored Build Step so it only rebuilds when its own files
+change (the weather one excludes `bird-watching/`). Previews per PR; `main` deploys to production.
 
 Running a single test:
 

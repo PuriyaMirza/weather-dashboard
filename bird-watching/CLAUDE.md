@@ -18,19 +18,22 @@ app/                 / (Today), /guide, /guide/[code] (prerendered), /guide/glos
 components/ui/       Primitives copied from the weather app (Icon subset, Surface, Chip, SectionHeader)
 components/guide/    FieldGuide (client search/filters), SpeciesRow, SpeciesDetail, ToggleChip
 components/log/      LogHome, OutingEditor, OutingDetails, QuickAdd, ObservationRow, SpeciesLists
-components/live/     MorningForecast, SightingsList (client-fetched from our routes)
-components/shell/    SiteHeader, BottomNav
+components/live/     MorningForecast, SightingsList, RareBirdHero (client-fetched from our routes)
+components/shell/    BottomNav, ServiceWorkerRegistrar; SiteHeader exists but is not rendered (hidden
+                     for later iteration — re-add it in app/layout.tsx)
 lib/birds/           schema.ts (Zod, the data contract), species.ts (server-only loader), search.ts,
                      labels.ts (size classes, colour/habitat labels), glossary.ts
 lib/ebird/          schemas.ts (eBird response shapes), sightings.ts (geo/recent + notable → ParkSighting)
 lib/forecast/       open-meteo.ts (provider), birding-outlook.ts (morning conditions + migration rule of thumb)
 lib/media/          wikipedia.ts (species lead photo + Commons credit; server-only, cached 1 week)
+lib/live/           rare-highlight.ts (pick a rare sighting with a credited photo), use-api.ts, format.ts
 lib/api/            http.ts (jsonError, CACHE_CONTROL, fetchJson → UpstreamError), request-timeout.ts
 lib/log/             schema.ts (Outing/Observation/Backup), repository.ts (SightingsRepository + memory impl),
                      indexeddb-repository.ts, ebird-csv.ts (Record Format Extended), life-list.ts, backup.ts
 data/                species-content.json (hand-written), species.json (generated — don't hand-edit)
 scripts/             build-species.ts (run with Node type stripping, imports only zod + lib/*/schema*.ts)
 store/               In-memory Zustand store for guide filters
+app/manifest.ts      PWA manifest; icons in public/icon-*.png (+ maskable), iOS touch icon app/apple-icon.png
 public/sw.js         Hand-written service worker (production only): network-first pages, cache-first
                      static/images, /api untouched. Shell pages precached; bump VERSION to drop caches.
 ```
@@ -78,3 +81,11 @@ aborts requests via `context.route` — `setOffline` alone doesn't stop the work
   root one. Use `npm ci`, or `npm install <pkg>` against the existing lockfile.
 - `next.config.ts` pins `turbopack.root` to this folder — the repo root's lockfile would otherwise win.
 - The cloud sandbox blocks eBird/Open-Meteo/Wikimedia; run data scripts locally and commit the JSON.
+- Design: light olive tokens in `app/globals.css` (dark green only for accents); `tests/theme-contrast.test.ts`
+  checks every text/surface pair. Figma mockup: file `6sbBeTvlvGi4gIAd7YPzb4`.
+- Layout uses `viewportFit: 'cover'` so `env(safe-area-inset-*)` works; the bottom nav pads by
+  `--nav-bottom-gap` (iPhone home indicator, min 0.75rem) and `main` clears it. Keep both when editing the shell.
+- Deploys: Vercel project `nyc-bird-tracker` (Root Directory `bird-watching`, prod https://nyc-bird-tracker.vercel.app);
+  its Ignored Build Step skips builds when nothing under `bird-watching/` changed. `EBIRD_API_KEY` is a Vercel env
+  var and a GitHub repo secret (nightly), never `NEXT_PUBLIC_`.
+- Regenerate PNG icons from `app/icon.svg` by rendering with Playwright's Chromium (no image deps installed).
