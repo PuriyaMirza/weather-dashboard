@@ -49,6 +49,8 @@
 
   --header-height: 3.75rem;
   --nav-height: 4rem;
+  /* Space under the nav's icons: the home-indicator inset on iPhones, never less than 0.75rem. */
+  --nav-bottom-gap: max(0.75rem, env(safe-area-inset-bottom));
 
   color-scheme: light;
 }

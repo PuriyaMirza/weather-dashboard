@@ -30,9 +30,9 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-outline-variant/60 bg-surface-container-low/95 backdrop-blur-sm"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-outline-variant/60 bg-surface-container-low/95 backdrop-blur-sm pb-[var(--nav-bottom-gap)]"
     >
-      <ul className="mx-auto flex h-[var(--nav-height)] max-w-2xl items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
+      <ul className="mx-auto flex h-[var(--nav-height)] max-w-2xl items-stretch justify-around px-2">
         {NAV_ITEMS.map((item) => {
           const active = item.matches(pathname);
           return (

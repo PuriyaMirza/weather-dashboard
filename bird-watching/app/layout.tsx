@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import { Manrope, Newsreader } from 'next/font/google';
 import { BottomNav } from '@/components/shell/bottom-nav';
 import { ServiceWorkerRegistrar } from '@/components/shell/service-worker-registrar';
-import { SiteHeader } from '@/components/shell/site-header';
 import './globals.css';
 
 const manrope = Manrope({ subsets: ['latin'], display: 'swap', variable: '--font-sans' });
@@ -28,6 +27,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   // Matches --surface so the browser chrome doesn't sit on a seam.
   themeColor: '#f2f3e4',
+  // Lets the page reach under the iPhone home indicator so env(safe-area-inset-*) reports real
+  // values; the bottom nav uses them to sit clear of it (see --nav-bottom-gap).
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
@@ -40,8 +42,8 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         >
           Skip to content
         </a>
-        <SiteHeader />
-        <main id="main" className="mx-auto w-full max-w-2xl px-4 pb-[calc(var(--nav-height)+2rem)] pt-4">
+        {/* SiteHeader (components/shell/site-header.tsx) is hidden for now, kept to iterate on later. */}
+        <main id="main" className="mx-auto w-full max-w-2xl px-4 pb-[calc(var(--nav-height)+var(--nav-bottom-gap)+2rem)] pt-[max(1.5rem,env(safe-area-inset-top))]">
           {children}
         </main>
         <BottomNav />
