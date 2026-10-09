@@ -21,6 +21,9 @@ export default defineConfig({
     // silently stops the client bundle loading and tests only ever see server HTML.
     baseURL: BASE_URL,
     trace: 'on-first-retry',
+    // A service worker would answer requests before page.route stubs see them; offline.spec.ts
+    // opts back in.
+    serviceWorkers: 'block',
   },
   webServer: {
     command: isCI ? 'npm run start' : 'npm run dev',

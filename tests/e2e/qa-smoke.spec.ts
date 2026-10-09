@@ -374,3 +374,14 @@ test('a malformed setup link is ignored rather than breaking the page', async ({
 
   expect(problems, `browser reported problems:\n${problems.join('\n')}`).toEqual([]);
 });
+
+test('the app can be added to a home screen: manifest, icons, and the iOS touch icon all resolve', async ({ page, request }) => {
+  const manifest = await (await request.get('/manifest.webmanifest')).json();
+  expect(manifest).toMatchObject({ short_name: 'Weather', display: 'standalone', start_url: '/' });
+  for (const icon of manifest.icons) expect((await request.get(icon.src)).ok(), icon.src).toBe(true);
+
+  await page.goto('/');
+  const touchIcon = await page.locator('link[rel="apple-touch-icon"]').getAttribute('href');
+  expect((await request.get(touchIcon!)).ok()).toBe(true);
+  await expect(page.locator('meta[name="mobile-web-app-capable"]')).toHaveAttribute('content', 'yes');
+});

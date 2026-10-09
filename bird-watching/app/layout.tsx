@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { Manrope, Newsreader } from 'next/font/google';
 import { BottomNav } from '@/components/shell/bottom-nav';
+import { ServiceWorkerRegistrar } from '@/components/shell/service-worker-registrar';
 import { SiteHeader } from '@/components/shell/site-header';
 import './globals.css';
 
@@ -20,6 +21,8 @@ export const metadata: Metadata = {
   description:
     'A field companion for birding Central Park: a beginner-friendly guide to the birds you will meet, where to find them, and how to tell look-alikes apart.',
   applicationName: 'Central Park Birding',
+  // Opens full-screen from the iOS home screen; the touch icon itself is app/apple-icon.png.
+  appleWebApp: { capable: true, title: 'Birding', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {
@@ -42,6 +45,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           {children}
         </main>
         <BottomNav />
+        <ServiceWorkerRegistrar />
       </body>
     </html>
   );

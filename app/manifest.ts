@@ -14,6 +14,14 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     background_color: THEMES[DEFAULT_THEME].themeColor,
     theme_color: THEMES[DEFAULT_THEME].themeColor,
-    icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' }],
+    // PNGs alongside the SVG: iOS and some Android launchers ignore SVG manifest icons. The
+    // maskable one is full-bleed with the art inside the safe zone, so launchers can crop it to
+    // any shape without clipping the mountains.
+    icons: [
+      { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' },
+      { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ],
   };
 }

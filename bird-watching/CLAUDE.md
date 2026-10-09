@@ -31,6 +31,8 @@ lib/log/             schema.ts (Outing/Observation/Backup), repository.ts (Sight
 data/                species-content.json (hand-written), species.json (generated — don't hand-edit)
 scripts/             build-species.ts (run with Node type stripping, imports only zod + lib/*/schema*.ts)
 store/               In-memory Zustand store for guide filters
+public/sw.js         Hand-written service worker (production only): network-first pages, cache-first
+                     static/images, /api untouched. Shell pages precached; bump VERSION to drop caches.
 ```
 
 ## Data rules
@@ -66,7 +68,9 @@ PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test   # in th
 workflow, eBird only if the `EBIRD_API_KEY` repo secret is set).
 
 Playwright: `mobile-chrome` (Pixel 7) runs everything; `chromium` (desktop) runs `accessibility.spec.ts`
-only. Add every new page/state to `tests/e2e/accessibility.spec.ts`.
+only. Add every new page/state to `tests/e2e/accessibility.spec.ts`. Service workers are blocked
+(so `page.route` stubs work) except in `offline.spec.ts`, which needs a production build (`CI=1`) and
+aborts requests via `context.route` — `setOffline` alone doesn't stop the worker's own fetches.
 
 ## Gotchas
 
