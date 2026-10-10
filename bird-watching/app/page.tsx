@@ -9,7 +9,7 @@ import { SectionHeader } from '@/components/ui/section-header';
 import { Surface } from '@/components/ui/surface';
 import { getWeeklyFrequencies } from '@/lib/birds/abundance';
 import { getAllSpecies, getYearRoundRegulars } from '@/lib/birds/species';
-import { getSpeciesPhotos } from '@/lib/media/wikipedia';
+import { getGuidePhotosForClient } from '@/lib/media/wikipedia';
 
 const FIRST_WALK_TIPS = [
   'Go early. Birds are most active in the first few hours after sunrise.',
@@ -20,7 +20,9 @@ const FIRST_WALK_TIPS = [
 
 export default async function TodayPage() {
   const regulars = getYearRoundRegulars();
-  const photos = await getSpeciesPhotos(regulars);
+  // This week's picks and recent sightings are chosen in the browser, so every guide bird they could
+  // name gets its photo here. Birds outside the guide show no photo: they'd cost new Wikipedia lookups.
+  const guidePhotos = await getGuidePhotosForClient(getAllSpecies());
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
@@ -44,12 +46,13 @@ export default async function TodayPage() {
         <AroundThisWeek
           frequencies={getWeeklyFrequencies()}
           names={Object.fromEntries(getAllSpecies().map((s) => [s.code, s.commonName]))}
+          photos={guidePhotos}
         />
       </section>
 
       <section aria-labelledby="recent" className="flex flex-col gap-2">
         <SectionHeader id="recent" title="Seen in the park lately" />
-        <SightingsList guideCodes={getAllSpecies().map((s) => s.code)} preview={5} />
+        <SightingsList guideCodes={getAllSpecies().map((s) => s.code)} photos={guidePhotos} preview={5} />
       </section>
 
       <section aria-labelledby="regulars" className="flex flex-col gap-2">
@@ -59,7 +62,7 @@ export default async function TodayPage() {
           <ul className="flex flex-col">
             {regulars.map((species) => (
               <li key={species.code}>
-                <SpeciesRow species={species} thumbSrc={photos[species.code]?.src} />
+                <SpeciesRow species={species} thumbSrc={guidePhotos[species.code]?.src} />
               </li>
             ))}
           </ul>

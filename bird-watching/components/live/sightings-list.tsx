@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useId, useMemo, useState } from 'react';
+import { PhotoThumbButton, type LightboxPhoto } from '@/components/log/photo-lightbox';
 import { Icon } from '@/components/ui/icon';
 import { Surface } from '@/components/ui/surface';
 import type { ParkSighting, SightingsResponse } from '@/lib/ebird/sightings';
@@ -15,13 +16,32 @@ const DAY_OPTIONS = [1, 3, 7, 14] as const;
 
 interface SightingsListProps {
   guideCodes: string[];
+  /** Credited photos for guide birds, by code; birds outside the guide get none (no extra Wikipedia lookups). */
+  photos: Record<string, LightboxPhoto>;
   /** Show only the first few rows with a link to the full page (the Today preview). */
   preview?: number;
 }
 
-function SightingRow({ sighting, today, linkable, isNew }: { sighting: ParkSighting; today: string; linkable: boolean; isNew: boolean }) {
+function SightingRow({
+  sighting,
+  today,
+  linkable,
+  isNew,
+  photo,
+}: {
+  sighting: ParkSighting;
+  today: string;
+  linkable: boolean;
+  isNew: boolean;
+  photo: LightboxPhoto | undefined;
+}) {
   return (
-    <li className="flex min-h-14 items-center gap-3 px-3 py-2.5">
+    <li className="flex min-h-[67px] items-center gap-3 px-3 py-2.5">
+      {photo ? (
+        <PhotoThumbButton photo={photo} commonName={sighting.commonName} className="h-12 w-12" />
+      ) : (
+        <span aria-hidden="true" className="h-12 w-12 shrink-0 rounded-lg bg-surface-container-highest" />
+      )}
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
           {linkable ? (
@@ -57,7 +77,7 @@ function SightingRow({ sighting, today, linkable, isNew }: { sighting: ParkSight
 }
 
 /** Recent reports from the park on eBird, rare birds first. */
-export function SightingsList({ guideCodes, preview }: SightingsListProps) {
+export function SightingsList({ guideCodes, photos, preview }: SightingsListProps) {
   const [days, setDays] = useState<(typeof DAY_OPTIONS)[number]>(preview ? 3 : 7);
   const [area, setArea] = useState('');
   const areaId = useId();
@@ -161,6 +181,7 @@ export function SightingsList({ guideCodes, preview }: SightingsListProps) {
                 today={today}
                 linkable={linkable.has(s.speciesCode)}
                 isNew={seen !== null && !seen.has(s.speciesCode)}
+                photo={photos[s.speciesCode]}
               />
             ))}
           </ul>

@@ -233,3 +233,23 @@ export async function getSpeciesPhotos(
   await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker));
   return result;
 }
+
+/** What a client photo popup needs: the photo and its credit, without the article link. */
+export type PhotoForClient = Omit<SpeciesPhoto, 'articleUrl'>;
+
+/**
+ * Credited photos for every guide species, keyed by code, trimmed for the client. Pages whose
+ * rows are only known in the browser (this week's picks, live sightings) pass this map down. The
+ * lookups are the guide pages' own (fetch-cached a week), so it adds no Wikipedia requests.
+ */
+export async function getGuidePhotosForClient(
+  species: { code: string; scientificName: string }[],
+): Promise<Record<string, PhotoForClient>> {
+  const photos = await getSpeciesPhotos(species);
+  return Object.fromEntries(
+    Object.entries(photos).map(([code, { src, width, height, artist, license, licenseUrl, sourceUrl }]) => [
+      code,
+      { src, width, height, artist, license, licenseUrl, sourceUrl },
+    ]),
+  );
+}

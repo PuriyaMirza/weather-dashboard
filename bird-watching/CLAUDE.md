@@ -19,7 +19,8 @@ app/                 / (Today), /guide, /guide/[code] (prerendered), /guide/glos
                      api/rare-highlight (Today's hero: newest rare bird with a credited species photo)
 components/ui/       Primitives copied from the weather app (Icon subset, Surface, Chip, SectionHeader)
 components/guide/    FieldGuide (client search/filters), SpeciesRow, SpeciesDetail, ToggleChip
-components/log/      LogHome, OutingEditor, OutingDetails, QuickAdd, ObservationRow, SpeciesLists, PhotoAdd, PhotoThumb
+components/log/      LogHome, OutingEditor, OutingDetails, QuickAdd, ObservationRow, SpeciesLists, PhotoAdd, PhotoThumb,
+                     PhotoLightbox + PhotoThumbButton (tap a reference photo to enlarge; also used on Today)
 components/live/     MorningForecast, SightingsList, RareBirdHero (client-fetched from our routes)
 components/shell/    BottomNav, ServiceWorkerRegistrar; SiteHeader exists but is not rendered (hidden
                      for later iteration — re-add it in app/layout.tsx)
