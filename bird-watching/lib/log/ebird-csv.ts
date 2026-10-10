@@ -1,5 +1,5 @@
 import { breedingCodeLabel } from './breeding-codes';
-import { PARK_CENTER, ebirdLocationName } from './park-areas';
+import { PARK_CENTER, ebirdLocationName, isParkArea } from './park-areas';
 import type { Observation, Outing } from './schema';
 
 /*
@@ -38,8 +38,11 @@ function speciesComments(observation: Observation): string {
 export function outingRows(outing: Outing, observations: Observation[]): string[][] {
   const [date, time] = outing.startTime.split('T');
   const [year, month, day] = date.split('-');
-  const latitude = outing.latitude ?? PARK_CENTER.latitude;
-  const longitude = outing.longitude ?? PARK_CENTER.longitude;
+  // Only a park area can fall back to the park's centre; a place elsewhere with no map point
+  // exports blank coordinates and gets matched to a location during eBird's import.
+  const fallback = isParkArea(outing.area) ? PARK_CENTER : null;
+  const latitude = outing.latitude ?? fallback?.latitude ?? null;
+  const longitude = outing.longitude ?? fallback?.longitude ?? null;
   return observations.map((obs) => {
     const [genus = '', ...rest] = (obs.scientificName ?? '').split(' ');
     return [
@@ -49,12 +52,13 @@ export function outingRows(outing: Outing, observations: Observation[]): string[
       obs.count === null ? 'X' : String(obs.count),
       speciesComments(obs),
       ebirdLocationName(outing.area),
-      latitude.toFixed(5),
-      longitude.toFixed(5),
+      latitude === null ? '' : latitude.toFixed(5),
+      longitude === null ? '' : longitude.toFixed(5),
       `${month}/${day}/${year}`,
       time,
-      'NY',
-      'US',
+      // Records from before places outside the park existed are all Central Park.
+      outing.stateCode ?? (outing.countryCode ? '' : 'NY'),
+      outing.countryCode ?? 'US',
       PROTOCOL_NAME[outing.protocol],
       String(outing.observers),
       outing.protocol === 'incidental' || outing.durationMin === null ? '' : String(outing.durationMin),

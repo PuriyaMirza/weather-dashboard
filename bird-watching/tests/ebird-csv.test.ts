@@ -35,6 +35,15 @@ describe('outingRows', () => {
     expect(row.slice(5, 8)).toEqual(['Central Park', '40.77911', '-73.96962']);
   });
 
+  it('keeps a place outside the park as its own location, with its state and country', () => {
+    const o = outing({ area: 'Jamaica Bay', latitude: null, longitude: null, stateCode: 'NY', countryCode: 'US' });
+    const [row] = outingRows(o, [observation(o.id)]);
+    expect(row.slice(5, 8)).toEqual(['Jamaica Bay', '', '']);
+    const abroad = outing({ area: 'Point Pelee', latitude: 41.96, longitude: -82.52, stateCode: null, countryCode: 'CA' });
+    const [far] = outingRows(abroad, [observation(abroad.id)]);
+    expect(far.slice(5, 12)).toEqual(['Point Pelee', '41.96000', '-82.52000', '05/10/2026', '07:15', '', 'CA']);
+  });
+
   it('omits effort that does not apply to the protocol', () => {
     const stationary = outing({ protocol: 'stationary', distanceMi: 2 });
     expect(outingRows(stationary, [observation(stationary.id)])[0][16]).toBe('');

@@ -13,11 +13,12 @@ discussion, check `node_modules/next/dist/docs/` before touching Next APIs).
 ```
 app/                 / (Today), /guide, /guide/[code] (prerendered), /guide/glossary,
                      /log, /log/outing?id= (query param: outings live only in IndexedDB), /log/lists,
-                     /sightings; api/sightings (eBird, needs EBIRD_API_KEY), api/forecast (Open-Meteo),
+                     /log/photo, /sightings; api/sightings (eBird, needs EBIRD_API_KEY), api/forecast (Open-Meteo),
+                     api/identify (POST photo crop + note → Claude Sonnet 5.5, needs ANTHROPIC_API_KEY),
                      api/rare-highlight (Today's hero: newest rare bird with a credited species photo)
 components/ui/       Primitives copied from the weather app (Icon subset, Surface, Chip, SectionHeader)
 components/guide/    FieldGuide (client search/filters), SpeciesRow, SpeciesDetail, ToggleChip
-components/log/      LogHome, OutingEditor, OutingDetails, QuickAdd, ObservationRow, SpeciesLists
+components/log/      LogHome, OutingEditor, OutingDetails, QuickAdd, ObservationRow, SpeciesLists, PhotoAdd, PhotoThumb
 components/live/     MorningForecast, SightingsList, RareBirdHero (client-fetched from our routes)
 components/shell/    BottomNav, ServiceWorkerRegistrar; SiteHeader exists but is not rendered (hidden
                      for later iteration — re-add it in app/layout.tsx)
@@ -28,6 +29,8 @@ lib/forecast/       open-meteo.ts (provider), birding-outlook.ts (morning condit
 lib/media/          wikipedia.ts (species lead photo + Commons credit; server-only, cached 1 week)
 lib/live/           rare-highlight.ts (pick a rare sighting with a credited photo), use-api.ts, format.ts
 lib/api/            http.ts (jsonError, CACHE_CONTROL, fetchJson → UpstreamError), request-timeout.ts
+lib/identify/        schema.ts (request/model/response Zod), claude.ts (the one vision call), resolve.ts (eBird
+                     taxonomy → codes, Open-Meteo geocode → map point), image.ts (client crop/downscale)
 lib/log/             schema.ts (Outing/Observation/Backup), repository.ts (SightingsRepository + memory impl),
                      indexeddb-repository.ts, ebird-csv.ts (Record Format Extended), life-list.ts, backup.ts
 data/                species-content.json (hand-written), species.json + abundance.json (generated — don't hand-edit;
@@ -58,6 +61,11 @@ public/sw.js         Hand-written service worker (production only): network-firs
   missing key → 503 with a readable message. e2e stubs `/api/*` with `page.route`.
 - Photos only with credit: `getSpeciesPhoto` returns null for non-Commons files, missing or non-free
   licences, or any fetch failure — never show an uncredited image. Offline builds render no photos.
+- The log is general (park = home base): `outing.area` is a park area or a free place name; `isParkArea`
+  decides the "Central Park--" prefix and the park-centre coordinate fallback. Optional `stateCode`/`countryCode`
+  (absent = NY/US) and `observation.photoId` (photo Blob in IndexedDB store `photos`, DB v2; not in JSON backup).
+- Photo ID: send only the tapped crop (≤768px ≈ 800 image tokens), no species list in the prompt, effort low;
+  never trust the model for codes or coordinates (resolve.ts does both); the user always confirms before saving.
 - eBird CSV: 19 columns, no header. Breeding codes travel in species comments (no column for them).
 
 ## Commands
@@ -88,5 +96,6 @@ aborts requests via `context.route` — `setOffline` alone doesn't stop the work
   `--nav-bottom-gap` (iPhone home indicator, min 0.75rem) and `main` clears it. Keep both when editing the shell.
 - Deploys: Vercel project `nyc-bird-tracker` (Root Directory `bird-watching`, prod https://nyc-bird-tracker.vercel.app);
   its Ignored Build Step skips builds when nothing under `bird-watching/` changed. `EBIRD_API_KEY` is a Vercel env
-  var and a GitHub repo secret (nightly), never `NEXT_PUBLIC_`.
+  var and a GitHub repo secret (nightly), never `NEXT_PUBLIC_`. `ANTHROPIC_API_KEY` is Vercel-only; set a monthly
+  spend limit in the Anthropic Console (the per-IP limiter is per instance).
 - Regenerate PNG icons from `app/icon.svg` by rendering with Playwright's Chromium (no image deps installed).

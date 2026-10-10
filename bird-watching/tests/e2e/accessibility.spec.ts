@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 
 // Serious and critical only, matching the weather dashboard's bar. Extend this list with every
 // new page or major UI state.
-const PAGES = ['/', '/guide', '/guide/amerob', '/guide/rudduc', '/guide/glossary', '/log', '/log/lists', '/sightings'];
+const PAGES = ['/', '/guide', '/guide/amerob', '/guide/rudduc', '/guide/glossary', '/log', '/log/lists', '/log/photo', '/sightings'];
 
 async function expectNoSeriousViolations(page: import('@playwright/test').Page) {
   const results = await new AxeBuilder({ page }).analyze();

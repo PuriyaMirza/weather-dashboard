@@ -2,7 +2,7 @@ import { softDeleted, type SightingsRepository } from './repository';
 import type { Observation, Outing } from './schema';
 
 const DB_NAME = 'central-park-birding';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 function request<T>(req: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -21,10 +21,14 @@ function done(tx: IDBTransaction): Promise<void> {
 
 function openDatabase(): Promise<IDBDatabase> {
   const open = indexedDB.open(DB_NAME, DB_VERSION);
-  open.onupgradeneeded = () => {
+  open.onupgradeneeded = (event) => {
     const db = open.result;
-    db.createObjectStore('outings', { keyPath: 'id' });
-    db.createObjectStore('observations', { keyPath: 'id' }).createIndex('outingId', 'outingId');
+    // Each step runs only for databases older than it, so existing logs upgrade in place.
+    if (event.oldVersion < 1) {
+      db.createObjectStore('outings', { keyPath: 'id' });
+      db.createObjectStore('observations', { keyPath: 'id' }).createIndex('outingId', 'outingId');
+    }
+    if (event.oldVersion < 2) db.createObjectStore('photos');
   };
   return request(open);
 }
@@ -75,5 +79,11 @@ export function createIndexedDbRepository(): SightingsRepository {
       const obs = await get<Observation>('observations', id);
       if (obs) await put('observations', softDeleted(obs));
     },
+    async savePhoto(id, photo) {
+      const tx = (await database()).transaction('photos', 'readwrite');
+      tx.objectStore('photos').put(photo, id);
+      await done(tx);
+    },
+    getPhoto: (id) => get<Blob>('photos', id),
   };
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useId } from 'react';
+import { PhotoThumb } from '@/components/log/photo-thumb';
 import { Icon } from '@/components/ui/icon';
 import { BREEDING_CODES } from '@/lib/log/breeding-codes';
 import type { Observation } from '@/lib/log/schema';
@@ -23,6 +24,7 @@ export function ObservationRow({ observation, onChange, onRemove }: ObservationR
   return (
     <li className="flex flex-col gap-2 rounded-xl bg-surface-container p-3">
       <div className="flex items-center gap-2">
+        {observation.photoId && <PhotoThumb photoId={observation.photoId} alt={`Your photo of ${name}`} />}
         <span className="min-w-0 flex-1 type-label-lg text-primary">{name}</span>
         <button
           type="button"

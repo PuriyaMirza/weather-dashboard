@@ -14,6 +14,9 @@ export interface SightingsRepository {
   listObservations(outingId?: string): Promise<Observation[]>;
   saveObservation(observation: Observation): Promise<void>;
   deleteObservation(id: string): Promise<void>;
+  /** Photos are blobs keyed by an observation's `photoId`; they aren't part of the JSON backup. */
+  savePhoto(id: string, photo: Blob): Promise<void>;
+  getPhoto(id: string): Promise<Blob | undefined>;
 }
 
 export function nowIso(): string {
@@ -30,6 +33,7 @@ export function softDeleted<T extends { deletedAt: string | null; updatedAt: str
 export function createMemoryRepository(): SightingsRepository {
   const outings = new Map<string, Outing>();
   const observations = new Map<string, Observation>();
+  const photos = new Map<string, Blob>();
   const live = <T extends { deletedAt: string | null }>(r: T | undefined) => (r && !r.deletedAt ? r : undefined);
 
   return {
@@ -58,6 +62,12 @@ export function createMemoryRepository(): SightingsRepository {
     async deleteObservation(id) {
       const obs = observations.get(id);
       if (obs) observations.set(id, softDeleted(obs));
+    },
+    async savePhoto(id, photo) {
+      photos.set(id, photo);
+    },
+    async getPhoto(id) {
+      return photos.get(id);
     },
   };
 }
