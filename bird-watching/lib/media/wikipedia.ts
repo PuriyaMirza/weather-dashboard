@@ -146,11 +146,18 @@ async function getJson(url: string): Promise<unknown> {
  * change or a disambiguation page ("Robin") can't pick the wrong bird.
  */
 export async function getSpeciesPhoto(scientificName: string): Promise<SpeciesPhoto | null> {
+  // Every "no photo" says why in the log, so a species that never gets a photo can be traced to
+  // its cause (no lead image, a non-Commons file, a licence we don't accept) without re-asking Wikipedia.
+  const noPhoto = (reason: string) => {
+    console.warn(`[photos] no photo for ${scientificName}: ${reason}`);
+    return null;
+  };
   try {
     const title = encodeURIComponent(scientificName.replace(/ /g, '_'));
     const summary = summarySchema.parse(await getJson(`${WIKIPEDIA}/api/rest_v1/page/summary/${title}?redirect=true`));
-    const fileName = summary.originalimage ? commonsFileName(summary.originalimage.source) : null;
-    if (!fileName) return null;
+    if (!summary.originalimage) return noPhoto('the article has no lead image');
+    const fileName = commonsFileName(summary.originalimage.source);
+    if (!fileName) return noPhoto(`lead image is not a Commons original: ${summary.originalimage.source}`);
 
     const infoUrl = new URL(`${WIKIPEDIA}/w/api.php`);
     infoUrl.search = new URLSearchParams({
@@ -163,11 +170,14 @@ export async function getSpeciesPhoto(scientificName: string): Promise<SpeciesPh
       iiurlwidth: String(DISPLAY_WIDTH),
     }).toString();
     const info = imageInfoSchema.parse(await getJson(infoUrl.toString())).query.pages[0]?.imageinfo?.[0];
-    if (!info) return null;
+    if (!info) return noPhoto(`Commons has no image info for File:${fileName}`);
 
     const meta = info.extmetadata;
     const license = meta.LicenseShortName?.value;
-    if (!license || !isFreeLicense(license, meta.NonFree?.value)) return null;
+    if (!license) return noPhoto(`File:${fileName} has no licence recorded`);
+    if (!isFreeLicense(license, meta.NonFree?.value)) {
+      return noPhoto(`File:${fileName} licence not accepted: "${license}"${meta.NonFree ? ` (NonFree=${meta.NonFree.value})` : ''}`);
+    }
     const artist = meta.Artist ? plainText(meta.Artist.value) : '';
 
     return {
