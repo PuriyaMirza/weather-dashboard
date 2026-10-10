@@ -56,9 +56,6 @@ function CandidateRow({ candidate, checked, onSelect }: { candidate: IdentifyCan
           className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface-container-highest"
         >
           <Image src={photo.src} alt="" fill sizes="80px" className="object-cover" />
-          <span aria-hidden="true" className="absolute bottom-1 right-1 inline-flex rounded-full bg-surface/90 p-0.5 text-on-surface">
-            <Icon name="search" size={16} />
-          </span>
         </button>
       ) : (
         <span aria-hidden="true" className="h-20 w-20 shrink-0 rounded-lg bg-surface-container-highest" />
