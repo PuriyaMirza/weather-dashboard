@@ -64,13 +64,16 @@ test('identify a bird from a photo, confirm, and find it in the log', async ({ p
   const osprey = page.locator('div', { has: page.getByRole('radio', { name: /Osprey/ }) }).last();
   await expect(osprey.locator('img')).toHaveCount(1);
   await expect(osprey.getByText('Photo: A. Birder')).toBeVisible();
-  await expect(osprey.getByRole('link', { name: /Wikimedia Commons/ })).toHaveAttribute('href', 'https://commons.wikimedia.org/wiki/File:Osprey.jpg');
+  // The row keeps only the photographer; licence and source links are in the enlarged view.
+  await expect(osprey.getByRole('link')).toHaveCount(0);
   // Tapping the thumbnail opens it large with its credit, without changing the chosen species.
   await page.getByRole('button', { name: 'Enlarge photo of Osprey' }).click();
   const enlarged = page.getByRole('dialog', { name: 'Photo of Osprey' });
   await expect(enlarged).toBeVisible();
   await expect(enlarged.getByRole('img', { name: 'Photo of Osprey' })).toBeVisible();
   await expect(enlarged.getByText('Photo: A. Birder')).toBeVisible();
+  await expect(enlarged.getByRole('link', { name: 'CC BY-SA 4.0' })).toHaveAttribute('href', 'https://creativecommons.org/licenses/by-sa/4.0');
+  await expect(enlarged.getByRole('link', { name: /Wikimedia Commons/ })).toHaveAttribute('href', 'https://commons.wikimedia.org/wiki/File:Osprey.jpg');
   await enlarged.getByRole('button', { name: 'Close photo' }).click();
   await expect(enlarged).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Enlarge photo of Osprey' })).toBeFocused();

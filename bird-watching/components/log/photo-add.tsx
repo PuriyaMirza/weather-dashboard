@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
-import { PhotoCredit } from '@/components/guide/species-photo';
 import { Icon } from '@/components/ui/icon';
 import { PhotoLightbox } from '@/components/log/photo-lightbox';
 import { Surface } from '@/components/ui/surface';
@@ -67,9 +66,8 @@ function CandidateRow({ candidate, checked, onSelect }: { candidate: IdentifyCan
         <span className="block type-body-sm italic text-on-surface-variant">{candidate.scientificName}</span>
         <span className="block type-body-sm text-on-surface">{candidate.fieldMarks}</span>
         {photo && (
-          <span className="mt-1 block type-label-sm text-on-surface-variant">
-            <PhotoCredit photo={photo} />
-          </span>
+          // Licence and source links live in the enlarged view, keeping the row short; 85% keeps AA (~5:1).
+          <span className="mt-1 block type-label-sm text-on-surface-variant/85">Photo: {photo.artist}</span>
         )}
       </label>
       {enlarged && photo && <PhotoLightbox photo={photo} commonName={candidate.commonName} onClose={() => setEnlarged(false)} />}
