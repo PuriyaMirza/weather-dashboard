@@ -41,9 +41,30 @@ export const identifyRequestSchema = z.object({
   note: z.string().max(300),
   /** The phone's local wall clock, so "this morning" resolves in the birder's timezone. */
   now: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+  /**
+   * Scientific names already shown. Present only on the "Show me more options" call, which asks
+   * for alternatives — a second paid call made only when the birder taps for it.
+   */
+  exclude: z.array(z.string().max(100)).max(3).optional(),
 });
 
 export type IdentifyRequest = z.infer<typeof identifyRequestSchema>;
+
+/**
+ * A credited reference photo of a suggested species, served by /api/species-photo from the field
+ * guide's Wikipedia source. Loaded by the browser after the suggestions show, never inline.
+ */
+export const candidatePhotoSchema = z.object({
+  src: z.string(),
+  width: z.number(),
+  height: z.number(),
+  artist: z.string(),
+  license: z.string(),
+  licenseUrl: z.string().nullable(),
+  sourceUrl: z.string(),
+});
+
+export type CandidatePhoto = z.infer<typeof candidatePhotoSchema>;
 
 export const identifyResponseSchema = z.object({
   candidates: z.array(

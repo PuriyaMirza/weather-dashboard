@@ -11,6 +11,11 @@ export const CACHE_CONTROL = {
   rareHighlight: 'public, max-age=0, s-maxage=900, stale-while-revalidate=300',
   // Open-Meteo refreshes hourly forecasts on roughly that cadence.
   forecast: 'public, max-age=0, s-maxage=1800, stale-while-revalidate=600',
+  // Wikipedia lead photos change rarely. A week at the CDN (and a day in the browser) means
+  // Wikipedia hears from us about once per species per week, however many people look.
+  speciesPhoto: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800',
+  // "No usable photo" (or a Wikipedia hiccup) is cached too, so a miss isn't retried on every view.
+  speciesPhotoMissing: 'public, max-age=3600, s-maxage=86400',
   none: 'no-store',
 } as const;
 

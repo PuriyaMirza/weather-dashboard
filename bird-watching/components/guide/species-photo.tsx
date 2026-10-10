@@ -23,20 +23,29 @@ export function SpeciesPhoto({ photo, commonName, priority = false }: SpeciesPho
         />
       </div>
       <figcaption className="type-body-sm text-on-surface-variant">
-        Photo: {photo.artist} ·{' '}
-        {photo.licenseUrl ? (
-          <a href={photo.licenseUrl} target="_blank" rel="noopener noreferrer license" className="underline underline-offset-2">
-            {photo.license}
-          </a>
-        ) : (
-          photo.license
-        )}{' '}
-        ·{' '}
-        <a href={photo.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
-          Wikimedia Commons<span className="sr-only"> (opens in a new tab)</span>
-        </a>
+        <PhotoCredit photo={photo} />
       </figcaption>
     </figure>
+  );
+}
+
+/** The credit line a Commons photo's licence requires; shown wherever the photo is. */
+export function PhotoCredit({ photo }: { photo: Pick<Photo, 'artist' | 'license' | 'licenseUrl' | 'sourceUrl'> }) {
+  return (
+    <>
+      Photo: {photo.artist} ·{' '}
+      {photo.licenseUrl ? (
+        <a href={photo.licenseUrl} target="_blank" rel="noopener noreferrer license" className="underline underline-offset-2">
+          {photo.license}
+        </a>
+      ) : (
+        photo.license
+      )}{' '}
+      ·{' '}
+      <a href={photo.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+        Wikimedia Commons<span className="sr-only"> (opens in a new tab)</span>
+      </a>
+    </>
   );
 }
 

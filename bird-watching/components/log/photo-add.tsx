@@ -1,11 +1,14 @@
 'use client';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
+import { PhotoCredit } from '@/components/guide/species-photo';
 import { Icon } from '@/components/ui/icon';
 import { Surface } from '@/components/ui/surface';
 import { identifyCanvas, keepCanvas, loadImage, toBase64Jpeg, toJpegBlob } from '@/lib/identify/image';
-import type { IdentifyCandidate, IdentifyResponse } from '@/lib/identify/schema';
+import type { CandidatePhoto, IdentifyCandidate, IdentifyResponse } from '@/lib/identify/schema';
+import { useApi } from '@/lib/live/use-api';
 import { localDateTime, newObservation, newOuting } from '@/lib/log/factory';
 import { isParkArea } from '@/lib/log/park-areas';
 import { getRepository } from '@/lib/log/use-repository';
@@ -30,6 +33,36 @@ const primary =
 const field = 'min-h-11 w-full rounded-lg border border-outline-variant bg-surface px-3 type-body-md text-on-surface';
 
 /**
+ * One suggestion as a radio row. Its reference photo loads on its own after the row shows, from
+ * our CDN-cached /api/species-photo, so the ID never waits on Wikipedia and Wikipedia sees about
+ * one request per species per week.
+ */
+function CandidateRow({ candidate, checked, onSelect }: { candidate: IdentifyCandidate; checked: boolean; onSelect: () => void }) {
+  const { state } = useApi<{ photo: CandidatePhoto | null }>(`/api/species-photo?sci=${encodeURIComponent(candidate.scientificName)}`);
+  const photo = state.status === 'ready' ? state.data.photo : null;
+  return (
+    <label className="flex min-h-14 cursor-pointer items-start gap-3 px-3 py-2.5">
+      <input type="radio" name="species" checked={checked} onChange={onSelect} className="mt-1 h-5 w-5 accent-[var(--secondary-fixed)]" />
+      <span aria-hidden="true" className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface-container-highest">
+        {photo && <Image src={photo.src} alt="" fill sizes="80px" className="object-cover" />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block type-label-lg text-primary">
+          {candidate.commonName} <span className="type-body-sm text-on-surface-variant">· {CONFIDENCE_LABEL[candidate.confidence]}</span>
+        </span>
+        <span className="block type-body-sm italic text-on-surface-variant">{candidate.scientificName}</span>
+        <span className="block type-body-sm text-on-surface">{candidate.fieldMarks}</span>
+        {photo && (
+          <span className="mt-1 block type-label-sm text-on-surface-variant">
+            <PhotoCredit photo={photo} />
+          </span>
+        )}
+      </span>
+    </label>
+  );
+}
+
+/**
  * Photo → Claude → log. The birder taps the bird (so only a small crop is sent), says when and
  * where in their own words, then confirms what Claude suggests — nothing is saved unconfirmed.
  */
@@ -42,6 +75,9 @@ export function PhotoAdd() {
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [choice, setChoice] = useState<string>('0');
+  const [sentImage, setSentImage] = useState('');
+  const [more, setMore] = useState<'idle' | 'loading' | 'done'>('idle');
+  const [moreError, setMoreError] = useState<string | null>(null);
   const [otherName, setOtherName] = useState('');
   const [when, setWhen] = useState('');
   const [where, setWhere] = useState('');
@@ -68,11 +104,12 @@ export function PhotoAdd() {
     if (!image) return;
     setError(null);
     setStep({ name: 'identifying' });
+    const sent = toBase64Jpeg(identifyCanvas(image, tap));
     try {
       const response = await fetch('/api/identify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: toBase64Jpeg(identifyCanvas(image, tap)), note, now: localDateTime(new Date()) }),
+        body: JSON.stringify({ image: sent, note, now: localDateTime(new Date()) }),
       });
       const body = await response.json().catch(() => null);
       if (!response.ok) {
@@ -82,6 +119,9 @@ export function PhotoAdd() {
       const result = body as IdentifyResponse;
       const today = localDateTime(new Date());
       setChoice(result.candidates.length ? '0' : OTHER);
+      setSentImage(sent);
+      setMore('idle');
+      setMoreError(null);
       setWhen(`${result.date ?? today.slice(0, 10)}T${result.time ?? '12:00'}`);
       setWhere(result.place.parkArea ?? result.place.name ?? '');
       setCount(result.count ?? 1);
@@ -90,6 +130,37 @@ export function PhotoAdd() {
     } catch {
       setError("You're offline, or the app couldn't be reached. Photo ID needs a connection.");
       setStep({ name: 'describe' });
+    }
+  }
+
+  /** Asks Claude again for lookalikes — only when the birder taps for them, since it's a second paid call. */
+  async function showMoreOptions(result: IdentifyResponse) {
+    setMore('loading');
+    setMoreError(null);
+    try {
+      const response = await fetch('/api/identify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: sentImage,
+          note,
+          now: localDateTime(new Date()),
+          exclude: result.candidates.map((c) => c.scientificName),
+        }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        setMoreError(body && typeof body.error === 'string' ? body.error : 'Something went wrong. Please try again.');
+        return setMore('idle');
+      }
+      // Only the candidates are used; the date and place the birder may already have edited stay put.
+      const seen = new Set(result.candidates.map((c) => c.scientificName.toLowerCase()));
+      const extra = (body as IdentifyResponse).candidates.filter((c) => !seen.has(c.scientificName.toLowerCase())).slice(0, 3 - result.candidates.length);
+      setStep({ name: 'confirm', result: { ...result, candidates: [...result.candidates, ...extra] } });
+      setMore('done');
+    } catch {
+      setMoreError("You're offline, or the app couldn't be reached.");
+      setMore('idle');
     }
   }
 
@@ -221,6 +292,7 @@ export function PhotoAdd() {
 
   const { result } = step;
   const otherChosen = choice === OTHER;
+  const canAskMore = more !== 'done' && result.candidates.length > 0 && result.candidates.length < 3;
   const canSave = (otherChosen ? otherName.trim().length > 0 : true) && when.length === 16;
   const showMapPoint = result.place.mapLabel && !isParkArea(where.trim()) && where.trim() === result.place.name;
 
@@ -240,23 +312,12 @@ export function PhotoAdd() {
         )}
         <Surface tone="container" className="flex flex-col py-1">
           {result.candidates.map((candidate, index) => (
-            <label key={`${candidate.scientificName}-${index}`} className="flex min-h-14 cursor-pointer items-start gap-3 px-3 py-2.5">
-              <input
-                type="radio"
-                name="species"
-                value={String(index)}
-                checked={choice === String(index)}
-                onChange={() => setChoice(String(index))}
-                className="mt-1 h-5 w-5 accent-[var(--secondary-fixed)]"
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block type-label-lg text-primary">
-                  {candidate.commonName} <span className="type-body-sm text-on-surface-variant">· {CONFIDENCE_LABEL[candidate.confidence]}</span>
-                </span>
-                <span className="block type-body-sm italic text-on-surface-variant">{candidate.scientificName}</span>
-                <span className="block type-body-sm text-on-surface">{candidate.fieldMarks}</span>
-              </span>
-            </label>
+            <CandidateRow
+              key={`${candidate.scientificName}-${index}`}
+              candidate={candidate}
+              checked={choice === String(index)}
+              onSelect={() => setChoice(String(index))}
+            />
           ))}
           <label className="flex min-h-14 cursor-pointer items-center gap-3 px-3 py-2.5">
             <input
@@ -270,6 +331,17 @@ export function PhotoAdd() {
             <span className="type-label-lg text-primary">{result.candidates.length ? 'None of these' : 'Type the species'}</span>
           </label>
         </Surface>
+        {canAskMore && (
+          <button type="button" className={`${pill} self-start`} onClick={() => void showMoreOptions(result)} disabled={more === 'loading'}>
+            <Icon name="expand-more" size={20} />
+            {more === 'loading' ? 'Finding lookalikes…' : 'Show me more options'}
+          </button>
+        )}
+        {more === 'done' && result.candidates.length === 1 && (
+          <p className="type-body-sm text-on-surface-variant">Claude didn&rsquo;t find any likely lookalikes.</p>
+        )}
+        {moreError && <p role="alert" className="type-body-md text-error">{moreError}</p>}
+        <p role="status" className="sr-only">{more === 'loading' ? 'Finding more options' : ''}</p>
         {otherChosen && (
           <div className="flex flex-col gap-1">
             <label htmlFor={ids.other} className="type-label-md text-on-surface-variant">Species name</label>

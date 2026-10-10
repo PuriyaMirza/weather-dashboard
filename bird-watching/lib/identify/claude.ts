@@ -13,7 +13,7 @@ export const IDENTIFY_MODEL = 'claude-sonnet-5-5';
 
 const SYSTEM = `You identify wild birds in a birder's photo and turn their note into a log entry.
 
-candidates: up to 3 species, most likely first, with current eBird English and scientific names. Give fewer when one is clear; none when no bird is visible. confidence "high" only when diagnostic field marks are clearly visible. fieldMarks: the visible marks behind the ID, under 12 words.
+candidates: up to 3 species, most likely first, with current eBird English and scientific names. Give fewer when one is clear; none when no bird is visible. If "exclude" is given, the birder wants alternatives: return up to 2 other closest species, never those listed. confidence "high" only when diagnostic field marks are clearly visible. fieldMarks: the visible marks behind the ID, under 12 words.
 
 From the note, resolved against "now": date (YYYY-MM-DD) and time (HH:mm, 24h), each null if not stated. place.name: the place as the birder would write it. place.parkArea: only if in Central Park, NYC — the matching area, or "Central Park (general)". stateCode: subdivision code without country (e.g. NY); countryCode: ISO alpha-2. count: individuals stated in the note, else null. Use null for anything not given; never guess a place.`;
 
@@ -33,7 +33,7 @@ export async function identifyWithClaude(client: Anthropic, input: IdentifyReque
         role: 'user',
         content: [
           { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: input.image } },
-          { type: 'text', text: `now: ${input.now}\nnote: ${input.note.trim() || '(none)'}` },
+          { type: 'text', text: `now: ${input.now}\nnote: ${input.note.trim() || '(none)'}${input.exclude?.length ? `\nexclude: ${input.exclude.join('; ')}` : ''}` },
         ],
       },
     ],

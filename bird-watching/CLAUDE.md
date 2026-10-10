@@ -15,6 +15,7 @@ app/                 / (Today), /guide, /guide/[code] (prerendered), /guide/glos
                      /log, /log/outing?id= (query param: outings live only in IndexedDB), /log/lists,
                      /log/photo, /sightings; api/sightings (eBird, needs EBIRD_API_KEY), api/forecast (Open-Meteo),
                      api/identify (POST photo crop + note → Claude Sonnet 5.5, needs ANTHROPIC_API_KEY),
+                     api/species-photo?sci= (credited reference photo per suggestion; CDN-cached a week),
                      api/rare-highlight (Today's hero: newest rare bird with a credited species photo)
 components/ui/       Primitives copied from the weather app (Icon subset, Surface, Chip, SectionHeader)
 components/guide/    FieldGuide (client search/filters), SpeciesRow, SpeciesDetail, ToggleChip
@@ -66,6 +67,8 @@ public/sw.js         Hand-written service worker (production only): network-firs
   (absent = NY/US) and `observation.photoId` (photo Blob in IndexedDB store `photos`, DB v2; not in JSON backup).
 - Photo ID: send only the tapped crop (≤768px ≈ 800 image tokens), no species list in the prompt, effort low;
   never trust the model for codes or coordinates (resolve.ts does both); the user always confirms before saving.
+  Lookalikes cost a 2nd call (`exclude`), made only on "Show me more options". Reference photos load per row from
+  /api/species-photo, never inline — keep Wikipedia load to ~1 request per species per week (CDN cache, throttle).
 - eBird CSV: 19 columns, no header. Breeding codes travel in species comments (no column for them).
 
 ## Commands
