@@ -45,6 +45,19 @@ export const identifyRequestSchema = z.object({
 
 export type IdentifyRequest = z.infer<typeof identifyRequestSchema>;
 
+/** A credited reference photo of a suggested species (from the field guide's Wikipedia source). */
+export const candidatePhotoSchema = z.object({
+  src: z.string(),
+  width: z.number(),
+  height: z.number(),
+  artist: z.string(),
+  license: z.string(),
+  licenseUrl: z.string().nullable(),
+  sourceUrl: z.string(),
+});
+
+export type CandidatePhoto = z.infer<typeof candidatePhotoSchema>;
+
 export const identifyResponseSchema = z.object({
   candidates: z.array(
     z.object({
@@ -53,6 +66,7 @@ export const identifyResponseSchema = z.object({
       scientificName: z.string(),
       confidence: z.enum(CONFIDENCE),
       fieldMarks: z.string(),
+      photo: candidatePhotoSchema.nullable(),
     }),
   ),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),

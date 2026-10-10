@@ -1,7 +1,9 @@
 'use client';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
+import { PhotoCredit } from '@/components/guide/species-photo';
 import { Icon } from '@/components/ui/icon';
 import { Surface } from '@/components/ui/surface';
 import { identifyCanvas, keepCanvas, loadImage, toBase64Jpeg, toJpegBlob } from '@/lib/identify/image';
@@ -249,12 +251,20 @@ export function PhotoAdd() {
                 onChange={() => setChoice(String(index))}
                 className="mt-1 h-5 w-5 accent-[var(--secondary-fixed)]"
               />
+              <span aria-hidden="true" className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface-container-highest">
+                {candidate.photo && <Image src={candidate.photo.src} alt="" fill sizes="80px" className="object-cover" />}
+              </span>
               <span className="min-w-0 flex-1">
                 <span className="block type-label-lg text-primary">
                   {candidate.commonName} <span className="type-body-sm text-on-surface-variant">· {CONFIDENCE_LABEL[candidate.confidence]}</span>
                 </span>
                 <span className="block type-body-sm italic text-on-surface-variant">{candidate.scientificName}</span>
                 <span className="block type-body-sm text-on-surface">{candidate.fieldMarks}</span>
+                {candidate.photo && (
+                  <span className="mt-1 block type-label-sm text-on-surface-variant">
+                    <PhotoCredit photo={candidate.photo} />
+                  </span>
+                )}
               </span>
             </label>
           ))}

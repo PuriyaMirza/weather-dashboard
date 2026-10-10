@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { fetchJson } from '@/lib/api/http';
 import { withTimeout } from '@/lib/api/request-timeout';
 import { getAllSpecies } from '@/lib/birds/species';
-import type { ClaudeOutput, IdentifyResponse } from './schema';
+import { getSpeciesPhoto, type SpeciesPhoto } from '@/lib/media/wikipedia';
+import type { CandidatePhoto, ClaudeOutput, IdentifyResponse } from './schema';
 
 /*
   Turns the model's answer into a log-ready record without trusting it for anything it could
@@ -89,32 +90,50 @@ export async function geocode(name: string, countryCode: string | null, fetchImp
   }
 }
 
+/** A reference photo must never hold up the ID: past this, the candidate just shows no photo. */
+const PHOTO_DEADLINE_MS = 4_000;
+
+async function photoWithin(getPhoto: (sci: string) => Promise<SpeciesPhoto | null>, scientificName: string): Promise<CandidatePhoto | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<null>((resolve) => (timer = setTimeout(() => resolve(null), PHOTO_DEADLINE_MS)));
+  const photo = await Promise.race([getPhoto(scientificName).catch(() => null), timeout]);
+  clearTimeout(timer);
+  if (!photo) return null;
+  const { src, width, height, artist, license, licenseUrl, sourceUrl } = photo;
+  return { src, width, height, artist, license, licenseUrl, sourceUrl };
+}
+
 const validDate = (date: string | null) => (date && /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(Date.parse(date)) ? date : null);
 const validTime = (time: string | null) => (time && /^([01]\d|2[0-3]):[0-5]\d$/.test(time) ? time : null);
 
 export async function resolveIdentification(
   output: ClaudeOutput,
-  { ebirdApiKey, fetchImpl = fetch }: { ebirdApiKey: string | undefined; fetchImpl?: typeof fetch },
+  {
+    ebirdApiKey,
+    fetchImpl = fetch,
+    getPhoto = getSpeciesPhoto,
+  }: { ebirdApiKey: string | undefined; fetchImpl?: typeof fetch; getPhoto?: (scientificName: string) => Promise<SpeciesPhoto | null> },
 ): Promise<IdentifyResponse> {
   const { place } = output;
   // Park areas export at the park's own hotspot; only places elsewhere need a map point.
-  const [lookupEntries, point] = await Promise.all([
-    loadTaxonomy(ebirdApiKey, fetchImpl),
-    !place.parkArea && place.name ? geocode(place.name, place.countryCode, fetchImpl) : Promise.resolve(null),
-  ]);
-  const lookup = buildTaxonIndex(lookupEntries);
+  const pointPromise = !place.parkArea && place.name ? geocode(place.name, place.countryCode, fetchImpl) : Promise.resolve(null);
+  const lookup = buildTaxonIndex(await loadTaxonomy(ebirdApiKey, fetchImpl));
+
+  const resolved = output.candidates.slice(0, 3).map((c) => {
+    const match = lookup(c.commonName, c.scientificName);
+    return {
+      speciesCode: match?.code ?? null,
+      commonName: match?.commonName ?? c.commonName,
+      scientificName: match?.scientificName ?? c.scientificName,
+      confidence: c.confidence,
+      fieldMarks: c.fieldMarks,
+    };
+  });
+  // Looked up by the resolved scientific name, the same key the field guide's photos use.
+  const [point, photos] = await Promise.all([pointPromise, Promise.all(resolved.map((c) => photoWithin(getPhoto, c.scientificName)))]);
 
   return {
-    candidates: output.candidates.slice(0, 3).map((c) => {
-      const match = lookup(c.commonName, c.scientificName);
-      return {
-        speciesCode: match?.code ?? null,
-        commonName: match?.commonName ?? c.commonName,
-        scientificName: match?.scientificName ?? c.scientificName,
-        confidence: c.confidence,
-        fieldMarks: c.fieldMarks,
-      };
-    }),
+    candidates: resolved.map((c, i) => ({ ...c, photo: photos[i] })),
     date: validDate(output.date),
     time: validTime(output.time),
     place: {

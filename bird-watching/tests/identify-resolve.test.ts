@@ -1,9 +1,18 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+const getSpeciesPhoto = vi.fn(async (_sci: string): Promise<unknown> => null);
+vi.mock('@/lib/media/wikipedia', () => ({ getSpeciesPhoto: (sci: string) => getSpeciesPhoto(sci) }));
+
 import { buildTaxonIndex, resetTaxonomyCache, resolveIdentification } from '@/lib/identify/resolve';
 import type { ClaudeOutput } from '@/lib/identify/schema';
 
-afterEach(() => resetTaxonomyCache());
+afterEach(() => {
+  resetTaxonomyCache();
+  getSpeciesPhoto.mockReset();
+  getSpeciesPhoto.mockResolvedValue(null);
+  vi.useRealTimers();
+});
 
 const output = (overrides: Partial<ClaudeOutput> = {}): ClaudeOutput => ({
   candidates: [{ commonName: 'Osprey', scientificName: 'Pandion haliaetus', confidence: 'high', fieldMarks: 'Dark eye stripe, white underparts, fish in talons' }],
@@ -87,5 +96,27 @@ describe('resolveIdentification', () => {
     const c = output().candidates[0];
     const result = await resolveIdentification(output({ candidates: [c, c, c, c] }), { ebirdApiKey: undefined, fetchImpl: fakeFetch() });
     expect(result.candidates).toHaveLength(3);
+  });
+
+  it('attaches a credited reference photo to each candidate, looked up by scientific name', async () => {
+    const photo = {
+      src: 'https://upload.wikimedia.org/osprey.jpg', width: 800, height: 600, artist: 'A. Birder',
+      license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0', sourceUrl: 'https://commons.wikimedia.org/wiki/File:Osprey.jpg',
+      articleUrl: 'https://en.wikipedia.org/wiki/Osprey',
+    };
+    getSpeciesPhoto.mockImplementation(async (sci: string) => (sci === 'Pandion haliaetus' ? photo : null));
+    const swamp = { commonName: 'Swamp Sparrow', scientificName: 'Melospiza georgiana', confidence: 'low' as const, fieldMarks: 'Rufous wings' };
+    const result = await resolveIdentification(output({ candidates: [output().candidates[0], swamp] }), { ebirdApiKey: 'k', fetchImpl: fakeFetch() });
+    const { articleUrl, ...shown } = photo;
+    expect(articleUrl).toBeTruthy();
+    expect(result.candidates.map((c) => c.photo)).toEqual([shown, null]);
+  });
+
+  it('gives up on a slow photo instead of delaying the ID', async () => {
+    vi.useFakeTimers();
+    getSpeciesPhoto.mockImplementation(() => new Promise(() => {}));
+    const pending = resolveIdentification(output(), { ebirdApiKey: undefined, fetchImpl: fakeFetch() });
+    await vi.advanceTimersByTimeAsync(4_000);
+    expect((await pending).candidates[0].photo).toBeNull();
   });
 });
