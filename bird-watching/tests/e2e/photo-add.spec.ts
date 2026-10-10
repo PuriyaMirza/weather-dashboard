@@ -61,10 +61,22 @@ test('identify a bird from a photo, confirm, and find it in the log', async ({ p
   expect(sent[0].image).toMatch(/^[A-Za-z0-9+/=]+$/);
 
   // Each suggestion carries a reference photo with its credit; one without a photo shows none.
-  const osprey = page.locator('label', { has: page.getByRole('radio', { name: /Osprey/ }) });
+  const osprey = page.locator('div', { has: page.getByRole('radio', { name: /Osprey/ }) }).last();
   await expect(osprey.locator('img')).toHaveCount(1);
   await expect(osprey.getByText('Photo: A. Birder')).toBeVisible();
   await expect(osprey.getByRole('link', { name: /Wikimedia Commons/ })).toHaveAttribute('href', 'https://commons.wikimedia.org/wiki/File:Osprey.jpg');
+  // Tapping the thumbnail opens it large with its credit, without changing the chosen species.
+  await page.getByRole('button', { name: 'Enlarge photo of Osprey' }).click();
+  const enlarged = page.getByRole('dialog', { name: 'Photo of Osprey' });
+  await expect(enlarged).toBeVisible();
+  await expect(enlarged.getByRole('img', { name: 'Photo of Osprey' })).toBeVisible();
+  await expect(enlarged.getByText('Photo: A. Birder')).toBeVisible();
+  await enlarged.getByRole('button', { name: 'Close photo' }).click();
+  await expect(enlarged).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Enlarge photo of Osprey' })).toBeFocused();
+  await page.getByRole('button', { name: 'Enlarge photo of Osprey' }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   // Lookalikes cost a second call, so it's made only when asked for — with the same crop, excluding what's shown.
   await expect(page.getByRole('radio', { name: /Bald Eagle/ })).toHaveCount(0);
   await page.getByRole('button', { name: 'Show me more options' }).click();
@@ -74,8 +86,7 @@ test('identify a bird from a photo, confirm, and find it in the log', async ({ p
   expect(sent[1].exclude).toEqual(['Pandion haliaetus']);
   expect(sent[1].image).toBe(sent[0].image);
   await expect(page.getByRole('radio', { name: /Osprey/ })).toBeChecked();
-  const eagle = page.locator('label', { has: page.getByRole('radio', { name: /Bald Eagle/ }) });
-  await expect(eagle.locator('img')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Enlarge photo of Bald Eagle' })).toHaveCount(0);
 
   await expect(page.getByLabel('When')).toHaveValue('2026-09-20T12:00');
   await expect(page.getByLabel('Where')).toHaveValue('Jamaica Bay');
@@ -96,6 +107,8 @@ test('no serious axe violations on the photo confirm screen', async ({ page }) =
   await reachConfirm(page);
   await page.getByRole('button', { name: 'Show me more options' }).click();
   await expect(page.getByRole('radio', { name: /Bald Eagle/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Enlarge photo of Osprey' }).click();
+  await expect(page.getByRole('dialog', { name: 'Photo of Osprey' })).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   const serious = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
   expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([]);

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
 import { PhotoCredit } from '@/components/guide/species-photo';
 import { Icon } from '@/components/ui/icon';
+import { PhotoLightbox } from '@/components/log/photo-lightbox';
 import { Surface } from '@/components/ui/surface';
 import { identifyCanvas, keepCanvas, loadImage, toBase64Jpeg, toJpegBlob } from '@/lib/identify/image';
 import type { CandidatePhoto, IdentifyCandidate, IdentifyResponse } from '@/lib/identify/schema';
@@ -38,15 +39,31 @@ const field = 'min-h-11 w-full rounded-lg border border-outline-variant bg-surfa
  * one request per species per week.
  */
 function CandidateRow({ candidate, checked, onSelect }: { candidate: IdentifyCandidate; checked: boolean; onSelect: () => void }) {
+  const radioId = useId();
+  const [enlarged, setEnlarged] = useState(false);
   const { state } = useApi<{ photo: CandidatePhoto | null }>(`/api/species-photo?sci=${encodeURIComponent(candidate.scientificName)}`);
   const photo = state.status === 'ready' ? state.data.photo : null;
+  // The thumbnail is a button beside the label, not inside it: a button is itself labelable, so
+  // nesting it would muddle the radio's accessible name and make a tap pick the row too.
   return (
-    <label className="flex min-h-14 cursor-pointer items-start gap-3 px-3 py-2.5">
-      <input type="radio" name="species" checked={checked} onChange={onSelect} className="mt-1 h-5 w-5 accent-[var(--secondary-fixed)]" />
-      <span aria-hidden="true" className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface-container-highest">
-        {photo && <Image src={photo.src} alt="" fill sizes="80px" className="object-cover" />}
-      </span>
-      <span className="min-w-0 flex-1">
+    <div className="flex items-start gap-3 px-3 py-2.5">
+      <input id={radioId} type="radio" name="species" checked={checked} onChange={onSelect} className="mt-1 h-5 w-5 shrink-0 accent-[var(--secondary-fixed)]" />
+      {photo ? (
+        <button
+          type="button"
+          onClick={() => setEnlarged(true)}
+          aria-label={`Enlarge photo of ${candidate.commonName}`}
+          className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface-container-highest"
+        >
+          <Image src={photo.src} alt="" fill sizes="80px" className="object-cover" />
+          <span aria-hidden="true" className="absolute bottom-1 right-1 inline-flex rounded-full bg-surface/90 p-0.5 text-on-surface">
+            <Icon name="search" size={16} />
+          </span>
+        </button>
+      ) : (
+        <span aria-hidden="true" className="h-20 w-20 shrink-0 rounded-lg bg-surface-container-highest" />
+      )}
+      <label htmlFor={radioId} className="min-w-0 flex-1 cursor-pointer">
         <span className="block type-label-lg text-primary">
           {candidate.commonName} <span className="type-body-sm text-on-surface-variant">· {CONFIDENCE_LABEL[candidate.confidence]}</span>
         </span>
@@ -57,8 +74,9 @@ function CandidateRow({ candidate, checked, onSelect }: { candidate: IdentifyCan
             <PhotoCredit photo={photo} />
           </span>
         )}
-      </span>
-    </label>
+      </label>
+      {enlarged && photo && <PhotoLightbox photo={photo} commonName={candidate.commonName} onClose={() => setEnlarged(false)} />}
+    </div>
   );
 }
 
