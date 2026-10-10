@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AroundThisWeek } from '@/components/live/around-this-week';
 import { MorningForecast } from '@/components/live/morning-forecast';
 import { RareBirdHero } from '@/components/live/rare-bird-hero';
 import { SightingsList } from '@/components/live/sightings-list';
@@ -6,6 +7,7 @@ import { SpeciesRow } from '@/components/guide/species-row';
 import { Icon } from '@/components/ui/icon';
 import { SectionHeader } from '@/components/ui/section-header';
 import { Surface } from '@/components/ui/surface';
+import { getWeeklyFrequencies } from '@/lib/birds/abundance';
 import { getAllSpecies, getYearRoundRegulars } from '@/lib/birds/species';
 import { getSpeciesPhotos } from '@/lib/media/wikipedia';
 
@@ -35,6 +37,14 @@ export default async function TodayPage() {
       <section aria-labelledby="forecast" className="flex flex-col gap-2">
         <SectionHeader id="forecast" title="Birding forecast" />
         <MorningForecast />
+      </section>
+
+      <section aria-labelledby="this-week" className="flex flex-col gap-2">
+        <SectionHeader id="this-week" title="Around this week" />
+        <AroundThisWeek
+          frequencies={getWeeklyFrequencies()}
+          names={Object.fromEntries(getAllSpecies().map((s) => [s.code, s.commonName]))}
+        />
       </section>
 
       <section aria-labelledby="recent" className="flex flex-col gap-2">
