@@ -67,6 +67,14 @@ export function LogHome() {
         Start an outing
       </button>
 
+      <Link
+        href="/log/photo"
+        className="-mt-3 flex min-h-12 items-center justify-center gap-2 rounded-xl border border-outline-variant px-4 type-label-lg text-on-surface hover:bg-surface-container-high"
+      >
+        <Icon name="visibility" size={20} />
+        Add a bird from a photo
+      </Link>
+
       <Link href="/log/lists" className="block">
         <Surface tone="container" className="grid grid-cols-3 divide-x divide-outline-variant/60 py-3 text-center hover:bg-surface-container-high">
           <span className="flex flex-col">

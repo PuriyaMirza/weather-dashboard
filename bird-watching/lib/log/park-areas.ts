@@ -25,8 +25,13 @@ export const PARK_AREAS = [
 
 export const DEFAULT_AREA = PARK_AREAS[0];
 
-/** eBird's location name for an area. */
+export function isParkArea(area: string): boolean {
+  return (PARK_AREAS as readonly string[]).includes(area);
+}
+
+/** eBird's location name for an area; a place outside the park keeps its own name. */
 export function ebirdLocationName(area: string): string {
+  if (!isParkArea(area)) return area;
   return area === DEFAULT_AREA ? 'Central Park' : `Central Park--${area}`;
 }
 

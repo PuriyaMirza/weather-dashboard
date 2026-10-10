@@ -19,8 +19,15 @@ const recordFields = {
 
 export const outingSchema = z.object({
   ...recordFields,
-  /** Park area, e.g. "The Ramble". Exported to eBird as "Central Park--The Ramble". */
+  /**
+   * Where: a park area ("The Ramble", exported as "Central Park--The Ramble") or, for birds seen
+   * elsewhere, a free place name ("Jamaica Bay").
+   */
   area: z.string().min(1),
+  /** State/province code for eBird export (e.g. "NY"); absent on older records, which mean NY. */
+  stateCode: z.string().nullable().optional(),
+  /** ISO country code (e.g. "US"); absent on older records, which mean US. */
+  countryCode: z.string().nullable().optional(),
   /** From the phone's location, when the user chose to share it; else null (park centre on export). */
   latitude: z.number().min(-90).max(90).nullable(),
   longitude: z.number().min(-180).max(180).nullable(),
@@ -46,6 +53,8 @@ export const observationSchema = z.object({
   count: z.number().int().min(1).nullable(),
   comments: z.string(),
   breedingCode: z.string().nullable(),
+  /** Key into the on-device photo store, for sightings logged from a photo. */
+  photoId: z.string().uuid().nullable().optional(),
 });
 
 export const backupSchema = z.object({

@@ -5,6 +5,14 @@ import { createMemoryRepository } from '@/lib/log/repository';
 import { observationSchema, outingSchema } from '@/lib/log/schema';
 
 describe('memory repository', () => {
+  it('stores a sighting photo by id', async () => {
+    const repo = createMemoryRepository();
+    const photo = new Blob(['jpeg'], { type: 'image/jpeg' });
+    await repo.savePhoto('p1', photo);
+    expect(await repo.getPhoto('p1')).toBe(photo);
+    expect(await repo.getPhoto('missing')).toBeUndefined();
+  });
+
   it('saves, reads, and soft-deletes an outing with its observations', async () => {
     const repo = createMemoryRepository();
     const o = newOuting();
