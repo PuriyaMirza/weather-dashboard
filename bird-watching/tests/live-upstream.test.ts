@@ -27,6 +27,14 @@ describe.skipIf(!live)('upstreams, live', { timeout: 30_000 }, () => {
     expect(photo).not.toBeNull();
   });
 
+  // The robin's lead image is an original upload; the starling's comes back as a resized
+  // rendition on thumb.wikimedia.org (the shape that silently cost 18 species their photos in
+  // Oct 2026). Checking one of each covers both paths for two extra requests a night.
+  it('Wikipedia still returns a credited photo for a species whose lead image is a rendition', async () => {
+    const photo = await getSpeciesPhoto('Sturnus vulgaris');
+    expect(photo).not.toBeNull();
+  });
+
   // The key is a repository secret; forks and repos without it skip rather than fail.
   it.skipIf(!ebirdKey)('eBird still returns Central Park sightings', async () => {
     const sightings = await fetchParkSightings(ebirdKey!, 7);

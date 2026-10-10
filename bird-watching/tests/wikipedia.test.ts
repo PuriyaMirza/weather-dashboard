@@ -122,6 +122,17 @@ describe('getSpeciesPhoto', () => {
     );
   });
 
+  it('shows no photo for a local (possibly non-free) lead image, and says why', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const fetchMock = stubFetch({
+      originalimage: { source: 'https://upload.wikimedia.org/wikipedia/en/a/a1/Album_cover.jpg' },
+      content_urls: summary.content_urls,
+    });
+    expect(await getSpeciesPhoto('Turdus migratorius')).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('lead image is not a Commons file'));
+  });
+
   it('shows no photo rather than an uncredited or non-free one', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     stubFetch(summary, imageInfo({ Artist: 'Someone', LicenseShortName: 'Fair use' }));
