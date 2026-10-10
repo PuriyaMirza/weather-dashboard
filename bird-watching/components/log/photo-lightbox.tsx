@@ -1,13 +1,16 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PhotoCredit } from '@/components/guide/species-photo';
 import { Icon } from '@/components/ui/icon';
 import type { CandidatePhoto } from '@/lib/identify/schema';
 
+/** The fields the enlarged view needs; a guide `SpeciesPhoto` satisfies it too. */
+export type LightboxPhoto = Pick<CandidatePhoto, 'src' | 'width' | 'height' | 'artist' | 'license' | 'licenseUrl' | 'sourceUrl'>;
+
 interface PhotoLightboxProps {
-  photo: CandidatePhoto;
+  photo: LightboxPhoto;
   commonName: string;
   onClose: () => void;
 }
@@ -63,5 +66,26 @@ export function PhotoLightbox({ photo, commonName, onClose }: PhotoLightboxProps
         </figcaption>
       </figure>
     </dialog>
+  );
+}
+
+/**
+ * A square thumbnail that opens the photo large. A sibling of the row's label or link, never
+ * inside it, so the row keeps one accessible name and one tap target each.
+ */
+export function PhotoThumbButton({ photo, commonName, className }: { photo: LightboxPhoto; commonName: string; className: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={`Enlarge photo of ${commonName}`}
+        className={`relative shrink-0 overflow-hidden rounded-lg bg-surface-container-highest ${className}`}
+      >
+        <Image src={photo.src} alt="" fill sizes="80px" className="object-cover" />
+      </button>
+      {open && <PhotoLightbox photo={photo} commonName={commonName} onClose={() => setOpen(false)} />}
+    </>
   );
 }

@@ -21,6 +21,10 @@ const FIRST_WALK_TIPS = [
 export default async function TodayPage() {
   const regulars = getYearRoundRegulars();
   const photos = await getSpeciesPhotos(regulars);
+  // This week's picks are chosen in the browser, so every bird they could name gets its photo here.
+  // These are the guide's own lookups (cached a week), so this adds no Wikipedia requests.
+  const frequencies = getWeeklyFrequencies();
+  const weekPhotos = await getSpeciesPhotos(getAllSpecies().filter((s) => s.code in frequencies));
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
@@ -42,8 +46,14 @@ export default async function TodayPage() {
       <section aria-labelledby="this-week" className="flex flex-col gap-2">
         <SectionHeader id="this-week" title="Around this week" />
         <AroundThisWeek
-          frequencies={getWeeklyFrequencies()}
+          frequencies={frequencies}
           names={Object.fromEntries(getAllSpecies().map((s) => [s.code, s.commonName]))}
+          photos={Object.fromEntries(
+            Object.entries(weekPhotos).map(([code, { src, width, height, artist, license, licenseUrl, sourceUrl }]) => [
+              code,
+              { src, width, height, artist, license, licenseUrl, sourceUrl },
+            ]),
+          )}
         />
       </section>
 
