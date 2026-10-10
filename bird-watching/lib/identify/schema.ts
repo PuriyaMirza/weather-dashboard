@@ -41,6 +41,11 @@ export const identifyRequestSchema = z.object({
   note: z.string().max(300),
   /** The phone's local wall clock, so "this morning" resolves in the birder's timezone. */
   now: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+  /**
+   * Scientific names already shown. Present only on the "Show me more options" call, which asks
+   * for alternatives — a second paid call made only when the birder taps for it.
+   */
+  exclude: z.array(z.string().max(100)).max(3).optional(),
 });
 
 export type IdentifyRequest = z.infer<typeof identifyRequestSchema>;

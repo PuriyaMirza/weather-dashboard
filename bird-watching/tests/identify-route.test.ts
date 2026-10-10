@@ -58,6 +58,16 @@ describe('POST /api/identify', () => {
     expect(JSON.parse(text)).toMatchObject({ candidates: [{ speciesCode: 'blujay', photo: null }], time: '07:30', place: { parkArea: 'The Ramble' } });
   });
 
+  it('passes the names to exclude through for a "show me more options" call', async () => {
+    vi.stubEnv('ANTHROPIC_API_KEY', 'secret-key');
+    identifyWithClaude.mockResolvedValue({
+      candidates: [], date: null, time: null, place: { name: null, parkArea: null, stateCode: null, countryCode: null }, count: null,
+    });
+    const response = await POST(post({ ...valid, exclude: ['Pandion haliaetus'] }, '10.1.0.6'));
+    expect(response.status).toBe(200);
+    expect(identifyWithClaude.mock.calls[0][1]).toMatchObject({ exclude: ['Pandion haliaetus'] });
+  });
+
   it('turns a decline into a readable 422', async () => {
     vi.stubEnv('ANTHROPIC_API_KEY', 'secret-key');
     identifyWithClaude.mockRejectedValue(new IdentifyRefusal('declined'));

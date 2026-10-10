@@ -44,7 +44,9 @@ export function PhotoAdd() {
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [choice, setChoice] = useState<string>('0');
-  const [showMore, setShowMore] = useState(false);
+  const [sentImage, setSentImage] = useState('');
+  const [more, setMore] = useState<'idle' | 'loading' | 'done'>('idle');
+  const [moreError, setMoreError] = useState<string | null>(null);
   const [otherName, setOtherName] = useState('');
   const [when, setWhen] = useState('');
   const [where, setWhere] = useState('');
@@ -71,11 +73,12 @@ export function PhotoAdd() {
     if (!image) return;
     setError(null);
     setStep({ name: 'identifying' });
+    const sent = toBase64Jpeg(identifyCanvas(image, tap));
     try {
       const response = await fetch('/api/identify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: toBase64Jpeg(identifyCanvas(image, tap)), note, now: localDateTime(new Date()) }),
+        body: JSON.stringify({ image: sent, note, now: localDateTime(new Date()) }),
       });
       const body = await response.json().catch(() => null);
       if (!response.ok) {
@@ -85,7 +88,9 @@ export function PhotoAdd() {
       const result = body as IdentifyResponse;
       const today = localDateTime(new Date());
       setChoice(result.candidates.length ? '0' : OTHER);
-      setShowMore(false);
+      setSentImage(sent);
+      setMore('idle');
+      setMoreError(null);
       setWhen(`${result.date ?? today.slice(0, 10)}T${result.time ?? '12:00'}`);
       setWhere(result.place.parkArea ?? result.place.name ?? '');
       setCount(result.count ?? 1);
@@ -94,6 +99,37 @@ export function PhotoAdd() {
     } catch {
       setError("You're offline, or the app couldn't be reached. Photo ID needs a connection.");
       setStep({ name: 'describe' });
+    }
+  }
+
+  /** Asks Claude again for lookalikes — only when the birder taps for them, since it's a second paid call. */
+  async function showMoreOptions(result: IdentifyResponse) {
+    setMore('loading');
+    setMoreError(null);
+    try {
+      const response = await fetch('/api/identify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: sentImage,
+          note,
+          now: localDateTime(new Date()),
+          exclude: result.candidates.map((c) => c.scientificName),
+        }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        setMoreError(body && typeof body.error === 'string' ? body.error : 'Something went wrong. Please try again.');
+        return setMore('idle');
+      }
+      // Only the candidates are used; the date and place the birder may already have edited stay put.
+      const seen = new Set(result.candidates.map((c) => c.scientificName.toLowerCase()));
+      const extra = (body as IdentifyResponse).candidates.filter((c) => !seen.has(c.scientificName.toLowerCase())).slice(0, 3 - result.candidates.length);
+      setStep({ name: 'confirm', result: { ...result, candidates: [...result.candidates, ...extra] } });
+      setMore('done');
+    } catch {
+      setMoreError("You're offline, or the app couldn't be reached.");
+      setMore('idle');
     }
   }
 
@@ -225,9 +261,7 @@ export function PhotoAdd() {
 
   const { result } = step;
   const otherChosen = choice === OTHER;
-  // A confident top pick stands alone; its lookalikes wait behind a button for when the birder isn't sure.
-  const collapsible = result.candidates.length > 1 && result.candidates[0].confidence === 'high';
-  const shown = collapsible && !showMore ? result.candidates.slice(0, 1) : result.candidates;
+  const canAskMore = more !== 'done' && result.candidates.length > 0 && result.candidates.length < 3;
   const canSave = (otherChosen ? otherName.trim().length > 0 : true) && when.length === 16;
   const showMapPoint = result.place.mapLabel && !isParkArea(where.trim()) && where.trim() === result.place.name;
 
@@ -246,7 +280,7 @@ export function PhotoAdd() {
           <p className="type-body-md text-on-surface-variant">Claude couldn&rsquo;t find a bird in this photo. Type the name below.</p>
         )}
         <Surface tone="container" className="flex flex-col py-1">
-          {shown.map((candidate, index) => (
+          {result.candidates.map((candidate, index) => (
             <label key={`${candidate.scientificName}-${index}`} className="flex min-h-14 cursor-pointer items-start gap-3 px-3 py-2.5">
               <input
                 type="radio"
@@ -285,12 +319,17 @@ export function PhotoAdd() {
             <span className="type-label-lg text-primary">{result.candidates.length ? 'None of these' : 'Type the species'}</span>
           </label>
         </Surface>
-        {collapsible && !showMore && (
-          <button type="button" className={`${pill} self-start`} onClick={() => setShowMore(true)}>
+        {canAskMore && (
+          <button type="button" className={`${pill} self-start`} onClick={() => void showMoreOptions(result)} disabled={more === 'loading'}>
             <Icon name="expand-more" size={20} />
-            Show me more options
+            {more === 'loading' ? 'Finding lookalikes…' : 'Show me more options'}
           </button>
         )}
+        {more === 'done' && result.candidates.length === 1 && (
+          <p className="type-body-sm text-on-surface-variant">Claude didn&rsquo;t find any likely lookalikes.</p>
+        )}
+        {moreError && <p role="alert" className="type-body-md text-error">{moreError}</p>}
+        <p role="status" className="sr-only">{more === 'loading' ? 'Finding more options' : ''}</p>
         {otherChosen && (
           <div className="flex flex-col gap-1">
             <label htmlFor={ids.other} className="type-label-md text-on-surface-variant">Species name</label>
