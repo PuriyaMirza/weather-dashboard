@@ -11,13 +11,7 @@ const PHOTO = {
 
 const RESULT = {
   candidates: [
-    { speciesCode: 'osprey', commonName: 'Osprey', scientificName: 'Pandion haliaetus', confidence: 'high', fieldMarks: 'Dark eye stripe, white underparts',
-      photo: {
-        src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Osprey.jpg/800px-Osprey.jpg', width: 800, height: 600,
-        artist: 'A. Birder', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
-        sourceUrl: 'https://commons.wikimedia.org/wiki/File:Osprey.jpg',
-      },
-    },
+    { speciesCode: 'osprey', commonName: 'Osprey', scientificName: 'Pandion haliaetus', confidence: 'high', fieldMarks: 'Dark eye stripe, white underparts' },
   ],
   date: '2026-09-20',
   time: null,
@@ -25,10 +19,16 @@ const RESULT = {
   count: null,
 };
 
+const OSPREY_PHOTO = {
+  src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Osprey.jpg/800px-Osprey.jpg', width: 800, height: 600,
+  artist: 'A. Birder', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+  sourceUrl: 'https://commons.wikimedia.org/wiki/File:Osprey.jpg',
+};
+
 // What the "Show me more options" call returns: lookalikes only.
 const MORE = {
   ...RESULT,
-  candidates: [{ speciesCode: 'baleag', commonName: 'Bald Eagle', scientificName: 'Haliaeetus leucocephalus', confidence: 'low', fieldMarks: 'Large raptor', photo: null }],
+  candidates: [{ speciesCode: 'baleag', commonName: 'Bald Eagle', scientificName: 'Haliaeetus leucocephalus', confidence: 'low', fieldMarks: 'Large raptor' }],
 };
 
 type Sent = { image: string; note: string; now: string; exclude?: string[] };
@@ -40,6 +40,10 @@ async function reachConfirm(page: Page) {
     sent.push(body);
     await route.fulfill({ json: body.exclude ? MORE : RESULT });
   });
+  // Reference photos load separately; only the Osprey has one here.
+  await page.route('**/api/species-photo?*', (route) =>
+    route.fulfill({ json: { photo: new URL(route.request().url()).searchParams.get('sci') === 'Pandion haliaetus' ? OSPREY_PHOTO : null } }),
+  );
   await page.goto('/log');
   await page.getByRole('link', { name: 'Add a bird from a photo' }).click();
   await page.getByLabel('Choose a photo').setInputFiles(PHOTO);

@@ -50,7 +50,10 @@ export const identifyRequestSchema = z.object({
 
 export type IdentifyRequest = z.infer<typeof identifyRequestSchema>;
 
-/** A credited reference photo of a suggested species (from the field guide's Wikipedia source). */
+/**
+ * A credited reference photo of a suggested species, served by /api/species-photo from the field
+ * guide's Wikipedia source. Loaded by the browser after the suggestions show, never inline.
+ */
 export const candidatePhotoSchema = z.object({
   src: z.string(),
   width: z.number(),
@@ -71,7 +74,6 @@ export const identifyResponseSchema = z.object({
       scientificName: z.string(),
       confidence: z.enum(CONFIDENCE),
       fieldMarks: z.string(),
-      photo: candidatePhotoSchema.nullable(),
     }),
   ),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),

@@ -7,8 +7,6 @@ vi.mock('@/lib/identify/claude', async (importOriginal) => ({
   identifyWithClaude: (...args: unknown[]) => identifyWithClaude(...args),
 }));
 
-vi.mock('@/lib/media/wikipedia', () => ({ getSpeciesPhoto: async () => null }));
-
 const { POST } = await import('@/app/api/identify/route');
 const { IdentifyRefusal } = await import('@/lib/identify/claude');
 
@@ -55,7 +53,7 @@ describe('POST /api/identify', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(text).not.toContain('secret-key');
-    expect(JSON.parse(text)).toMatchObject({ candidates: [{ speciesCode: 'blujay', photo: null }], time: '07:30', place: { parkArea: 'The Ramble' } });
+    expect(JSON.parse(text)).toMatchObject({ candidates: [{ speciesCode: 'blujay' }], time: '07:30', place: { parkArea: 'The Ramble' } });
   });
 
   it('passes the names to exclude through for a "show me more options" call', async () => {

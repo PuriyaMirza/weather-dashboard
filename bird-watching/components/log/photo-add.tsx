@@ -7,7 +7,8 @@ import { PhotoCredit } from '@/components/guide/species-photo';
 import { Icon } from '@/components/ui/icon';
 import { Surface } from '@/components/ui/surface';
 import { identifyCanvas, keepCanvas, loadImage, toBase64Jpeg, toJpegBlob } from '@/lib/identify/image';
-import type { IdentifyCandidate, IdentifyResponse } from '@/lib/identify/schema';
+import type { CandidatePhoto, IdentifyCandidate, IdentifyResponse } from '@/lib/identify/schema';
+import { useApi } from '@/lib/live/use-api';
 import { localDateTime, newObservation, newOuting } from '@/lib/log/factory';
 import { isParkArea } from '@/lib/log/park-areas';
 import { getRepository } from '@/lib/log/use-repository';
@@ -30,6 +31,36 @@ const pill =
 const primary =
   'flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-secondary-fixed px-4 type-label-lg text-on-secondary disabled:opacity-50';
 const field = 'min-h-11 w-full rounded-lg border border-outline-variant bg-surface px-3 type-body-md text-on-surface';
+
+/**
+ * One suggestion as a radio row. Its reference photo loads on its own after the row shows, from
+ * our CDN-cached /api/species-photo, so the ID never waits on Wikipedia and Wikipedia sees about
+ * one request per species per week.
+ */
+function CandidateRow({ candidate, checked, onSelect }: { candidate: IdentifyCandidate; checked: boolean; onSelect: () => void }) {
+  const { state } = useApi<{ photo: CandidatePhoto | null }>(`/api/species-photo?sci=${encodeURIComponent(candidate.scientificName)}`);
+  const photo = state.status === 'ready' ? state.data.photo : null;
+  return (
+    <label className="flex min-h-14 cursor-pointer items-start gap-3 px-3 py-2.5">
+      <input type="radio" name="species" checked={checked} onChange={onSelect} className="mt-1 h-5 w-5 accent-[var(--secondary-fixed)]" />
+      <span aria-hidden="true" className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface-container-highest">
+        {photo && <Image src={photo.src} alt="" fill sizes="80px" className="object-cover" />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block type-label-lg text-primary">
+          {candidate.commonName} <span className="type-body-sm text-on-surface-variant">· {CONFIDENCE_LABEL[candidate.confidence]}</span>
+        </span>
+        <span className="block type-body-sm italic text-on-surface-variant">{candidate.scientificName}</span>
+        <span className="block type-body-sm text-on-surface">{candidate.fieldMarks}</span>
+        {photo && (
+          <span className="mt-1 block type-label-sm text-on-surface-variant">
+            <PhotoCredit photo={photo} />
+          </span>
+        )}
+      </span>
+    </label>
+  );
+}
 
 /**
  * Photo → Claude → log. The birder taps the bird (so only a small crop is sent), says when and
@@ -281,31 +312,12 @@ export function PhotoAdd() {
         )}
         <Surface tone="container" className="flex flex-col py-1">
           {result.candidates.map((candidate, index) => (
-            <label key={`${candidate.scientificName}-${index}`} className="flex min-h-14 cursor-pointer items-start gap-3 px-3 py-2.5">
-              <input
-                type="radio"
-                name="species"
-                value={String(index)}
-                checked={choice === String(index)}
-                onChange={() => setChoice(String(index))}
-                className="mt-1 h-5 w-5 accent-[var(--secondary-fixed)]"
-              />
-              <span aria-hidden="true" className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface-container-highest">
-                {candidate.photo && <Image src={candidate.photo.src} alt="" fill sizes="80px" className="object-cover" />}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block type-label-lg text-primary">
-                  {candidate.commonName} <span className="type-body-sm text-on-surface-variant">· {CONFIDENCE_LABEL[candidate.confidence]}</span>
-                </span>
-                <span className="block type-body-sm italic text-on-surface-variant">{candidate.scientificName}</span>
-                <span className="block type-body-sm text-on-surface">{candidate.fieldMarks}</span>
-                {candidate.photo && (
-                  <span className="mt-1 block type-label-sm text-on-surface-variant">
-                    <PhotoCredit photo={candidate.photo} />
-                  </span>
-                )}
-              </span>
-            </label>
+            <CandidateRow
+              key={`${candidate.scientificName}-${index}`}
+              candidate={candidate}
+              checked={choice === String(index)}
+              onSelect={() => setChoice(String(index))}
+            />
           ))}
           <label className="flex min-h-14 cursor-pointer items-center gap-3 px-3 py-2.5">
             <input
