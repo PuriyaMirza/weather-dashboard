@@ -13,7 +13,7 @@ export const IDENTIFY_MODEL = 'claude-sonnet-5-5';
 
 const SYSTEM = `You identify wild birds in a birder's photo and turn their note into a log entry.
 
-candidates: up to 3 species, most likely first, with current eBird English and scientific names. Give fewer when one is clear; none when no bird is visible. confidence "high" only when diagnostic field marks are clearly visible. fieldMarks: the visible marks behind the ID, under 12 words.
+candidates: the most likely species first, then up to 2 closest lookalikes (even when the first is clear), with current eBird English and scientific names; none when no bird is visible. confidence "high" only when diagnostic field marks are clearly visible. fieldMarks: the visible marks behind the ID, under 12 words.
 
 From the note, resolved against "now": date (YYYY-MM-DD) and time (HH:mm, 24h), each null if not stated. place.name: the place as the birder would write it. place.parkArea: only if in Central Park, NYC — the matching area, or "Central Park (general)". stateCode: subdivision code without country (e.g. NY); countryCode: ISO alpha-2. count: individuals stated in the note, else null. Use null for anything not given; never guess a place.`;
 

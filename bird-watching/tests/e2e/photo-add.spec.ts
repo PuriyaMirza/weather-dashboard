@@ -52,6 +52,10 @@ test('identify a bird from a photo, confirm, and find it in the log', async ({ p
   await expect(osprey.locator('img')).toHaveCount(1);
   await expect(osprey.getByText('Photo: A. Birder')).toBeVisible();
   await expect(osprey.getByRole('link', { name: /Wikimedia Commons/ })).toHaveAttribute('href', 'https://commons.wikimedia.org/wiki/File:Osprey.jpg');
+  // A confident pick hides its lookalikes until asked for.
+  await expect(page.getByRole('radio', { name: /Bald Eagle/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Show me more options' }).click();
+  await expect(page.getByRole('button', { name: 'Show me more options' })).toHaveCount(0);
   const eagle = page.locator('label', { has: page.getByRole('radio', { name: /Bald Eagle/ }) });
   await expect(eagle.locator('img')).toHaveCount(0);
 
@@ -72,6 +76,7 @@ test('identify a bird from a photo, confirm, and find it in the log', async ({ p
 
 test('no serious axe violations on the photo confirm screen', async ({ page }) => {
   await reachConfirm(page);
+  await page.getByRole('button', { name: 'Show me more options' }).click();
   const results = await new AxeBuilder({ page }).analyze();
   const serious = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
   expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([]);

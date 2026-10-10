@@ -44,6 +44,7 @@ export function PhotoAdd() {
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [choice, setChoice] = useState<string>('0');
+  const [showMore, setShowMore] = useState(false);
   const [otherName, setOtherName] = useState('');
   const [when, setWhen] = useState('');
   const [where, setWhere] = useState('');
@@ -84,6 +85,7 @@ export function PhotoAdd() {
       const result = body as IdentifyResponse;
       const today = localDateTime(new Date());
       setChoice(result.candidates.length ? '0' : OTHER);
+      setShowMore(false);
       setWhen(`${result.date ?? today.slice(0, 10)}T${result.time ?? '12:00'}`);
       setWhere(result.place.parkArea ?? result.place.name ?? '');
       setCount(result.count ?? 1);
@@ -223,6 +225,9 @@ export function PhotoAdd() {
 
   const { result } = step;
   const otherChosen = choice === OTHER;
+  // A confident top pick stands alone; its lookalikes wait behind a button for when the birder isn't sure.
+  const collapsible = result.candidates.length > 1 && result.candidates[0].confidence === 'high';
+  const shown = collapsible && !showMore ? result.candidates.slice(0, 1) : result.candidates;
   const canSave = (otherChosen ? otherName.trim().length > 0 : true) && when.length === 16;
   const showMapPoint = result.place.mapLabel && !isParkArea(where.trim()) && where.trim() === result.place.name;
 
@@ -241,7 +246,7 @@ export function PhotoAdd() {
           <p className="type-body-md text-on-surface-variant">Claude couldn&rsquo;t find a bird in this photo. Type the name below.</p>
         )}
         <Surface tone="container" className="flex flex-col py-1">
-          {result.candidates.map((candidate, index) => (
+          {shown.map((candidate, index) => (
             <label key={`${candidate.scientificName}-${index}`} className="flex min-h-14 cursor-pointer items-start gap-3 px-3 py-2.5">
               <input
                 type="radio"
@@ -280,6 +285,12 @@ export function PhotoAdd() {
             <span className="type-label-lg text-primary">{result.candidates.length ? 'None of these' : 'Type the species'}</span>
           </label>
         </Surface>
+        {collapsible && !showMore && (
+          <button type="button" className={`${pill} self-start`} onClick={() => setShowMore(true)}>
+            <Icon name="expand-more" size={20} />
+            Show me more options
+          </button>
+        )}
         {otherChosen && (
           <div className="flex flex-col gap-1">
             <label htmlFor={ids.other} className="type-label-md text-on-surface-variant">Species name</label>
