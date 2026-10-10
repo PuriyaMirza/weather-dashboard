@@ -28,7 +28,7 @@ function PickList({ title, hint, picks, names, photos }: ListProps) {
       <p className="type-body-sm text-on-surface-variant">{hint}</p>
       <ul className="mt-2 flex flex-col">
         {picks.map((pick) => (
-          <li key={pick.code} className="flex min-h-14 items-center gap-3 py-1">
+          <li key={pick.code} className="flex min-h-[67px] items-center gap-3 py-1">
             {photos[pick.code] ? (
               <PhotoThumbButton photo={photos[pick.code]} commonName={names[pick.code] ?? pick.code} className="h-12 w-12" />
             ) : (

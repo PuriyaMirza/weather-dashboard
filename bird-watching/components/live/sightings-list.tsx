@@ -36,7 +36,7 @@ function SightingRow({
   photo: LightboxPhoto | undefined;
 }) {
   return (
-    <li className="flex min-h-14 items-center gap-3 px-3 py-2.5">
+    <li className="flex min-h-[67px] items-center gap-3 px-3 py-2.5">
       {photo ? (
         <PhotoThumbButton photo={photo} commonName={sighting.commonName} className="h-12 w-12" />
       ) : (
