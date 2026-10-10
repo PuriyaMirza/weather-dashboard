@@ -64,13 +64,33 @@ const imageInfoSchema = z.object({
   }),
 });
 
-/** The Commons file name behind an upload URL, or null for local (possibly non-free) uploads. */
-export function commonsFileName(uploadUrl: string): string | null {
-  const url = new URL(uploadUrl);
-  if (url.hostname !== 'upload.wikimedia.org' || !url.pathname.startsWith('/wikipedia/commons/')) return null;
-  if (url.pathname.includes('/thumb/')) return null;
-  const last = url.pathname.split('/').pop();
-  return last ? decodeURIComponent(last) : null;
+// Originals: /wikipedia/commons/a/ab/File.jpg. Renditions: /wikipedia/commons/thumb/a/ab/File.jpg/3840px-File.jpg
+// — which is what the REST summary hands back as "originalimage" for large lead photos (on
+// thumb.wikimedia.org), so both must resolve to the file. The a/ab directories are the MD5 prefix.
+const COMMONS_ORIGINAL = /^\/wikipedia\/commons\/[0-9a-f]\/[0-9a-f]{2}\/([^/]+)$/;
+const COMMONS_RENDITION = /^\/wikipedia\/commons\/thumb\/[0-9a-f]\/[0-9a-f]{2}\/([^/]+)\/[^/]+$/;
+const COMMONS_HOSTS = new Set(['upload.wikimedia.org', 'thumb.wikimedia.org']);
+
+/**
+ * The Commons file name behind an image URL, original or rendition; null for anything else —
+ * including local uploads (/wikipedia/en/…), which may be non-free. The licence is checked against
+ * Commons afterwards, so accepting a rendition never skips that check.
+ */
+export function commonsFileName(imageUrl: string): string | null {
+  let url: URL;
+  try {
+    url = new URL(imageUrl);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'https:' || !COMMONS_HOSTS.has(url.hostname)) return null;
+  const name = (COMMONS_ORIGINAL.exec(url.pathname) ?? COMMONS_RENDITION.exec(url.pathname))?.[1];
+  if (!name) return null;
+  try {
+    return decodeURIComponent(name);
+  } catch {
+    return null;
+  }
 }
 
 const FREE_LICENSE = /^(cc0|cc[ -]by(-sa)?\b|public domain|pd\b|pd-|gfdl)/i;
@@ -146,11 +166,18 @@ async function getJson(url: string): Promise<unknown> {
  * change or a disambiguation page ("Robin") can't pick the wrong bird.
  */
 export async function getSpeciesPhoto(scientificName: string): Promise<SpeciesPhoto | null> {
+  // Every "no photo" says why in the log, so a species that never gets a photo can be traced to
+  // its cause (no lead image, a non-Commons file, a licence we don't accept) without re-asking Wikipedia.
+  const noPhoto = (reason: string) => {
+    console.warn(`[photos] no photo for ${scientificName}: ${reason}`);
+    return null;
+  };
   try {
     const title = encodeURIComponent(scientificName.replace(/ /g, '_'));
     const summary = summarySchema.parse(await getJson(`${WIKIPEDIA}/api/rest_v1/page/summary/${title}?redirect=true`));
-    const fileName = summary.originalimage ? commonsFileName(summary.originalimage.source) : null;
-    if (!fileName) return null;
+    if (!summary.originalimage) return noPhoto('the article has no lead image');
+    const fileName = commonsFileName(summary.originalimage.source);
+    if (!fileName) return noPhoto(`lead image is not a Commons file: ${summary.originalimage.source}`);
 
     const infoUrl = new URL(`${WIKIPEDIA}/w/api.php`);
     infoUrl.search = new URLSearchParams({
@@ -163,11 +190,14 @@ export async function getSpeciesPhoto(scientificName: string): Promise<SpeciesPh
       iiurlwidth: String(DISPLAY_WIDTH),
     }).toString();
     const info = imageInfoSchema.parse(await getJson(infoUrl.toString())).query.pages[0]?.imageinfo?.[0];
-    if (!info) return null;
+    if (!info) return noPhoto(`Commons has no image info for File:${fileName}`);
 
     const meta = info.extmetadata;
     const license = meta.LicenseShortName?.value;
-    if (!license || !isFreeLicense(license, meta.NonFree?.value)) return null;
+    if (!license) return noPhoto(`File:${fileName} has no licence recorded`);
+    if (!isFreeLicense(license, meta.NonFree?.value)) {
+      return noPhoto(`File:${fileName} licence not accepted: "${license}"${meta.NonFree ? ` (NonFree=${meta.NonFree.value})` : ''}`);
+    }
     const artist = meta.Artist ? plainText(meta.Artist.value) : '';
 
     return {

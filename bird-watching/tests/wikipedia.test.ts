@@ -40,11 +40,30 @@ function stubFetch(...bodies: unknown[]) {
 }
 
 describe('helpers', () => {
-  it('takes the file name only from Commons originals', () => {
+  it('takes the file name from Commons originals', () => {
     expect(commonsFileName(summary.originalimage.source)).toBe('Turdus-migratorius-002.jpg');
     expect(commonsFileName('https://upload.wikimedia.org/wikipedia/commons/a/a1/Caf%C3%A9_bird.jpg')).toBe('Café_bird.jpg');
     expect(commonsFileName('https://upload.wikimedia.org/wikipedia/en/a/a1/Album.jpg')).toBeNull();
     expect(commonsFileName('https://example.com/wikipedia/commons/a/a1/X.jpg')).toBeNull();
+  });
+
+  it('reads the file behind a resized rendition, which the summary returns for large lead photos', () => {
+    // Real shape from the REST summary for Sturnus vulgaris (Oct 2026).
+    const starling =
+      'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/Common_starling_%28Sturnus_vulgaris%29_breeding_male_Marken.jpg/3840px-Common_starling_%28Sturnus_vulgaris%29_breeding_male_Marken.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail';
+    expect(commonsFileName(starling)).toBe('Common_starling_(Sturnus_vulgaris)_breeding_male_Marken.jpg');
+    expect(commonsFileName('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Wood_Duck.png/800px-Wood_Duck.png')).toBe('Wood_Duck.png');
+  });
+
+  it('still rejects anything that is not a Commons file', () => {
+    expect(commonsFileName('https://thumb.wikimedia.org/wikipedia/en/thumb/a/a1/Album.jpg/800px-Album.jpg')).toBeNull();
+    expect(commonsFileName('http://upload.wikimedia.org/wikipedia/commons/a/a1/X.jpg')).toBeNull();
+    expect(commonsFileName('https://upload.wikimedia.org/wikipedia/commons/a/a1/X.jpg/extra')).toBeNull();
+    expect(commonsFileName('https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/X.jpg')).toBeNull();
+    expect(commonsFileName('https://upload.wikimedia.org/wikipedia/commons/zz/a1/X.jpg')).toBeNull();
+    expect(commonsFileName('https://evil.example/wikipedia/commons/thumb/a/a1/X.jpg/800px-X.jpg')).toBeNull();
+    expect(commonsFileName('not a url')).toBeNull();
+    expect(commonsFileName('https://upload.wikimedia.org/wikipedia/commons/a/a1/%E0%A4%A.jpg')).toBeNull();
   });
 
   it('accepts free licences only', () => {
@@ -84,6 +103,34 @@ describe('getSpeciesPhoto', () => {
     expect((init.headers as Record<string, string>)['User-Agent']).toMatch(/^CentralParkBirding\//);
     expect(init.next.revalidate).toBe(604800);
     expect((fetchMock.mock.calls[1] as unknown as [string])[0]).toContain('File%3ATurdus-migratorius-002.jpg');
+  });
+
+  it('follows a rendition lead image to its Commons file and still checks the licence', async () => {
+    const fetchMock = stubFetch(
+      {
+        originalimage: {
+          source:
+            'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/Common_starling_%28Sturnus_vulgaris%29_breeding_male_Marken.jpg/3840px-Common_starling_%28Sturnus_vulgaris%29_breeding_male_Marken.jpg?utm_source=en.wikipedia.org',
+        },
+        content_urls: { desktop: { page: 'https://en.wikipedia.org/wiki/Common_starling' } },
+      },
+      imageInfo({ Artist: 'Someone', LicenseShortName: 'CC BY-SA 4.0' }),
+    );
+    expect(await getSpeciesPhoto('Sturnus vulgaris')).toMatchObject({ license: 'CC BY-SA 4.0', articleUrl: 'https://en.wikipedia.org/wiki/Common_starling' });
+    expect(decodeURIComponent((fetchMock.mock.calls[1] as unknown as [string])[0])).toContain(
+      'titles=File:Common_starling_(Sturnus_vulgaris)_breeding_male_Marken.jpg',
+    );
+  });
+
+  it('shows no photo for a local (possibly non-free) lead image, and says why', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const fetchMock = stubFetch({
+      originalimage: { source: 'https://upload.wikimedia.org/wikipedia/en/a/a1/Album_cover.jpg' },
+      content_urls: summary.content_urls,
+    });
+    expect(await getSpeciesPhoto('Turdus migratorius')).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('lead image is not a Commons file'));
   });
 
   it('shows no photo rather than an uncredited or non-free one', async () => {
