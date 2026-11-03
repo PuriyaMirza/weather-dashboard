@@ -96,7 +96,8 @@ aborts requests via `context.route` — `setOffline` alone doesn't stop the work
 - The cloud sandbox blocks eBird/Open-Meteo/Wikimedia; run data scripts locally and commit the JSON.
 - Design: light olive tokens in `app/globals.css` (dark green only for accents); `tests/theme-contrast.test.ts`
   checks every text/surface pair. Figma mockup: file `6sbBeTvlvGi4gIAd7YPzb4`.
-- Layout uses `viewportFit: 'cover'` so `env(safe-area-inset-*)` works; the bottom nav pads by
+- `viewport-fit=cover` is set only in the home-screen app (inline script in `app/layout.tsx`): in a browser tab it hides
+  the page top under Chrome iOS's top address bar. It makes `env(safe-area-inset-*)` work; the bottom nav pads by
   `--nav-bottom-gap` (iPhone home indicator, min 0.75rem) and `main` clears it. Keep both when editing the shell.
 - Deploys: Vercel project `nyc-bird-tracker` (Root Directory `bird-watching`, prod https://nyc-bird-tracker.vercel.app);
   its Ignored Build Step skips builds when nothing under `bird-watching/` changed. `EBIRD_API_KEY` is a Vercel env

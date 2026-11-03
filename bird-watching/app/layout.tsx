@@ -27,14 +27,30 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   // Matches --surface so the browser chrome doesn't sit on a seam.
   themeColor: '#f2f3e4',
-  // Lets the page reach under the iPhone home indicator so env(safe-area-inset-*) reports real
-  // values; the bottom nav uses them to sit clear of it (see --nav-bottom-gap).
-  viewportFit: 'cover',
+  // No viewportFit here: 'cover' in a browser tab lets Chrome on iOS (address bar on top) draw the page
+  // under its toolbar while env(safe-area-inset-top) stays 0, hiding the top of every page.
+  // STANDALONE_VIEWPORT_SCRIPT opts in to 'cover' only for the home-screen app.
 };
+
+/**
+ * Turns on viewport-fit=cover only when launched from the home screen, where nothing but the
+ * home indicator overlaps the page and env(safe-area-inset-bottom) is needed for the bottom nav
+ * (see --nav-bottom-gap). Inline in <head> so it applies before first paint; it keeps watching
+ * <head> because Next inserts a second viewport meta after hydration, which would otherwise win.
+ */
+const STANDALONE_VIEWPORT_SCRIPT = `(function(){try{
+if(!(navigator.standalone||matchMedia('(display-mode: standalone)').matches))return;
+function fit(){document.querySelectorAll('meta[name="viewport"]').forEach(function(m){
+if(m.content.indexOf('viewport-fit')<0)m.content+=', viewport-fit=cover';});}
+fit();new MutationObserver(fit).observe(document.head,{childList:true,subtree:true,attributes:true,attributeFilter:['content']});
+}catch(e){}})();`;
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" className={`${manrope.variable} ${newsreader.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: STANDALONE_VIEWPORT_SCRIPT }} />
+      </head>
       <body className="min-h-dvh font-sans antialiased">
         <a
           href="#main"
